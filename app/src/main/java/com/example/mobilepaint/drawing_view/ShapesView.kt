@@ -59,6 +59,10 @@ class ShapesView @JvmOverloads constructor(
 
     @ColorInt
     var color = Color.BLACK
+        set(value) {
+            field = value
+            selectedShape?.changeColor(field)
+        }
 
     var strokeWidth = 1f
 
@@ -158,10 +162,7 @@ class ShapesView @JvmOverloads constructor(
                     selection?.translate(dx, dy)
                     startX = touchX
                     startY = touchY
-                    selectedShape?.let {
-                        val shader = SweepGradient(selection!!.centerX(), selection!!.centerY(), selectionColors, null)
-                        it.applyShader(shader)
-                    }
+                    updateSelectionShader()
                 }
                 currentShape?.move(touchX, touchY)
             }
@@ -176,8 +177,7 @@ class ShapesView @JvmOverloads constructor(
                         selectedShape = shapes.firstOrNull { it.isInside(touchX, touchY) }
                         selectedShape?.let {
                             selection = CustomRectF(boundingBoxPaint, it.getBoundingBox())
-                            val shader = SweepGradient(selection!!.centerX(), selection!!.centerY(), selectionColors, null)
-                            it.applyShader(shader)
+                            updateSelectionShader()
                         }
                     }
                 }
@@ -189,6 +189,13 @@ class ShapesView @JvmOverloads constructor(
 
         invalidate()
         return true
+    }
+
+    private fun updateSelectionShader() {
+        selectedShape?.let {
+            val shader = SweepGradient(selection!!.centerX(), selection!!.centerY(), selectionColors, null)
+            it.applyShader(shader)
+        }
     }
 
     private fun deselectShape() {

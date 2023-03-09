@@ -101,4 +101,8 @@ class CustomArrow(
         trianglePaint.shader = shader
     }
 
+    override fun changeColor(color: Int) {
+        paint.color = color
+        trianglePaint.color = color
+    }
 }

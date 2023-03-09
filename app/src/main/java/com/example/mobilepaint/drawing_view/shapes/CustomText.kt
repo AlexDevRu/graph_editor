@@ -73,4 +73,8 @@ class CustomText(
     override fun applyShader(shader: Shader?) {
         paint.shader = shader
     }
+
+    override fun changeColor(color: Int) {
+        paint.color = color
+    }
 }

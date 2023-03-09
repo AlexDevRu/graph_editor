@@ -55,4 +55,8 @@ class CustomLine(
         paint.shader = shader
     }
 
+    override fun changeColor(color: Int) {
+        paint.color = color
+    }
+
 }

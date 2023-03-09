@@ -4,6 +4,7 @@ import android.graphics.Canvas
 import android.graphics.Paint
 import android.graphics.RectF
 import android.graphics.Shader
+import androidx.annotation.ColorInt
 
 interface Shape {
     val paint: Paint
@@ -18,4 +19,5 @@ interface Shape {
     fun translate(dx: Float, dy: Float) = Unit
 
     fun applyShader(shader: Shader?)
+    fun changeColor(@ColorInt color: Int)
 }

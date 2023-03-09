@@ -17,9 +17,9 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:gravity="center_vertical"
+            android:paddingHorizontal="10dp"
             android:paddingTop="16dp"
-            android:paddingBottom="10dp"
-            android:paddingHorizontal="10dp">
+            android:paddingBottom="10dp">
 
             <View
                 android:id="@+id/colorView"
@@ -32,11 +32,11 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_gravity="bottom"
-                android:valueFrom="1"
-                android:valueTo="10"
-                android:value="5"
+                android:layout_weight="1"
                 android:stepSize="1"
-                android:layout_weight="1" />
+                android:value="5"
+                android:valueFrom="1"
+                android:valueTo="10" />
 
             <com.google.android.material.textfield.TextInputLayout
                 android:id="@+id/tlType"

@@ -8,7 +8,6 @@ import android.view.MotionEvent
 import android.view.View
 import androidx.annotation.ColorInt
 import androidx.core.content.ContextCompat
-import androidx.core.graphics.transform
 import com.example.mobilepaint.R
 import com.example.mobilepaint.Utils.toPx
 import com.example.mobilepaint.drawing_view.shapes.*
@@ -45,16 +44,6 @@ class ShapesView @JvmOverloads constructor(
     fun addNewShape(shape: Shape) {
         shapes.push(shape)
         onShapeChanged?.onStackSizesChanged(shapes.size, removedShapes.size)
-    }
-
-    enum class GeometryType {
-        HAND,
-        PATH,
-        LINE,
-        ELLIPSE,
-        RECT,
-        TEXT,
-        ARROW
     }
 
     @ColorInt
@@ -124,8 +113,9 @@ class ShapesView @JvmOverloads constructor(
         ContextCompat.getColor(context, R.color.yellow),
     )
 
-    private var startX = -1f
-    private var startY = -1f
+    private var startX = 0f
+    private var startY = 0f
+    private var isShapeMoving = false
 
     @SuppressLint("ClickableViewAccessibility")
     override fun onTouchEvent(event: MotionEvent?): Boolean {
@@ -140,6 +130,7 @@ class ShapesView @JvmOverloads constructor(
                 if (geometryType == GeometryType.HAND && selection?.contains(touchX, touchY) == true) {
                     startX = touchX
                     startY = touchY
+                    isShapeMoving = true
                 } else {
                     currentShape = when (geometryType) {
                         GeometryType.PATH -> CustomPath(createPaint())
@@ -155,7 +146,7 @@ class ShapesView @JvmOverloads constructor(
                 }
             }
             MotionEvent.ACTION_MOVE -> {
-                if (geometryType == GeometryType.HAND && selection != null && startX >= 0 && startY >= 0) {
+                if (geometryType == GeometryType.HAND && selection != null && isShapeMoving) {
                     val dx = touchX - startX
                     val dy = touchY - startY
                     selectedShape?.translate(dx, dy)
@@ -168,9 +159,8 @@ class ShapesView @JvmOverloads constructor(
             }
             MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> {
                 if (geometryType == GeometryType.HAND) {
-                    if (startX >= 0 && startY >= 0) {
-                        startX = -1f
-                        startY = -1f
+                    if (isShapeMoving) {
+                        isShapeMoving = false
                         selectedShape?.up()
                     } else {
                         deselectShape()

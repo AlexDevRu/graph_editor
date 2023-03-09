@@ -14,9 +14,9 @@ interface Shape {
     fun move(x: Float, y: Float)
     fun up() = Unit
     fun isInside(x: Float, y: Float) : Boolean
-    fun getBoundingBox() : RectF = RectF()
+    fun getBoundingBox() : RectF
 
-    fun translate(dx: Float, dy: Float) = Unit
+    fun translate(dx: Float, dy: Float)
 
     fun applyShader(shader: Shader?)
     fun changeColor(@ColorInt color: Int)

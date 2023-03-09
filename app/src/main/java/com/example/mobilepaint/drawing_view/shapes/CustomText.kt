@@ -70,6 +70,14 @@ class CustomText(
         return false
     }
 
+    override fun getBoundingBox(): RectF {
+        TODO("Not yet implemented")
+    }
+
+    override fun translate(dx: Float, dy: Float) {
+        TODO("Not yet implemented")
+    }
+
     override fun applyShader(shader: Shader?) {
         paint.shader = shader
     }

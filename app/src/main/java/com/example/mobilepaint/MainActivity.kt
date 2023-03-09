@@ -7,6 +7,7 @@ import android.view.View
 import android.widget.AdapterView
 import androidx.appcompat.app.AppCompatActivity
 import com.example.mobilepaint.databinding.ActivityMainBinding
+import com.example.mobilepaint.drawing_view.GeometryType
 import com.example.mobilepaint.drawing_view.ShapesView
 import com.google.android.material.slider.Slider
 import com.skydoves.colorpickerview.ColorEnvelope
@@ -23,12 +24,12 @@ class MainActivity : AppCompatActivity(), ShapesView.OnShapeChanged, View.OnClic
 
     private val options by lazy {
         listOf(
-            PenType(getString(R.string.cursor), R.drawable.ic_hand, ShapesView.GeometryType.HAND),
-            PenType(getString(R.string.path), R.drawable.ic_curve, ShapesView.GeometryType.PATH),
-            PenType(getString(R.string.line), R.drawable.ic_line, ShapesView.GeometryType.LINE),
-            PenType(getString(R.string.ellipse), R.drawable.ic_ellipse, ShapesView.GeometryType.ELLIPSE),
-            PenType(getString(R.string.rectangle), R.drawable.ic_rectangle, ShapesView.GeometryType.RECT),
-            PenType(getString(R.string.arrow), R.drawable.ic_arrow, ShapesView.GeometryType.ARROW),
+            PenType(getString(R.string.cursor), R.drawable.ic_hand, GeometryType.HAND),
+            PenType(getString(R.string.path), R.drawable.ic_curve, GeometryType.PATH),
+            PenType(getString(R.string.line), R.drawable.ic_line, GeometryType.LINE),
+            PenType(getString(R.string.ellipse), R.drawable.ic_ellipse, GeometryType.ELLIPSE),
+            PenType(getString(R.string.rectangle), R.drawable.ic_rectangle, GeometryType.RECT),
+            PenType(getString(R.string.arrow), R.drawable.ic_arrow, GeometryType.ARROW),
         )
     }
 

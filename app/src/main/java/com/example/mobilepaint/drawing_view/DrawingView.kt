@@ -36,7 +36,7 @@ class DrawingView @JvmOverloads constructor(
 
     private val imm = context.getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
 
-    var geometryType: ShapesView.GeometryType = ShapesView.GeometryType.TEXT
+    var geometryType: GeometryType = GeometryType.TEXT
         set(value) {
             field = value
             binding.shapesView.geometryType = field
@@ -291,7 +291,7 @@ class DrawingView @JvmOverloads constructor(
     }
 
     override fun onTouchEvent(event: MotionEvent): Boolean {
-        if(geometryType == ShapesView.GeometryType.TEXT) {
+        if(geometryType == GeometryType.TEXT) {
             val touchX = event.x
             val touchY = event.y
 
@@ -309,7 +309,7 @@ class DrawingView @JvmOverloads constructor(
             }
         }
 
-        return geometryType == ShapesView.GeometryType.TEXT
+        return geometryType == GeometryType.TEXT
     }
 
     fun getBitmap(): Bitmap? {

@@ -17,6 +17,7 @@ class CustomArrow(
     private val triangle = Path()
 
     private val matrix = Matrix()
+    private val triangleBounds = RectF()
     private val bounds = RectF()
 
     private val trianglePaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
@@ -65,18 +66,39 @@ class CustomArrow(
             else -> 0f
         }
 
-        triangle.computeBounds(bounds, true)
+        triangle.computeBounds(triangleBounds, true)
         matrix.reset()
-        matrix.postRotate(angle, bounds.centerX(), bounds.bottom)
+        matrix.postRotate(angle, triangleBounds.centerX(), triangleBounds.bottom)
         triangle.transform(matrix)
     }
 
+    override fun up() {
+        triangle.computeBounds(triangleBounds, true)
+        bounds.left = minOf(left, right, triangleBounds.left, triangleBounds.right)
+        bounds.right = maxOf(left, right, triangleBounds.left, triangleBounds.right)
+        bounds.top = minOf(top, bottom, triangleBounds.top, triangleBounds.bottom)
+        bounds.bottom = maxOf(top, bottom, triangleBounds.top, triangleBounds.bottom)
+    }
+
     override fun isInside(x: Float, y: Float): Boolean {
-        return contains(x, y)
+        return bounds.contains(x, y)
     }
 
     override fun getBoundingBox(): RectF {
-        return this
+        return bounds
+    }
+
+    override fun translate(dx: Float, dy: Float) {
+        left += dx
+        right += dx
+        top += dy
+        bottom += dy
+        triangle.offset(dx, dy)
+    }
+
+    override fun applyShader(shader: Shader?) {
+        paint.shader = shader
+        trianglePaint.shader = shader
     }
 
 }

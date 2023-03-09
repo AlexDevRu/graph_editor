@@ -1,9 +1,6 @@
 package com.example.mobilepaint.drawing_view.shapes
 
-import android.graphics.Canvas
-import android.graphics.Paint
-import android.graphics.Path
-import android.graphics.RectF
+import android.graphics.*
 
 class CustomPath(
     override val paint: Paint
@@ -37,5 +34,9 @@ class CustomPath(
 
     override fun translate(dx: Float, dy: Float) {
         offset(dx, dy)
+    }
+
+    override fun applyShader(shader: Shader?) {
+        paint.shader = shader
     }
 }

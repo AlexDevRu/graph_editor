@@ -27,7 +27,8 @@ class MainActivity : AppCompatActivity(), ShapesView.OnShapeChanged, View.OnClic
             PenType(getString(R.string.path), R.drawable.ic_curve, ShapesView.GeometryType.PATH),
             PenType(getString(R.string.line), R.drawable.ic_line, ShapesView.GeometryType.LINE),
             PenType(getString(R.string.ellipse), R.drawable.ic_ellipse, ShapesView.GeometryType.ELLIPSE),
-            PenType(getString(R.string.rectangle), R.drawable.ic_rectangle, ShapesView.GeometryType.RECT)
+            PenType(getString(R.string.rectangle), R.drawable.ic_rectangle, ShapesView.GeometryType.RECT),
+            PenType(getString(R.string.arrow), R.drawable.ic_arrow, ShapesView.GeometryType.ARROW),
         )
     }
 

@@ -3,6 +3,7 @@ package com.example.mobilepaint.drawing_view.shapes
 import android.graphics.Canvas
 import android.graphics.Paint
 import android.graphics.RectF
+import android.graphics.Shader
 import kotlin.math.max
 import kotlin.math.min
 
@@ -48,6 +49,10 @@ class CustomLine(
         right += dx
         top += dy
         bottom += dy
+    }
+
+    override fun applyShader(shader: Shader?) {
+        paint.shader = shader
     }
 
 }

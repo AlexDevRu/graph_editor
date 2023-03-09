@@ -50,4 +50,8 @@ class CustomRectF(
         top += dy
         bottom += dy
     }
+
+    override fun applyShader(shader: Shader?) {
+        paint.shader = shader
+    }
 }

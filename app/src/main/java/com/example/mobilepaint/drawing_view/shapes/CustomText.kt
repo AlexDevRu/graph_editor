@@ -69,4 +69,8 @@ class CustomText(
     override fun isInside(x: Float, y: Float): Boolean {
         return false
     }
+
+    override fun applyShader(shader: Shader?) {
+        paint.shader = shader
+    }
 }

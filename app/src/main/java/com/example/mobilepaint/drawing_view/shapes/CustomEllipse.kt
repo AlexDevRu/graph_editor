@@ -1,9 +1,6 @@
 package com.example.mobilepaint.drawing_view.shapes
 
-import android.graphics.Canvas
-import android.graphics.Paint
-import android.graphics.PointF
-import android.graphics.RectF
+import android.graphics.*
 import kotlin.math.max
 import kotlin.math.min
 
@@ -47,6 +44,10 @@ class CustomEllipse(
         right += dx
         top += dy
         bottom += dy
+    }
+
+    override fun applyShader(shader: Shader?) {
+        paint.shader = shader
     }
 
 }

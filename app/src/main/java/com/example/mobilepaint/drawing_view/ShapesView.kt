@@ -8,6 +8,7 @@ import android.view.MotionEvent
 import android.view.View
 import androidx.annotation.ColorInt
 import androidx.core.content.ContextCompat
+import androidx.core.graphics.transform
 import com.example.mobilepaint.R
 import com.example.mobilepaint.Utils.toPx
 import com.example.mobilepaint.drawing_view.shapes.*
@@ -157,6 +158,10 @@ class ShapesView @JvmOverloads constructor(
                     selection?.translate(dx, dy)
                     startX = touchX
                     startY = touchY
+                    selectedShape?.let {
+                        val shader = SweepGradient(selection!!.centerX(), selection!!.centerY(), selectionColors, null)
+                        it.applyShader(shader)
+                    }
                 }
                 currentShape?.move(touchX, touchY)
             }
@@ -171,7 +176,8 @@ class ShapesView @JvmOverloads constructor(
                         selectedShape = shapes.firstOrNull { it.isInside(touchX, touchY) }
                         selectedShape?.let {
                             selection = CustomRectF(boundingBoxPaint, it.getBoundingBox())
-                            it.paint.shader = SweepGradient(selection!!.centerX(), selection!!.centerY(), selectionColors, null)
+                            val shader = SweepGradient(selection!!.centerX(), selection!!.centerY(), selectionColors, null)
+                            it.applyShader(shader)
                         }
                     }
                 }
@@ -186,7 +192,7 @@ class ShapesView @JvmOverloads constructor(
     }
 
     private fun deselectShape() {
-        selectedShape?.paint?.shader = null
+        selectedShape?.applyShader(null)
         selectedShape = null
         selection = null
     }

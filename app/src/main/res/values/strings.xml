@@ -13,4 +13,6 @@
     <string name="select_pen_type">Select pen type</string>
     <string name="import_image">Import image</string>
     <string name="export">Export</string>
+
+    <string name="remove_shape_question">Do you want to remove selected shape?</string>
 </resources>

@@ -3,6 +3,8 @@ package com.example.mobilepaint.drawing_view
 import android.annotation.SuppressLint
 import android.content.Context
 import android.graphics.*
+import android.os.Handler
+import android.os.Looper
 import android.util.AttributeSet
 import android.view.MotionEvent
 import android.view.View
@@ -18,7 +20,7 @@ class ShapesView @JvmOverloads constructor(
     context: Context,
     attrs: AttributeSet? = null,
     defStyle: Int = 0
-): View(context, attrs, defStyle) {
+) : View(context, attrs, defStyle) {
 
     init {
         isFocusable = true
@@ -35,6 +37,7 @@ class ShapesView @JvmOverloads constructor(
 
     interface OnShapeChanged {
         fun onStackSizesChanged(addedShapesSize: Int, removedShapesSize: Int)
+        fun onShapeLongClick(shape: Shape)
     }
 
     private var onShapeChanged: OnShapeChanged? = null
@@ -44,6 +47,14 @@ class ShapesView @JvmOverloads constructor(
     fun addNewShape(shape: Shape) {
         shapes.push(shape)
         onShapeChanged?.onStackSizesChanged(shapes.size, removedShapes.size)
+    }
+
+    fun removeShape(shape: Shape) {
+        if (selectedShape == shape)
+            deselectShape()
+        shapes.remove(shape)
+        onShapeChanged?.onStackSizesChanged(shapes.size, removedShapes.size)
+        invalidate()
     }
 
     @ColorInt
@@ -62,11 +73,31 @@ class ShapesView @JvmOverloads constructor(
                 deselectShape()
         }
 
-    private var selectedShape : Shape? = null
-    private var selection : CustomRectF? = null
+    private var selectedShape: Shape? = null
+    private var selection: CustomRectF? = null
+
+    private val selectionColors = intArrayOf(
+        ContextCompat.getColor(context, R.color.red),
+        ContextCompat.getColor(context, R.color.blue),
+        ContextCompat.getColor(context, R.color.green),
+        ContextCompat.getColor(context, R.color.yellow),
+    )
+
+    private var startX = 0f
+    private var startY = 0f
+    private var isShapeMoving = false
+
+    private var clickedShape : Shape? = null
+
+    private val handler = Handler(Looper.getMainLooper())
+    private val onLongPressed = Runnable {
+        selectedShape?.let {
+            onShapeChanged?.onShapeLongClick(it)
+        }
+    }
 
     fun undo() {
-        if(shapes.isNotEmpty()) {
+        if (shapes.isNotEmpty()) {
             val shape = shapes.pop()
             if (shape == selectedShape)
                 deselectShape()
@@ -77,7 +108,7 @@ class ShapesView @JvmOverloads constructor(
     }
 
     fun redo() {
-        if(removedShapes.isNotEmpty()) {
+        if (removedShapes.isNotEmpty()) {
             val shape = removedShapes.pop()
             shapes.push(shape)
             onShapeChanged?.onStackSizesChanged(shapes.size, removedShapes.size)
@@ -106,20 +137,9 @@ class ShapesView @JvmOverloads constructor(
         color = this@ShapesView.color
     }
 
-    private val selectionColors = intArrayOf(
-        ContextCompat.getColor(context, R.color.red),
-        ContextCompat.getColor(context, R.color.blue),
-        ContextCompat.getColor(context, R.color.green),
-        ContextCompat.getColor(context, R.color.yellow),
-    )
-
-    private var startX = 0f
-    private var startY = 0f
-    private var isShapeMoving = false
-
     @SuppressLint("ClickableViewAccessibility")
     override fun onTouchEvent(event: MotionEvent?): Boolean {
-        if(event == null || geometryType == GeometryType.TEXT)
+        if (event == null || geometryType == GeometryType.TEXT)
             return false
 
         val touchX = event.x
@@ -127,7 +147,12 @@ class ShapesView @JvmOverloads constructor(
 
         when (event.actionMasked) {
             MotionEvent.ACTION_DOWN -> {
-                if (geometryType == GeometryType.HAND && selection?.contains(touchX, touchY) == true) {
+                if (geometryType == GeometryType.HAND && selection?.contains(
+                        touchX,
+                        touchY
+                    ) == true
+                ) {
+                    handler.postDelayed(onLongPressed, 1000)
                     startX = touchX
                     startY = touchY
                     isShapeMoving = true
@@ -141,11 +166,12 @@ class ShapesView @JvmOverloads constructor(
                         else -> null
                     }
                     currentShape?.down(touchX, touchY)
-                    if(currentShape != null)
+                    if (currentShape != null)
                         addNewShape(currentShape!!)
                 }
             }
             MotionEvent.ACTION_MOVE -> {
+                handler.removeCallbacks(onLongPressed)
                 if (geometryType == GeometryType.HAND && selection != null && isShapeMoving) {
                     val dx = touchX - startX
                     val dy = touchY - startY
@@ -158,13 +184,14 @@ class ShapesView @JvmOverloads constructor(
                 currentShape?.move(touchX, touchY)
             }
             MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> {
+                handler.removeCallbacks(onLongPressed)
                 if (geometryType == GeometryType.HAND) {
                     if (isShapeMoving) {
                         isShapeMoving = false
                         selectedShape?.up()
                     } else {
                         deselectShape()
-                        selectedShape = shapes.firstOrNull { it.isInside(touchX, touchY) }
+                        selectedShape = shapes.lastOrNull { it.isInside(touchX, touchY) }
                         selectedShape?.let {
                             selection = CustomRectF(boundingBoxPaint, it.getBoundingBox())
                             updateSelectionShader()
@@ -183,7 +210,8 @@ class ShapesView @JvmOverloads constructor(
 
     private fun updateSelectionShader() {
         selectedShape?.let {
-            val shader = SweepGradient(selection!!.centerX(), selection!!.centerY(), selectionColors, null)
+            val shader =
+                SweepGradient(selection!!.centerX(), selection!!.centerY(), selectionColors, null)
             it.applyShader(shader)
         }
     }
@@ -196,7 +224,7 @@ class ShapesView @JvmOverloads constructor(
 
     override fun onDraw(canvas: Canvas) {
         super.onDraw(canvas)
-        for(shape in shapes.descendingIterator())
+        for (shape in shapes.descendingIterator())
             shape.drawInCanvas(canvas)
         if (selection != null)
             canvas.drawRect(selection!!, boundingBoxPaint)

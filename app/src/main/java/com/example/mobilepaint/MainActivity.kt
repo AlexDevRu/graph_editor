@@ -5,22 +5,25 @@ import android.view.Menu
 import android.view.MenuItem
 import android.view.View
 import android.widget.AdapterView
+import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import com.example.mobilepaint.databinding.ActivityMainBinding
 import com.example.mobilepaint.drawing_view.GeometryType
 import com.example.mobilepaint.drawing_view.ShapesView
+import com.example.mobilepaint.drawing_view.shapes.Shape
 import com.google.android.material.slider.Slider
 import com.skydoves.colorpickerview.ColorEnvelope
 import com.skydoves.colorpickerview.ColorPickerDialog
 import com.skydoves.colorpickerview.listeners.ColorEnvelopeListener
 
 
-class MainActivity : AppCompatActivity(), ShapesView.OnShapeChanged, View.OnClickListener, ColorEnvelopeListener, AdapterView.OnItemClickListener,
+class MainActivity : AppCompatActivity(), ShapesView.OnShapeChanged, View.OnClickListener,
+    ColorEnvelopeListener, AdapterView.OnItemClickListener,
     Slider.OnChangeListener {
 
-    private lateinit var binding : ActivityMainBinding
+    private lateinit var binding: ActivityMainBinding
 
-    private lateinit var menu : Menu
+    private lateinit var menu: Menu
 
     private val options by lazy {
         listOf(
@@ -77,6 +80,15 @@ class MainActivity : AppCompatActivity(), ShapesView.OnShapeChanged, View.OnClic
     override fun onStackSizesChanged(addedShapesSize: Int, removedShapesSize: Int) {
         menu.findItem(R.id.undo).isEnabled = addedShapesSize > 0
         menu.findItem(R.id.redo).isEnabled = removedShapesSize > 0
+    }
+
+    override fun onShapeLongClick(shape: Shape) {
+        AlertDialog.Builder(this)
+            .setTitle(R.string.remove_shape_question)
+            .setPositiveButton(android.R.string.ok) { _, _ ->
+                binding.shapesView.removeShape(shape)
+            }
+            .show()
     }
 
     override fun onColorSelected(envelope: ColorEnvelope?, fromUser: Boolean) {

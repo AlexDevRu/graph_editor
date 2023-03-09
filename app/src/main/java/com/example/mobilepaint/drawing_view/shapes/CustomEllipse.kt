@@ -42,4 +42,11 @@ class CustomEllipse(
         return this
     }
 
+    override fun translate(dx: Float, dy: Float) {
+        left += dx
+        right += dx
+        top += dy
+        bottom += dy
+    }
+
 }

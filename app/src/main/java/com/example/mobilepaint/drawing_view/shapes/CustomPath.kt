@@ -34,4 +34,8 @@ class CustomPath(
     override fun getBoundingBox(): RectF {
         return bounds
     }
+
+    override fun translate(dx: Float, dy: Float) {
+        offset(dx, dy)
+    }
 }

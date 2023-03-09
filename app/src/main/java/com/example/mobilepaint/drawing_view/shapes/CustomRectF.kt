@@ -1,7 +1,6 @@
 package com.example.mobilepaint.drawing_view.shapes
 
 import android.graphics.*
-import androidx.annotation.ColorInt
 import kotlin.math.max
 import kotlin.math.min
 
@@ -10,6 +9,11 @@ class CustomRectF(
 ) : RectF(), Shape {
 
     private val startPoint = PointF()
+
+    constructor(paint: Paint, rect: RectF) : this(paint) {
+        down(rect.left, rect.top)
+        move(rect.right, rect.bottom)
+    }
 
     override fun drawInCanvas(canvas: Canvas) {
         canvas.drawRect(this, paint)
@@ -38,5 +42,12 @@ class CustomRectF(
 
     override fun getBoundingBox(): RectF {
         return this
+    }
+
+    override fun translate(dx: Float, dy: Float) {
+        left += dx
+        right += dx
+        top += dy
+        bottom += dy
     }
 }

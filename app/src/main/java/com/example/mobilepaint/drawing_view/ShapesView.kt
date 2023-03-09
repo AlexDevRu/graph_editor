@@ -1,5 +1,6 @@
 package com.example.mobilepaint.drawing_view
 
+import android.annotation.SuppressLint
 import android.content.Context
 import android.graphics.*
 import android.util.AttributeSet
@@ -68,7 +69,7 @@ class ShapesView @JvmOverloads constructor(
         }
 
     private var selectedShape : Shape? = null
-    private var selection : RectF? = null
+    private var selection : CustomRectF? = null
 
     fun undo() {
         if(shapes.isNotEmpty()) {
@@ -121,6 +122,7 @@ class ShapesView @JvmOverloads constructor(
     private var startX = -1f
     private var startY = -1f
 
+    @SuppressLint("ClickableViewAccessibility")
     override fun onTouchEvent(event: MotionEvent?): Boolean {
         if(event == null || geometryType == GeometryType.TEXT)
             return false
@@ -152,6 +154,9 @@ class ShapesView @JvmOverloads constructor(
                     val dx = touchX - startX
                     val dy = touchY - startY
                     selectedShape?.translate(dx, dy)
+                    selection?.translate(dx, dy)
+                    startX = touchX
+                    startY = touchY
                 }
                 currentShape?.move(touchX, touchY)
             }
@@ -165,7 +170,7 @@ class ShapesView @JvmOverloads constructor(
                         deselectShape()
                         selectedShape = shapes.firstOrNull { it.isInside(touchX, touchY) }
                         selectedShape?.let {
-                            selection = it.getBoundingBox()
+                            selection = CustomRectF(boundingBoxPaint, it.getBoundingBox())
                             it.paint.shader = SweepGradient(selection!!.centerX(), selection!!.centerY(), selectionColors, null)
                         }
                     }

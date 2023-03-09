@@ -20,4 +20,5 @@ interface Shape {
 
     fun applyShader(shader: Shader?)
     fun changeColor(@ColorInt color: Int)
+    fun fillColor(@ColorInt color: Int) = false
 }

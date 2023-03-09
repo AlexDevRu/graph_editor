@@ -7,5 +7,6 @@ enum class GeometryType {
     ELLIPSE,
     RECT,
     TEXT,
-    ARROW
+    ARROW,
+    PAINT
 }

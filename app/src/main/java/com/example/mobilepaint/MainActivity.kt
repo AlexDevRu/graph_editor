@@ -33,6 +33,7 @@ class MainActivity : AppCompatActivity(), ShapesView.OnShapeChanged, View.OnClic
             PenType(getString(R.string.ellipse), R.drawable.ic_ellipse, GeometryType.ELLIPSE),
             PenType(getString(R.string.rectangle), R.drawable.ic_rectangle, GeometryType.RECT),
             PenType(getString(R.string.arrow), R.drawable.ic_arrow, GeometryType.ARROW),
+            PenType(getString(R.string.fill), R.drawable.ic_paint, GeometryType.PAINT),
         )
     }
 

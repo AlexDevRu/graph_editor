@@ -10,6 +10,8 @@ class CustomRectF(
 
     private val startPoint = PointF()
 
+    private var fillPaint : Paint? = null
+
     constructor(paint: Paint, rect: RectF) : this(paint) {
         down(rect.left, rect.top)
         move(rect.right, rect.bottom)
@@ -17,6 +19,9 @@ class CustomRectF(
 
     override fun drawInCanvas(canvas: Canvas) {
         canvas.drawRect(this, paint)
+        fillPaint?.let {
+            canvas.drawRect(this, it)
+        }
     }
 
     override fun down(x: Float, y: Float) {
@@ -57,5 +62,14 @@ class CustomRectF(
 
     override fun changeColor(color: Int) {
         paint.color = color
+    }
+
+    override fun fillColor(color: Int): Boolean {
+        if (fillPaint == null)
+            fillPaint = Paint().apply {
+                style = Paint.Style.FILL
+            }
+        fillPaint?.color = color
+        return true
     }
 }

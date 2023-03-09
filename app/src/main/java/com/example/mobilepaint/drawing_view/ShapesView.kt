@@ -64,6 +64,13 @@ class ShapesView @JvmOverloads constructor(
             selectedShape?.changeColor(field)
         }
 
+    @ColorInt
+    var canvasColor = Color.WHITE
+        set(value) {
+            field = value
+            invalidate()
+        }
+
     var strokeWidth = 1f
 
     var geometryType: GeometryType = GeometryType.PATH
@@ -197,6 +204,15 @@ class ShapesView @JvmOverloads constructor(
                             updateSelectionShader()
                         }
                     }
+                } else if (geometryType == GeometryType.PAINT) {
+                    val shape = shapes.lastOrNull { it.isInside(touchX, touchY) }
+                    if (shape != null) {
+                        val result = shape.fillColor(color)
+                        if (!result)
+                            canvasColor = color
+                    } else {
+                        canvasColor = color
+                    }
                 }
                 currentShape?.up()
                 currentShape = null
@@ -224,6 +240,7 @@ class ShapesView @JvmOverloads constructor(
 
     override fun onDraw(canvas: Canvas) {
         super.onDraw(canvas)
+        canvas.drawColor(canvasColor)
         for (shape in shapes.descendingIterator())
             shape.drawInCanvas(canvas)
         if (selection != null)

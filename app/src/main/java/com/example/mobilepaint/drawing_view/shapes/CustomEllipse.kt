@@ -10,6 +10,8 @@ class CustomEllipse(
 
     private val startPoint = PointF()
 
+    private var fillPaint : Paint? = null
+
     override fun down(x: Float, y: Float) {
         startPoint.x = x
         startPoint.y = y
@@ -29,6 +31,9 @@ class CustomEllipse(
 
     override fun drawInCanvas(canvas: Canvas) {
         canvas.drawOval(this, paint)
+        fillPaint?.let {
+            canvas.drawOval(this, it)
+        }
     }
 
     override fun isInside(x: Float, y: Float): Boolean {
@@ -54,4 +59,12 @@ class CustomEllipse(
         paint.color = color
     }
 
+    override fun fillColor(color: Int) : Boolean {
+        if (fillPaint == null)
+            fillPaint = Paint().apply {
+                style = Paint.Style.FILL
+            }
+        fillPaint?.color = color
+        return true
+    }
 }

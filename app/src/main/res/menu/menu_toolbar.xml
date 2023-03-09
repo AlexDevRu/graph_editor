@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+    <item
+        android:id="@+id/undo"
+        android:icon="@drawable/ic_undo"
+        android:title="@string/undo"
+        app:iconTint="@color/color_toolbar_button"
+        app:showAsAction="ifRoom" />
+    <item
+        android:id="@+id/redo"
+        android:icon="@drawable/ic_redo"
+        android:title="@string/redo"
+        app:iconTint="@color/color_toolbar_button"
+        app:showAsAction="ifRoom" />
+    <item
+        android:id="@+id/newCanvas"
+        android:icon="@drawable/ic_add"
+        android:title="@string/new_canvas"
+        app:iconTint="@color/white"
+        app:showAsAction="ifRoom" />
+    <item
+        android:id="@+id/importImage"
+        android:icon="@drawable/ic_upload"
+        android:title="@string/import_image"
+        app:iconTint="@color/white"
+        app:showAsAction="never" />
+    <item
+        android:id="@+id/exportImage"
+        android:icon="@drawable/ic_download"
+        android:title="@string/export"
+        app:iconTint="@color/white"
+        app:showAsAction="never" />
+</menu>

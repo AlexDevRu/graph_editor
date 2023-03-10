@@ -100,8 +100,8 @@ class CustomPath(
             }
         }
 
-        val sx = newWidth / oldWidth
-        val sy = newHeight / oldHeight
+        val sx = newWidth / initialBounds.width()
+        val sy = newHeight / initialBounds.height()
 
         Log.d("asd", "resize: old scaleY=${this.sx}")
         Log.d("asd", "resize: old scaleX=${this.sy}")

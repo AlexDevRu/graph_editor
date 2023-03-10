@@ -25,7 +25,7 @@ class CustomLine(
         bottom = y
     }
 
-    override fun up() {
+    override fun up(x: Float, y: Float) {
         bounds.top = min(top, bottom)
         bounds.bottom = max(top, bottom)
         bounds.left = min(left, right)
@@ -57,6 +57,23 @@ class CustomLine(
 
     override fun changeColor(color: Int) {
         paint.color = color
+    }
+
+    override fun resize(dx: Float, dy: Float, handlePosition: Int) {
+        when (handlePosition) {
+            0 -> {
+
+            }
+            1 -> {
+
+            }
+            2 -> {
+
+            }
+            3 -> {
+
+            }
+        }
     }
 
 }

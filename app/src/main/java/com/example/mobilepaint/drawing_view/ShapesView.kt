@@ -6,6 +6,7 @@ import android.graphics.*
 import android.os.Handler
 import android.os.Looper
 import android.util.AttributeSet
+import android.util.Log
 import android.view.MotionEvent
 import android.view.View
 import androidx.annotation.ColorInt
@@ -80,8 +81,18 @@ class ShapesView @JvmOverloads constructor(
                 deselectShape()
         }
 
+    private val handleSize = 10.toPx
+
     private var selectedShape: Shape? = null
-    private var selection: CustomRectF? = null
+    private var selection: SelectionBorder? = null
+        set(value) {
+            field = value
+            initialWidth = field?.width() ?: 0f
+            initialHeight = field?.height() ?: 0f
+        }
+
+    private var initialWidth = 0f
+    private var initialHeight = 0f
 
     private val selectionColors = intArrayOf(
         ContextCompat.getColor(context, R.color.red),
@@ -93,8 +104,8 @@ class ShapesView @JvmOverloads constructor(
     private var startX = 0f
     private var startY = 0f
     private var isShapeMoving = false
-
-    private var clickedShape : Shape? = null
+    private var isShapeResizing = false
+    private var handleIndex = -1
 
     private val handler = Handler(Looper.getMainLooper())
     private val onLongPressed = Runnable {
@@ -128,20 +139,26 @@ class ShapesView @JvmOverloads constructor(
     }
 
     private val boundingBoxPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-        strokeJoin = Paint.Join.ROUND
-        strokeCap = Paint.Cap.ROUND
         style = Paint.Style.STROKE
         strokeWidth = 2.toPx
         color = Color.BLACK
         pathEffect = DashPathEffect(floatArrayOf(20.toPx, 5.toPx), 0f)
     }
 
+    private val handlePaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        style = Paint.Style.FILL
+        color = Color.BLACK
+    }
+
     private fun createPaint() = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-        strokeJoin = Paint.Join.ROUND
-        strokeCap = Paint.Cap.ROUND
         style = Paint.Style.STROKE
         strokeWidth = this@ShapesView.strokeWidth.toPx
         color = this@ShapesView.color
+    }
+
+    private fun createPathPaint() = Paint(createPaint()).apply {
+        strokeJoin = Paint.Join.ROUND
+        strokeCap = Paint.Cap.ROUND
     }
 
     @SuppressLint("ClickableViewAccessibility")
@@ -154,7 +171,12 @@ class ShapesView @JvmOverloads constructor(
 
         when (event.actionMasked) {
             MotionEvent.ACTION_DOWN -> {
-                if (geometryType == GeometryType.HAND && selection?.contains(
+                handleIndex = selection?.getHandleIndexByPoint(touchX, touchY) ?: -1
+                if (geometryType == GeometryType.HAND && handleIndex >= 0) {
+                    startX = touchX
+                    startY = touchY
+                    isShapeResizing = true
+                } else if (geometryType == GeometryType.HAND && selection?.contains(
                         touchX,
                         touchY
                     ) == true
@@ -165,8 +187,8 @@ class ShapesView @JvmOverloads constructor(
                     isShapeMoving = true
                 } else {
                     currentShape = when (geometryType) {
-                        GeometryType.PATH -> CustomPath(createPaint())
-                        GeometryType.LINE -> CustomLine(createPaint())
+                        GeometryType.PATH -> CustomPath(createPathPaint())
+                        GeometryType.LINE -> CustomLine1(createPaint())
                         GeometryType.RECT -> CustomRectF(createPaint())
                         GeometryType.ELLIPSE -> CustomEllipse(createPaint())
                         GeometryType.ARROW -> CustomArrow(arrowWidth, arrowHeight, createPaint())
@@ -179,7 +201,18 @@ class ShapesView @JvmOverloads constructor(
             }
             MotionEvent.ACTION_MOVE -> {
                 handler.removeCallbacks(onLongPressed)
-                if (geometryType == GeometryType.HAND && selection != null && isShapeMoving) {
+                if (geometryType == GeometryType.HAND && selection != null && isShapeResizing) {
+                    val dx = touchX - startX
+                    val dy = touchY - startY
+                    selection?.resize(dx, dy, handleIndex)
+                    //handleIndex = selection!!.index
+                    Log.e("view", "onTouchEvent: width=${selection?.width()}")
+                    Log.e("view", "onTouchEvent: height=${selection?.height()}")
+                    //selectedShape?.resize(dx, dy, handleIndex)
+                    (selectedShape as? CustomPath)?.resize1(initialWidth, initialHeight, selection!!.width(), selection!!.height(), handleIndex)
+                    startX = touchX
+                    startY = touchY
+                } else if (geometryType == GeometryType.HAND && selection != null && isShapeMoving) {
                     val dx = touchX - startX
                     val dy = touchY - startY
                     selectedShape?.translate(dx, dy)
@@ -193,14 +226,17 @@ class ShapesView @JvmOverloads constructor(
             MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> {
                 handler.removeCallbacks(onLongPressed)
                 if (geometryType == GeometryType.HAND) {
-                    if (isShapeMoving) {
+                    if (isShapeResizing) {
+                        isShapeResizing = false
+                        selectedShape?.up(touchX, touchY)
+                    } else if (isShapeMoving) {
                         isShapeMoving = false
-                        selectedShape?.up()
+                        selectedShape?.up(touchX, touchY)
                     } else {
                         deselectShape()
                         selectedShape = shapes.lastOrNull { it.isInside(touchX, touchY) }
                         selectedShape?.let {
-                            selection = CustomRectF(boundingBoxPaint, it.getBoundingBox())
+                            selection = SelectionBorder(handlePaint, handleSize, boundingBoxPaint, it.getBoundingBox())
                             updateSelectionShader()
                         }
                     }
@@ -214,7 +250,7 @@ class ShapesView @JvmOverloads constructor(
                         canvasColor = color
                     }
                 }
-                currentShape?.up()
+                currentShape?.up(touchX, touchY)
                 currentShape = null
             }
             else -> return false
@@ -227,7 +263,7 @@ class ShapesView @JvmOverloads constructor(
     private fun updateSelectionShader() {
         selectedShape?.let {
             val shader =
-                SweepGradient(selection!!.centerX(), selection!!.centerY(), selectionColors, null)
+                LinearGradient(0f, 0f, 100f, 20f, selectionColors, null, Shader.TileMode.MIRROR)
             it.applyShader(shader)
         }
     }
@@ -243,7 +279,7 @@ class ShapesView @JvmOverloads constructor(
         canvas.drawColor(canvasColor)
         for (shape in shapes.descendingIterator())
             shape.drawInCanvas(canvas)
-        if (selection != null)
-            canvas.drawRect(selection!!, boundingBoxPaint)
+
+        selection?.drawInCanvas(canvas)
     }
 }

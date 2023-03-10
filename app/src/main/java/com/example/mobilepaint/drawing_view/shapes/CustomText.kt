@@ -75,7 +75,8 @@ class CustomText(
     }
 
     override fun translate(dx: Float, dy: Float) {
-        TODO("Not yet implemented")
+        x += dx
+        y += dy
     }
 
     override fun applyShader(shader: Shader?) {

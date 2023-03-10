@@ -12,7 +12,7 @@ interface Shape {
     fun drawInCanvas(canvas: Canvas)
     fun down(x: Float, y: Float)
     fun move(x: Float, y: Float)
-    fun up() = Unit
+    fun up(x: Float, y: Float) = Unit
     fun isInside(x: Float, y: Float) : Boolean
     fun getBoundingBox() : RectF
 
@@ -21,4 +21,5 @@ interface Shape {
     fun applyShader(shader: Shader?)
     fun changeColor(@ColorInt color: Int)
     fun fillColor(@ColorInt color: Int) = false
+    fun resize(dx: Float, dy: Float, handlePosition: Int) = Unit
 }

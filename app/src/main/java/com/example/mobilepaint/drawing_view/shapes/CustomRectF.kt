@@ -1,14 +1,13 @@
 package com.example.mobilepaint.drawing_view.shapes
 
-import android.graphics.*
+import android.graphics.Canvas
+import android.graphics.Paint
+import android.graphics.RectF
+import android.graphics.Shader
 import kotlin.math.max
 import kotlin.math.min
 
-class CustomRectF(
-    override val paint: Paint
-) : RectF(), Shape {
-
-    private val startPoint = PointF()
+open class CustomRectF(override val paint: Paint) : RectF(), Shape {
 
     private var fillPaint : Paint? = null
 
@@ -17,43 +16,38 @@ class CustomRectF(
         move(rect.right, rect.bottom)
     }
 
+    override fun down(x: Float, y: Float) {
+        left = x
+        top = y
+        right = x
+        bottom = y
+    }
+
+    override fun move(x: Float, y: Float) {
+        right = x
+        bottom = y
+    }
+
+    override fun up(x: Float, y: Float) {
+        calculateCoordinates()
+    }
+
+    private fun calculateCoordinates() {
+        val xMin = min(left, right)
+        val xMax = max(left, right)
+        val yMin = min(top, bottom)
+        val yMax = max(top, bottom)
+        left = xMin
+        top = yMin
+        right = xMax
+        bottom = yMax
+    }
+
     override fun drawInCanvas(canvas: Canvas) {
         canvas.drawRect(this, paint)
         fillPaint?.let {
             canvas.drawRect(this, it)
         }
-    }
-
-    override fun down(x: Float, y: Float) {
-        startPoint.x = x
-        startPoint.y = y
-        calculateCoordinates(x, y)
-    }
-
-    override fun move(x: Float, y: Float) {
-        calculateCoordinates(x, y)
-    }
-
-    private fun calculateCoordinates(x: Float, y: Float) {
-        left = min(x, startPoint.x)
-        top = min(y, startPoint.y)
-        right = max(x, startPoint.x)
-        bottom = max(y, startPoint.y)
-    }
-
-    override fun isInside(x: Float, y: Float): Boolean {
-        return contains(x, y)
-    }
-
-    override fun getBoundingBox(): RectF {
-        return this
-    }
-
-    override fun translate(dx: Float, dy: Float) {
-        left += dx
-        right += dx
-        top += dy
-        bottom += dy
     }
 
     override fun applyShader(shader: Shader?) {
@@ -72,4 +66,37 @@ class CustomRectF(
         fillPaint?.color = color
         return true
     }
+
+    override fun translate(dx: Float, dy: Float) {
+        left += dx
+        right += dx
+        top += dy
+        bottom += dy
+    }
+
+    override fun getBoundingBox() = this
+
+    override fun isInside(x: Float, y: Float) = contains(x, y)
+
+    override fun resize(dx: Float, dy: Float, handlePosition: Int) {
+        when (handlePosition) {
+            0 -> {
+                left += dx
+                top += dy
+            }
+            1 -> {
+                right += dx
+                top += dy
+            }
+            2 -> {
+                left += dx
+                bottom += dy
+            }
+            3 -> {
+                right += dx
+                bottom += dy
+            }
+        }
+    }
+
 }

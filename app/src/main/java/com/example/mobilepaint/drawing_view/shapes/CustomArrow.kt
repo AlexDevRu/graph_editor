@@ -72,7 +72,7 @@ class CustomArrow(
         triangle.transform(matrix)
     }
 
-    override fun up() {
+    override fun up(x: Float, y: Float) {
         triangle.computeBounds(triangleBounds, true)
         bounds.left = minOf(left, right, triangleBounds.left, triangleBounds.right)
         bounds.right = maxOf(left, right, triangleBounds.left, triangleBounds.right)
@@ -104,5 +104,26 @@ class CustomArrow(
     override fun changeColor(color: Int) {
         paint.color = color
         trianglePaint.color = color
+    }
+
+    override fun resize(dx: Float, dy: Float, handlePosition: Int) {
+        when (handlePosition) {
+            0 -> {
+                left += dx
+                top += dy
+            }
+            1 -> {
+                right += dx
+                top += dy
+            }
+            2 -> {
+                left += dx
+                bottom += dy
+            }
+            3 -> {
+                right += dx
+                bottom += dy
+            }
+        }
     }
 }

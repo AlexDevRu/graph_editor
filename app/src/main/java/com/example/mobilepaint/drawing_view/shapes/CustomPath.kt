@@ -78,25 +78,25 @@ class CustomPath(
     private val scaleMatrix = Matrix()
 
     fun resize1(oldWidth: Float, oldHeight: Float, newWidth: Float, newHeight: Float, handlePosition: Int) {
-        px = bounds.left
-        py = bounds.top
+        px = initialBounds.left
+        py = initialBounds.top
 
         when (handlePosition) {
             0 -> {
-                px = bounds.right
-                py = bounds.bottom
+                px = initialBounds.right
+                py = initialBounds.bottom
             }
             1 -> {
-                px = bounds.left
-                py = bounds.bottom
+                px = initialBounds.left
+                py = initialBounds.bottom
             }
             2 -> {
-                px = bounds.right
-                py = bounds.top
+                px = initialBounds.right
+                py = initialBounds.top
             }
             3 -> {
-                px = bounds.left
-                py = bounds.top
+                px = initialBounds.left
+                py = initialBounds.top
             }
         }
 
@@ -132,7 +132,7 @@ class CustomPath(
         scaleMatrix.setScale(scaleX, scaleY, px, py)
         transform(scaleMatrix)*/
 
-        /*val newBounds = RectF(bounds)
+        val newBounds = RectF(bounds)
 
         when (handlePosition) {
             0 -> {
@@ -165,35 +165,37 @@ class CustomPath(
         Log.d("asd", "resize: scaleX=${sx}")
         Log.d("asd", "===============================")
 
-        var px = bounds.left
-        var py = bounds.top
+        var px = initialBounds.left
+        var py = initialBounds.top
 
-        val hh = if (handlePosition == 0 && newBounds.width() < 0) 1 else handlePosition
+        //val hh = if (handlePosition == 0 && newBounds.width() < 0) 1 else handlePosition
 
-        when (hh) {
+        when (handlePosition) {
             0 -> {
-                px = bounds.right
-                py = bounds.bottom
+                px = initialBounds.right
+                py = initialBounds.bottom
             }
             1 -> {
-                px = bounds.left
-                py = bounds.bottom
+                px = initialBounds.left
+                py = initialBounds.bottom
             }
             2 -> {
-                px = bounds.right
-                py = bounds.top
+                px = initialBounds.right
+                py = initialBounds.top
             }
             3 -> {
-                px = bounds.left
-                py = bounds.top
+                px = initialBounds.left
+                py = initialBounds.top
             }
         }
 
-        val scaleMatrix = Matrix()
+        val invert = Matrix()
+        scaleMatrix.invert(invert)
+        transform(invert)
         scaleMatrix.setScale(sx, sy, px, py)
         transform(scaleMatrix)
 
-        computeBounds(bounds, true)*/
+        computeBounds(bounds, true)
 
         /*val newBounds = RectF(bounds)
 

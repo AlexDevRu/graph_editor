@@ -34,7 +34,6 @@
                 android:layout_gravity="bottom"
                 android:layout_weight="1"
                 android:stepSize="1"
-                android:value="5"
                 android:valueFrom="1"
                 android:valueTo="10" />
 

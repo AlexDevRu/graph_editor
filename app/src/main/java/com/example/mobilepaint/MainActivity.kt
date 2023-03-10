@@ -5,6 +5,7 @@ import android.view.Menu
 import android.view.MenuItem
 import android.view.View
 import android.widget.AdapterView
+import androidx.activity.viewModels
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import com.example.mobilepaint.databinding.ActivityMainBinding
@@ -37,6 +38,8 @@ class MainActivity : AppCompatActivity(), ShapesView.OnShapeChanged, View.OnClic
         )
     }
 
+    private val viewModel by viewModels<MainViewModel>()
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = ActivityMainBinding.inflate(layoutInflater)
@@ -49,6 +52,14 @@ class MainActivity : AppCompatActivity(), ShapesView.OnShapeChanged, View.OnClic
 
         binding.colorView.setOnClickListener(this)
         binding.strokeWidthSlider.addOnChangeListener(this)
+
+        observe()
+    }
+
+    private fun observe() {
+        viewModel.stroke.observe(this) {
+            binding.strokeWidthSlider.value = it
+        }
     }
 
     override fun onClick(p0: View?) {

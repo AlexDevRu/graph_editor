@@ -4,28 +4,86 @@ import android.graphics.Canvas
 import android.graphics.Paint
 import android.graphics.RectF
 import android.graphics.Shader
+import com.example.mobilepaint.Utils.toPx
+import kotlin.math.abs
 import kotlin.math.max
 import kotlin.math.min
 
-open class CustomRectF(override val paint: Paint) : RectF(), Shape {
+open class CustomRectF(
+    private val handlePaint : Paint,
+    private val boundingBoxPaint : Paint,
+    private val selectionShader: Shader?,
+    override val paint: Paint
+) : RectF(), Shape {
 
     private var fillPaint : Paint? = null
 
-    constructor(paint: Paint, rect: RectF) : this(paint) {
-        down(rect.left, rect.top)
-        move(rect.right, rect.bottom)
-    }
+    private var selected = false
+
+    private val handleRadius = 8.toPx
+
+    private var tlPointMoving = false
+    private var trPointMoving = false
+    private var blPointMoving = false
+    private var brPointMoving = false
+
+    private var isTranslating = false
+    private var startX = 0f
+    private var startY = 0f
 
     override fun down(x: Float, y: Float) {
-        left = x
-        top = y
-        right = x
-        bottom = y
+        if (selected) {
+            tlPointMoving = abs(x - left) < handleRadius && abs(y - top) < handleRadius
+            trPointMoving = abs(x - right) < handleRadius && abs(y - top) < handleRadius
+            blPointMoving = abs(x - left) < handleRadius && abs(y - bottom) < handleRadius
+            brPointMoving = abs(x - right) < handleRadius && abs(y - bottom) < handleRadius
+            isTranslating = !tlPointMoving && !trPointMoving && !blPointMoving && !brPointMoving && isInside(x, y)
+            if (isTranslating) {
+                startX = x
+                startY = y
+            }
+        } else {
+            left = x
+            top = y
+            right = x
+            bottom = y
+        }
     }
 
     override fun move(x: Float, y: Float) {
-        right = x
-        bottom = y
+        if (selected) {
+            when {
+                tlPointMoving -> {
+                    left = x
+                    top = y
+                }
+                trPointMoving -> {
+                    right = x
+                    top = y
+                }
+                blPointMoving -> {
+                    left = x
+                    bottom = y
+                }
+                brPointMoving -> {
+                    right = x
+                    bottom = y
+                }
+                isTranslating -> {
+                    val dx = x - startX
+                    val dy = y - startY
+                    left += dx
+                    right += dx
+                    top += dy
+                    bottom += dy
+                    startX = x
+                    startY = y
+                }
+            }
+        } else {
+            right = x
+            bottom = y
+        }
     }
 
     override fun up(x: Float, y: Float) {
@@ -47,6 +105,13 @@ open class CustomRectF(override val paint: Paint) : RectF(), Shape {
         canvas.drawRect(this, paint)
         fillPaint?.let {
             canvas.drawRect(this, it)
+        }
+        if (selected) {
+            canvas.drawRect(this, boundingBoxPaint)
+            canvas.drawCircle(left, top, handleRadius, handlePaint)
+            canvas.drawCircle(right, top, handleRadius, handlePaint)
+            canvas.drawCircle(left, bottom, handleRadius, handlePaint)
+            canvas.drawCircle(right, bottom, handleRadius, handlePaint)
         }
     }
 
@@ -78,25 +143,14 @@ open class CustomRectF(override val paint: Paint) : RectF(), Shape {
 
     override fun isInside(x: Float, y: Float) = contains(x, y)
 
-    override fun resize(dx: Float, dy: Float, handlePosition: Int) {
-        when (handlePosition) {
-            0 -> {
-                left += dx
-                top += dy
-            }
-            1 -> {
-                right += dx
-                top += dy
-            }
-            2 -> {
-                left += dx
-                bottom += dy
-            }
-            3 -> {
-                right += dx
-                bottom += dy
-            }
-        }
+    override fun setSelected(selected: Boolean) {
+        this.selected = selected
+        paint.shader = if (selected) selectionShader else null
+        tlPointMoving = false
+        trPointMoving = false
+        blPointMoving = false
+        brPointMoving = false
+        isTranslating = false
     }
 
 }

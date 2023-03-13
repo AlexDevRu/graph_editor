@@ -83,15 +83,6 @@ class ShapesView @JvmOverloads constructor(
     private val handleSize = 10.toPx
 
     private var selectedShape: Shape? = null
-    private var selection: SelectionBorder? = null
-        set(value) {
-            field = value
-            initialWidth = field?.width() ?: 0f
-            initialHeight = field?.height() ?: 0f
-        }
-
-    private var initialWidth = 0f
-    private var initialHeight = 0f
 
     private val selectionColors = intArrayOf(
         ContextCompat.getColor(context, R.color.red),
@@ -173,18 +164,26 @@ class ShapesView @JvmOverloads constructor(
 
         when (event.actionMasked) {
             MotionEvent.ACTION_DOWN -> {
-                currentShape = when (geometryType) {
-                    GeometryType.PATH -> CustomPath(createPathPaint())
-                    GeometryType.LINE -> CustomLine(handlePaint, shader, createPaint())
-                    GeometryType.RECT -> CustomRectF(createPaint())
-                    GeometryType.ELLIPSE -> CustomEllipse(createPaint())
-                    GeometryType.ARROW -> CustomArrow(arrowWidth, arrowHeight, handlePaint, shader, createPaint())
-                    else -> null
+                if (geometryType == GeometryType.PAINT) {
+                    val shape = shapes.lastOrNull { it.isInside(touchX, touchY) }
+                    if (shape != null)
+                        shape.fillColor(color)
+                    else
+                        canvasColor = color
+                } else {
+                    currentShape = when (geometryType) {
+                        GeometryType.PATH -> CustomPath(handlePaint, boundingBoxPaint, shader, createPathPaint())
+                        GeometryType.LINE -> CustomLine(handlePaint, shader, createPaint())
+                        GeometryType.RECT -> CustomRectF(handlePaint, boundingBoxPaint, shader, createPaint())
+                        GeometryType.ELLIPSE -> CustomEllipse(handlePaint, boundingBoxPaint, shader, createPaint())
+                        GeometryType.ARROW -> CustomArrow(arrowWidth, arrowHeight, handlePaint, shader, createPaint())
+                        else -> null
+                    }
+                    selectedShape?.down(touchX, touchY)
+                    currentShape?.down(touchX, touchY)
+                    if (currentShape != null)
+                        addNewShape(currentShape!!)
                 }
-                selectedShape?.down(touchX, touchY)
-                currentShape?.down(touchX, touchY)
-                if (currentShape != null)
-                    addNewShape(currentShape!!)
             }
             MotionEvent.ACTION_MOVE -> {
                 selectedShape?.move(touchX, touchY)
@@ -216,9 +215,7 @@ class ShapesView @JvmOverloads constructor(
 
     private fun deselectShape() {
         selectedShape?.setSelected(false)
-        selectedShape?.applyShader(null)
         selectedShape = null
-        selection = null
     }
 
     override fun onDraw(canvas: Canvas) {
@@ -228,5 +225,13 @@ class ShapesView @JvmOverloads constructor(
             shape.drawInCanvas(canvas)
 
         //selection?.drawInCanvas(canvas)
+    }
+
+    fun getBitmap(): Bitmap {
+        deselectShape()
+        val bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
+        val canvas = Canvas(bitmap)
+        draw(canvas)
+        return bitmap
     }
 }

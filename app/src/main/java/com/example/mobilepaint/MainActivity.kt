@@ -1,13 +1,20 @@
 package com.example.mobilepaint
 
+import android.Manifest;
 import android.os.Bundle
 import android.view.Menu
 import android.view.MenuItem
 import android.view.View
 import android.widget.AdapterView
+import android.widget.Toast
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.view.isVisible
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
 import com.example.mobilepaint.databinding.ActivityMainBinding
 import com.example.mobilepaint.drawing_view.GeometryType
 import com.example.mobilepaint.drawing_view.ShapesView
@@ -16,6 +23,8 @@ import com.google.android.material.slider.Slider
 import com.skydoves.colorpickerview.ColorEnvelope
 import com.skydoves.colorpickerview.ColorPickerDialog
 import com.skydoves.colorpickerview.listeners.ColorEnvelopeListener
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.launch
 
 
 class MainActivity : AppCompatActivity(), ShapesView.OnShapeChanged, View.OnClickListener,
@@ -40,6 +49,14 @@ class MainActivity : AppCompatActivity(), ShapesView.OnShapeChanged, View.OnClic
 
     private val viewModel by viewModels<MainViewModel>()
 
+    private val externalStoragePermissionLauncher = registerForActivityResult(
+        ActivityResultContracts.RequestMultiplePermissions()
+    ) {
+        if (it.all { it.value }) {
+            viewModel.saveImageToExternalStorage(binding.shapesView.getBitmap(), System.currentTimeMillis().toString())
+        }
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = ActivityMainBinding.inflate(layoutInflater)
@@ -59,6 +76,16 @@ class MainActivity : AppCompatActivity(), ShapesView.OnShapeChanged, View.OnClic
     private fun observe() {
         viewModel.stroke.observe(this) {
             binding.strokeWidthSlider.value = it
+        }
+        viewModel.loading.observe(this) {
+            binding.progressBar.isVisible = it
+        }
+        lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                viewModel.message.collectLatest {
+                    Toast.makeText(this@MainActivity, it, Toast.LENGTH_SHORT).show()
+                }
+            }
         }
     }
 
@@ -85,6 +112,7 @@ class MainActivity : AppCompatActivity(), ShapesView.OnShapeChanged, View.OnClic
         when (item.itemId) {
             R.id.undo -> binding.shapesView.undo()
             R.id.redo -> binding.shapesView.redo()
+            R.id.exportImage -> externalStoragePermissionLauncher.launch(arrayOf(Manifest.permission.READ_EXTERNAL_STORAGE, Manifest.permission.WRITE_EXTERNAL_STORAGE))
         }
         return super.onOptionsItemSelected(item)
     }

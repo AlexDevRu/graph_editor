@@ -209,7 +209,7 @@ class ShapesView @JvmOverloads constructor(
                     Log.e("view", "onTouchEvent: width=${selection?.width()}")
                     Log.e("view", "onTouchEvent: height=${selection?.height()}")
                     //selectedShape?.resize(dx, dy, handleIndex)
-                    (selectedShape as? CustomPath)?.resize1(initialWidth, initialHeight, selection!!.width(), selection!!.height(), handleIndex)
+                    (selectedShape as? CustomPath)?.resize1(selection!!.width(), selection!!.height(), handleIndex)
                     startX = touchX
                     startY = touchY
                 } else if (geometryType == GeometryType.HAND && selection != null && isShapeMoving) {

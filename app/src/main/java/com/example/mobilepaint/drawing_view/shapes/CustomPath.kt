@@ -9,8 +9,6 @@ class CustomPath(
 
     private val bounds = RectF()
 
-    private var path1 = Path()
-
     override fun drawInCanvas(canvas: Canvas) {
         canvas.drawPath(this, paint)
     }
@@ -25,18 +23,8 @@ class CustomPath(
 
     override fun up(x: Float, y: Float) {
         computeBounds(bounds, true)
-        initialBounds.set(bounds)
-        path1 = Path(this)
-        dx = 0f
-        dy = 0f
-        /*val scaleMatrix = Matrix()
-        scaleMatrix.setScale(1 / sx, 1 / sy, px, py)
-        transform(scaleMatrix)
-        sx = 1f
-        sy = 1f*/
-        /*sx = 1f
-        sy = 1f*/
-        initResize = true
+        if (initialBounds.left == 0f)
+            initialBounds.set(bounds)
     }
 
     override fun isInside(x: Float, y: Float): Boolean {
@@ -49,6 +37,7 @@ class CustomPath(
 
     override fun translate(dx: Float, dy: Float) {
         offset(dx, dy)
+        //operations.addLast(Opera)
     }
 
     override fun applyShader(shader: Shader?) {
@@ -59,25 +48,17 @@ class CustomPath(
         paint.color = color
     }
 
-    //private val scaleMatrix = Matrix()
+    private val initialBounds = RectF(0f, 0f, 0f, 0f)
 
-    //private var newBounds = RectF()
-
-    private val initialBounds = RectF()
-
-    private var dx = 0f
-    private var dy = 0f
     private var sx = 1f
     private var sy = 1f
 
     var px = bounds.left
     var py = bounds.top
 
-    private var initResize = true
-
     private val scaleMatrix = Matrix()
 
-    fun resize1(oldWidth: Float, oldHeight: Float, newWidth: Float, newHeight: Float, handlePosition: Int) {
+    fun resize1(newWidth: Float, newHeight: Float, handlePosition: Int) {
         px = initialBounds.left
         py = initialBounds.top
 
@@ -118,8 +99,6 @@ class CustomPath(
         this.sy = sy
 
         computeBounds(bounds, true)
-
-        initResize = false
     }
 
     override fun resize(dx: Float, dy: Float, handlePosition: Int) {

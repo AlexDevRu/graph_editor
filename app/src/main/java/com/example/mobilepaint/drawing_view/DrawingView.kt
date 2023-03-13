@@ -16,6 +16,7 @@ import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.core.content.ContextCompat
 import androidx.core.view.isVisible
 import androidx.core.widget.doAfterTextChanged
+import com.example.mobilepaint.R
 import com.example.mobilepaint.databinding.ViewDrawingViewBinding
 import com.example.mobilepaint.drawing_view.ShapesView
 import com.example.mobilepaint.drawing_view.shapes.CustomText

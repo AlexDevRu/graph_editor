@@ -16,10 +16,11 @@ interface Shape {
     fun isInside(x: Float, y: Float) : Boolean
     fun getBoundingBox() : RectF
 
-    fun translate(dx: Float, dy: Float)
+    fun translate(dx: Float, dy: Float) = Unit
 
     fun applyShader(shader: Shader?)
     fun changeColor(@ColorInt color: Int)
     fun fillColor(@ColorInt color: Int) = false
     fun resize(dx: Float, dy: Float, handlePosition: Int) = Unit
+    fun setSelected(selected: Boolean) = Unit
 }

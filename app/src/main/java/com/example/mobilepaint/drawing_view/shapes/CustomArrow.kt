@@ -1,18 +1,28 @@
 package com.example.mobilepaint.drawing_view.shapes
 
 import android.graphics.*
+import com.example.mobilepaint.Utils.toPx
 import kotlin.math.abs
 import kotlin.math.atan
 
 class CustomArrow(
     private val arrowWidth: Float,
     private val arrowHeight: Float,
+    private val handlePaint: Paint,
+    private val selectionShader: Shader?,
     override val paint: Paint
 ): RectF(), Shape {
 
     companion object {
         private const val PI = Math.PI.toFloat()
     }
+
+    private var selected = false
+
+    private val handleRadius = 8.toPx
+
+    private var startPointMoving = false
+    private var endPointMoving = false
 
     private val triangle = Path()
 
@@ -28,19 +38,25 @@ class CustomArrow(
     override fun drawInCanvas(canvas: Canvas) {
         canvas.drawLine(left, top, right, bottom, paint)
         canvas.drawPath(triangle, trianglePaint)
+        if (selected) {
+            canvas.drawCircle(left, top, handleRadius, handlePaint)
+            canvas.drawCircle(right, bottom, handleRadius, handlePaint)
+        }
     }
 
     override fun down(x: Float, y: Float) {
-        left = x
-        top = y
-        right = x
-        bottom = y
+        if (selected) {
+            startPointMoving = abs(x - left) < handleRadius && abs(y - top) < handleRadius
+            endPointMoving = abs(x - right) < handleRadius && abs(y - bottom) < handleRadius
+        } else {
+            left = x
+            top = y
+            right = x
+            bottom = y
+        }
     }
 
-    override fun move(x: Float, y: Float) {
-        right = x
-        bottom = y
-
+    private fun calculateArrowCoordinates(x: Float, y: Float) {
         val arrowWidthHalf = arrowWidth / 2
 
         triangle.reset()
@@ -67,9 +83,28 @@ class CustomArrow(
         }
 
         triangle.computeBounds(triangleBounds, true)
-        matrix.reset()
-        matrix.postRotate(angle, triangleBounds.centerX(), triangleBounds.bottom)
+
+        matrix.setRotate(angle, triangleBounds.centerX(), triangleBounds.bottom)
         triangle.transform(matrix)
+    }
+
+    override fun move(x: Float, y: Float) {
+        if (selected) {
+            if (startPointMoving) {
+                left = x
+                top = y
+            } else if (endPointMoving) {
+                right = x
+                bottom = y
+            }
+        } else {
+            right = x
+            bottom = y
+        }
+        if (selected && startPointMoving)
+            calculateArrowCoordinates(right, bottom)
+        else if (!selected || endPointMoving)
+            calculateArrowCoordinates(x, y)
     }
 
     override fun up(x: Float, y: Float) {
@@ -88,14 +123,6 @@ class CustomArrow(
         return bounds
     }
 
-    override fun translate(dx: Float, dy: Float) {
-        left += dx
-        right += dx
-        top += dy
-        bottom += dy
-        triangle.offset(dx, dy)
-    }
-
     override fun applyShader(shader: Shader?) {
         paint.shader = shader
         trianglePaint.shader = shader
@@ -106,24 +133,14 @@ class CustomArrow(
         trianglePaint.color = color
     }
 
-    override fun resize(dx: Float, dy: Float, handlePosition: Int) {
-        when (handlePosition) {
-            0 -> {
-                left += dx
-                top += dy
-            }
-            1 -> {
-                right += dx
-                top += dy
-            }
-            2 -> {
-                left += dx
-                bottom += dy
-            }
-            3 -> {
-                right += dx
-                bottom += dy
-            }
+    override fun setSelected(selected: Boolean) {
+        this.selected = selected
+        if (selected) {
+            applyShader(selectionShader)
+        } else {
+            applyShader(null)
         }
+        startPointMoving = false
+        endPointMoving = false
     }
 }

@@ -1,54 +1,75 @@
 package com.example.mobilepaint.drawing_view.shapes
 
-import android.graphics.Canvas
-import android.graphics.Paint
-import android.graphics.RectF
-import android.graphics.Shader
+import android.graphics.*
+import com.example.mobilepaint.Utils.toPx
+import kotlin.math.abs
 import kotlin.math.max
 import kotlin.math.min
 
 class CustomLine(
+    private val handlePaint: Paint,
+    private val selectionShader: Shader?,
     override val paint: Paint
-): RectF(), Shape {
+) : RectF(), Shape {
 
-    private val bounds = RectF()
+    private val startPoint = PointF()
+    private val endPoint = PointF()
+
+    private var selected = false
+
+    private val handleRadius = 8.toPx
+
+    private var startPointMoving = false
+    private var endPointMoving = false
 
     override fun down(x: Float, y: Float) {
-        left = x
-        top = y
-        right = x
-        bottom = y
+        if (selected) {
+            startPointMoving = abs(x - startPoint.x) < handleRadius && abs(y - startPoint.y) < handleRadius
+            endPointMoving = abs(x - endPoint.x) < handleRadius && abs(y - endPoint.y) < handleRadius
+        } else {
+            startPoint.x = x
+            startPoint.y = y
+            endPoint.x = x
+            endPoint.y = y
+        }
     }
 
     override fun move(x: Float, y: Float) {
-        right = x
-        bottom = y
+        if (selected) {
+            if (startPointMoving) {
+                startPoint.x = x
+                startPoint.y = y
+            } else if (endPointMoving) {
+                endPoint.x = x
+                endPoint.y = y
+            }
+        } else {
+            endPoint.x = x
+            endPoint.y = y
+        }
     }
 
     override fun up(x: Float, y: Float) {
-        bounds.top = min(top, bottom)
-        bounds.bottom = max(top, bottom)
-        bounds.left = min(left, right)
-        bounds.right = max(left, right)
+        calculateCoordinates()
+    }
+
+    private fun calculateCoordinates() {
+        val xMin = min(startPoint.x, endPoint.x)
+        val xMax = max(startPoint.x, endPoint.x)
+        val yMin = min(startPoint.y, endPoint.y)
+        val yMax = max(startPoint.y, endPoint.y)
+        left = xMin
+        top = yMin
+        right = xMax
+        bottom = yMax
     }
 
     override fun drawInCanvas(canvas: Canvas) {
-        canvas.drawLine(left, top, right, bottom, paint)
-    }
-
-    override fun isInside(x: Float, y: Float): Boolean {
-        return bounds.contains(x, y)
-    }
-
-    override fun getBoundingBox(): RectF {
-        return bounds
-    }
-
-    override fun translate(dx: Float, dy: Float) {
-        left += dx
-        right += dx
-        top += dy
-        bottom += dy
+        canvas.drawLine(startPoint.x, startPoint.y, endPoint.x, endPoint.y, paint)
+        if (selected) {
+            canvas.drawCircle(startPoint.x, startPoint.y, handleRadius, handlePaint)
+            canvas.drawCircle(endPoint.x, endPoint.y, handleRadius, handlePaint)
+        }
     }
 
     override fun applyShader(shader: Shader?) {
@@ -59,21 +80,13 @@ class CustomLine(
         paint.color = color
     }
 
-    override fun resize(dx: Float, dy: Float, handlePosition: Int) {
-        when (handlePosition) {
-            0 -> {
+    override fun getBoundingBox() = this
 
-            }
-            1 -> {
+    override fun isInside(x: Float, y: Float) = contains(x, y)
 
-            }
-            2 -> {
-
-            }
-            3 -> {
-
-            }
-        }
+    override fun setSelected(selected: Boolean) {
+        this.selected = selected
+        paint.shader = if (selected) selectionShader else null
     }
 
 }

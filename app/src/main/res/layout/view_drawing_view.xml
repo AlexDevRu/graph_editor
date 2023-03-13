@@ -36,7 +36,8 @@
         android:id="@+id/expand"
         android:layout_width="@dimen/drawing_view_text_button_size"
         android:layout_height="@dimen/drawing_view_text_button_size"
-
+        android:src="@drawable/ic_baseline_crop_rotate_24"
+        android:background="@color/black"
         android:tint="@color/white"
         app:layout_constraintStart_toEndOf="@id/editText"
         app:layout_constraintTop_toBottomOf="@id/editText" />
@@ -45,7 +46,8 @@
         android:id="@+id/close"
         android:layout_width="@dimen/drawing_view_text_button_size"
         android:layout_height="@dimen/drawing_view_text_button_size"
-
+        android:src="@android:drawable/ic_menu_close_clear_cancel"
+        android:background="@color/black"
         app:layout_constraintBottom_toTopOf="@id/editText"
         app:layout_constraintEnd_toStartOf="@id/editText" />
 
@@ -53,7 +55,8 @@
         android:id="@+id/save"
         android:layout_width="@dimen/drawing_view_text_button_size"
         android:layout_height="@dimen/drawing_view_text_button_size"
-
+        android:src="@drawable/ic_outline_save_24"
+        android:background="@color/black"
         android:tint="@color/white"
         app:layout_constraintStart_toEndOf="@id/editText"
         app:layout_constraintBottom_toTopOf="@id/editText" />

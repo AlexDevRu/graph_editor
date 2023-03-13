@@ -6,7 +6,6 @@ import android.graphics.*
 import android.os.Handler
 import android.os.Looper
 import android.util.AttributeSet
-import android.util.Log
 import android.view.MotionEvent
 import android.view.View
 import androidx.annotation.ColorInt
@@ -114,6 +113,9 @@ class ShapesView @JvmOverloads constructor(
         }
     }
 
+    private val shader =
+        LinearGradient(0f, 0f, 100f, 20f, selectionColors, null, Shader.TileMode.MIRROR)
+
     fun undo() {
         if (shapes.isNotEmpty()) {
             val shape = shapes.pop()
@@ -171,87 +173,33 @@ class ShapesView @JvmOverloads constructor(
 
         when (event.actionMasked) {
             MotionEvent.ACTION_DOWN -> {
-                handleIndex = selection?.getHandleIndexByPoint(touchX, touchY) ?: -1
-                if (geometryType == GeometryType.HAND && handleIndex >= 0) {
-                    startX = touchX
-                    startY = touchY
-                    isShapeResizing = true
-                } else if (geometryType == GeometryType.HAND && selection?.contains(
-                        touchX,
-                        touchY
-                    ) == true
-                ) {
-                    handler.postDelayed(onLongPressed, 1000)
-                    startX = touchX
-                    startY = touchY
-                    isShapeMoving = true
-                } else {
-                    currentShape = when (geometryType) {
-                        GeometryType.PATH -> CustomPath(createPathPaint())
-                        GeometryType.LINE -> CustomLine1(createPaint())
-                        GeometryType.RECT -> CustomRectF(createPaint())
-                        GeometryType.ELLIPSE -> CustomEllipse(createPaint())
-                        GeometryType.ARROW -> CustomArrow(arrowWidth, arrowHeight, createPaint())
-                        else -> null
-                    }
-                    currentShape?.down(touchX, touchY)
-                    if (currentShape != null)
-                        addNewShape(currentShape!!)
+                currentShape = when (geometryType) {
+                    GeometryType.PATH -> CustomPath(createPathPaint())
+                    GeometryType.LINE -> CustomLine(handlePaint, shader, createPaint())
+                    GeometryType.RECT -> CustomRectF(createPaint())
+                    GeometryType.ELLIPSE -> CustomEllipse(createPaint())
+                    GeometryType.ARROW -> CustomArrow(arrowWidth, arrowHeight, handlePaint, shader, createPaint())
+                    else -> null
                 }
+                selectedShape?.down(touchX, touchY)
+                currentShape?.down(touchX, touchY)
+                if (currentShape != null)
+                    addNewShape(currentShape!!)
             }
             MotionEvent.ACTION_MOVE -> {
-                handler.removeCallbacks(onLongPressed)
-                if (geometryType == GeometryType.HAND && selection != null && isShapeResizing) {
-                    val dx = touchX - startX
-                    val dy = touchY - startY
-                    selection?.resize(dx, dy, handleIndex)
-                    //handleIndex = selection!!.index
-                    Log.e("view", "onTouchEvent: width=${selection?.width()}")
-                    Log.e("view", "onTouchEvent: height=${selection?.height()}")
-                    //selectedShape?.resize(dx, dy, handleIndex)
-                    (selectedShape as? CustomPath)?.resize1(selection!!.width(), selection!!.height(), handleIndex)
-                    startX = touchX
-                    startY = touchY
-                } else if (geometryType == GeometryType.HAND && selection != null && isShapeMoving) {
-                    val dx = touchX - startX
-                    val dy = touchY - startY
-                    selectedShape?.translate(dx, dy)
-                    selection?.translate(dx, dy)
-                    startX = touchX
-                    startY = touchY
-                    updateSelectionShader()
-                }
+                selectedShape?.move(touchX, touchY)
                 currentShape?.move(touchX, touchY)
             }
             MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> {
-                handler.removeCallbacks(onLongPressed)
                 if (geometryType == GeometryType.HAND) {
-                    if (isShapeResizing) {
-                        isShapeResizing = false
-                        selectedShape?.up(touchX, touchY)
-                    } else if (isShapeMoving) {
-                        isShapeMoving = false
-                        selectedShape?.up(touchX, touchY)
-                    } else {
-                        deselectShape()
-                        selectedShape = shapes.lastOrNull { it.isInside(touchX, touchY) }
-                        selectedShape?.let {
-                            selection = SelectionBorder(handlePaint, handleSize, boundingBoxPaint, it.getBoundingBox())
-                            updateSelectionShader()
-                        }
-                    }
-                } else if (geometryType == GeometryType.PAINT) {
-                    val shape = shapes.lastOrNull { it.isInside(touchX, touchY) }
-                    if (shape != null) {
-                        val result = shape.fillColor(color)
-                        if (!result)
-                            canvasColor = color
-                    } else {
-                        canvasColor = color
-                    }
+                    selectedShape?.up(touchX, touchY)
+                    deselectShape()
+                    selectedShape = shapes.firstOrNull { it.isInside(touchX, touchY) }
+                    selectedShape?.setSelected(true)
+                } else {
+                    currentShape?.up(touchX, touchY)
+                    currentShape = null
                 }
-                currentShape?.up(touchX, touchY)
-                currentShape = null
             }
             else -> return false
         }
@@ -262,13 +210,12 @@ class ShapesView @JvmOverloads constructor(
 
     private fun updateSelectionShader() {
         selectedShape?.let {
-            val shader =
-                LinearGradient(0f, 0f, 100f, 20f, selectionColors, null, Shader.TileMode.MIRROR)
             it.applyShader(shader)
         }
     }
 
     private fun deselectShape() {
+        selectedShape?.setSelected(false)
         selectedShape?.applyShader(null)
         selectedShape = null
         selection = null
@@ -280,6 +227,6 @@ class ShapesView @JvmOverloads constructor(
         for (shape in shapes.descendingIterator())
             shape.drawInCanvas(canvas)
 
-        selection?.drawInCanvas(canvas)
+        //selection?.drawInCanvas(canvas)
     }
 }

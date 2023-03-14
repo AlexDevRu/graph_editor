@@ -79,11 +79,11 @@ class CustomText(
         y += dy
     }
 
-    override fun applyShader(shader: Shader?) {
-        paint.shader = shader
-    }
-
     override fun changeColor(color: Int) {
         paint.color = color
+    }
+
+    override fun setSelected(selected: Boolean) {
+        TODO("Not yet implemented")
     }
 }

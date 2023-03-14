@@ -30,11 +30,8 @@ class ShapesView @JvmOverloads constructor(
     private val arrowWidth = resources.getDimension(R.dimen.drawing_view_arrow_width)
     private val arrowHeight = arrowWidth * 1.2f
 
-    private val shapes = LinkedList<Shape>()
-    private val removedShapes = LinkedList<Shape>()
-
-    fun getShapesList() : List<Shape> = shapes
-    fun getRemovedShapesList() : List<Shape> = removedShapes
+    val shapes = LinkedList<Shape>()
+    val removedShapes = LinkedList<Shape>()
 
     private var currentShape: Shape? = null
 
@@ -58,6 +55,14 @@ class ShapesView @JvmOverloads constructor(
         this.shapes.addAll(shapes)
         this.removedShapes.addAll(removedShapes)
         invalidate()
+    }
+
+    private val bitmapPaint = Paint(Paint.ANTI_ALIAS_FLAG)
+
+    fun addBitmap(bitmap: Bitmap) {
+        val customBitmap = CustomBitmap(bitmap, handlePaint, boundingBoxPaint, null, bitmapPaint)
+        shapes.push(customBitmap)
+        addNewShape(customBitmap)
     }
 
     fun removeShape(shape: Shape) {
@@ -175,6 +180,7 @@ class ShapesView @JvmOverloads constructor(
                         canvasColor = color
                 } else if (geometryType == GeometryType.HAND) {
                     handler.postDelayed(onLongPressed, 1000)
+                    selectedShape?.down(touchX, touchY)
                 } else {
                     currentShape = when (geometryType) {
                         GeometryType.PATH -> CustomPath(handlePaint, boundingBoxPaint, shader, createPathPaint())
@@ -184,7 +190,6 @@ class ShapesView @JvmOverloads constructor(
                         GeometryType.ARROW -> CustomArrow(arrowWidth, arrowHeight, handlePaint, shader, createPaint())
                         else -> null
                     }
-                    selectedShape?.down(touchX, touchY)
                     currentShape?.down(touchX, touchY)
                     if (currentShape != null)
                         addNewShape(currentShape!!)

@@ -10,29 +10,29 @@ import kotlin.math.max
 import kotlin.math.min
 
 open class CustomRectF(
-    private val handlePaint : Paint,
-    private val boundingBoxPaint : Paint,
+    protected val handlePaint : Paint,
+    protected val boundingBoxPaint : Paint,
     private val selectionShader: Shader?,
     override val paint: Paint
 ) : RectF(), Shape {
 
     private var fillPaint : Paint? = null
 
-    private var selected = false
+    protected var selected1 = false
 
-    private val handleRadius = 8.toPx
+    protected val handleRadius = 8.toPx
 
-    private var tlPointMoving = false
-    private var trPointMoving = false
-    private var blPointMoving = false
-    private var brPointMoving = false
+    protected var tlPointMoving = false
+    protected var trPointMoving = false
+    protected var blPointMoving = false
+    protected var brPointMoving = false
 
-    private var isTranslating = false
+    protected var isTranslating = false
     private var startX = 0f
     private var startY = 0f
 
     override fun down(x: Float, y: Float) {
-        if (selected) {
+        if (selected1) {
             tlPointMoving = abs(x - left) < handleRadius && abs(y - top) < handleRadius
             trPointMoving = abs(x - right) < handleRadius && abs(y - top) < handleRadius
             blPointMoving = abs(x - left) < handleRadius && abs(y - bottom) < handleRadius
@@ -51,7 +51,7 @@ open class CustomRectF(
     }
 
     override fun move(x: Float, y: Float) {
-        if (selected) {
+        if (selected1) {
             when {
                 tlPointMoving -> {
                     left = x
@@ -106,17 +106,13 @@ open class CustomRectF(
         fillPaint?.let {
             canvas.drawRect(this, it)
         }
-        if (selected) {
+        if (selected1) {
             canvas.drawRect(this, boundingBoxPaint)
             canvas.drawCircle(left, top, handleRadius, handlePaint)
             canvas.drawCircle(right, top, handleRadius, handlePaint)
             canvas.drawCircle(left, bottom, handleRadius, handlePaint)
             canvas.drawCircle(right, bottom, handleRadius, handlePaint)
         }
-    }
-
-    override fun applyShader(shader: Shader?) {
-        paint.shader = shader
     }
 
     override fun changeColor(color: Int) {
@@ -144,7 +140,7 @@ open class CustomRectF(
     override fun isInside(x: Float, y: Float) = contains(x, y)
 
     override fun setSelected(selected: Boolean) {
-        this.selected = selected
+        this.selected1 = selected
         paint.shader = if (selected) selectionShader else null
         tlPointMoving = false
         trPointMoving = false

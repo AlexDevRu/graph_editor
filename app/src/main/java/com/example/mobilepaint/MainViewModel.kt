@@ -4,7 +4,9 @@ import android.app.Application
 import android.graphics.Bitmap
 import android.graphics.Color
 import android.media.MediaScannerConnection
+import android.net.Uri
 import android.os.Environment
+import androidx.core.net.toUri
 import androidx.lifecycle.*
 import com.example.mobilepaint.drawing_view.GeometryType
 import com.example.mobilepaint.drawing_view.shapes.Shape
@@ -28,6 +30,11 @@ class MainViewModel(private val app : Application): AndroidViewModel(app) {
         PenType(app.getString(R.string.fill), R.drawable.ic_paint, GeometryType.PAINT),
     )
 
+    data class ShapeWrapper(
+        val shapesList : LinkedList<Shape> = LinkedList(),
+        val removedShapesList : LinkedList<Shape> = LinkedList()
+    )
+
     private val _stroke = MutableLiveData(5f)
     val stroke : LiveData<Float> = _stroke
 
@@ -43,8 +50,22 @@ class MainViewModel(private val app : Application): AndroidViewModel(app) {
     private val _message = MutableSharedFlow<String>()
     val message = _message.asSharedFlow()
 
-    val shapesList = LinkedList<Shape>()
-    val removedShapesList = LinkedList<Shape>()
+    private val _openFile = MutableSharedFlow<Uri>()
+    val openFile = _openFile.asSharedFlow()
+
+    val canvases = mutableListOf<ShapeWrapper>()
+
+    fun addCanvas() {
+        canvases.add(ShapeWrapper())
+    }
+
+    fun removeCanvas(position: Int) {
+        canvases.removeAt(position)
+    }
+
+    init {
+        canvases.add(ShapeWrapper())
+    }
 
     fun setStroke(stroke : Float) {
         _stroke.value = stroke
@@ -58,11 +79,8 @@ class MainViewModel(private val app : Application): AndroidViewModel(app) {
         _penType.value = options[position]
     }
 
-    fun saveShapes(shapesList : List<Shape>, removedShapesList : List<Shape>) {
-        this.shapesList.clear()
-        this.removedShapesList.clear()
-        this.shapesList.addAll(shapesList)
-        this.removedShapesList.addAll(removedShapesList)
+    fun saveShapes(position: Int, shapesList : LinkedList<Shape>, removedShapesList : LinkedList<Shape>) {
+        canvases[position] = ShapeWrapper(shapesList, removedShapesList)
     }
 
     fun saveImageToExternalStorage(image : Bitmap, filename: String) {
@@ -78,6 +96,7 @@ class MainViewModel(private val app : Application): AndroidViewModel(app) {
             MediaScannerConnection.scanFile(app, arrayOf(file.absolutePath), null, null)
             _loading.postValue(false)
             _message.emit("Saved")
+            _openFile.emit(file.toUri())
         }
     }
 }

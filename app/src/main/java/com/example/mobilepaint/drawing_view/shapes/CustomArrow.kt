@@ -123,7 +123,7 @@ class CustomArrow(
         return bounds
     }
 
-    override fun applyShader(shader: Shader?) {
+    private fun applyShader(shader: Shader?) {
         paint.shader = shader
         trianglePaint.shader = shader
     }

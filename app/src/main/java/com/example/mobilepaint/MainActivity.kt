@@ -1,7 +1,12 @@
 package com.example.mobilepaint
 
-import android.Manifest;
+import android.Manifest
+import android.content.Intent
+import android.net.Uri
+import android.os.Build
 import android.os.Bundle
+import android.os.Environment
+import android.provider.Settings
 import android.view.Menu
 import android.view.MenuItem
 import android.view.View
@@ -9,6 +14,7 @@ import android.widget.AdapterView
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
+import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.isVisible
@@ -16,7 +22,6 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import com.example.mobilepaint.databinding.ActivityMainBinding
-import com.example.mobilepaint.drawing_view.GeometryType
 import com.example.mobilepaint.drawing_view.ShapesView
 import com.example.mobilepaint.drawing_view.shapes.Shape
 import com.google.android.material.slider.Slider
@@ -35,24 +40,21 @@ class MainActivity : AppCompatActivity(), ShapesView.OnShapeChanged, View.OnClic
 
     private lateinit var menu: Menu
 
-    private val options by lazy {
-        listOf(
-            PenType(getString(R.string.cursor), R.drawable.ic_hand, GeometryType.HAND),
-            PenType(getString(R.string.path), R.drawable.ic_curve, GeometryType.PATH),
-            PenType(getString(R.string.line), R.drawable.ic_line, GeometryType.LINE),
-            PenType(getString(R.string.ellipse), R.drawable.ic_ellipse, GeometryType.ELLIPSE),
-            PenType(getString(R.string.rectangle), R.drawable.ic_rectangle, GeometryType.RECT),
-            PenType(getString(R.string.arrow), R.drawable.ic_arrow, GeometryType.ARROW),
-            PenType(getString(R.string.fill), R.drawable.ic_paint, GeometryType.PAINT),
-        )
-    }
-
     private val viewModel by viewModels<MainViewModel>()
 
     private val externalStoragePermissionLauncher = registerForActivityResult(
         ActivityResultContracts.RequestMultiplePermissions()
-    ) {
-        if (it.all { it.value }) {
+    ) { result ->
+        if (result.all { it.value }) {
+            viewModel.saveImageToExternalStorage(binding.shapesView.getBitmap(), System.currentTimeMillis().toString())
+        }
+    }
+
+    @RequiresApi(Build.VERSION_CODES.R)
+    private val storageActivityResultLauncher = registerForActivityResult(
+        ActivityResultContracts.StartActivityForResult()
+    ) { result ->
+        if (Environment.isExternalStorageManager()) {
             viewModel.saveImageToExternalStorage(binding.shapesView.getBitmap(), System.currentTimeMillis().toString())
         }
     }
@@ -63,12 +65,13 @@ class MainActivity : AppCompatActivity(), ShapesView.OnShapeChanged, View.OnClic
         setContentView(binding.root)
         binding.shapesView.setOnShapeChangedListener(this)
 
-        binding.etType.setAdapter(PenTypesAdapter(this, options))
+        binding.etType.setAdapter(PenTypesAdapter(this, viewModel.options))
         binding.etType.onItemClickListener = this
-        binding.etType.setText(options.first().text, false)
 
         binding.colorView.setOnClickListener(this)
         binding.strokeWidthSlider.addOnChangeListener(this)
+
+        binding.shapesView.addShapes(viewModel.shapesList, viewModel.removedShapesList)
 
         observe()
     }
@@ -76,9 +79,18 @@ class MainActivity : AppCompatActivity(), ShapesView.OnShapeChanged, View.OnClic
     private fun observe() {
         viewModel.stroke.observe(this) {
             binding.strokeWidthSlider.value = it
+            binding.shapesView.strokeWidth = it
+        }
+        viewModel.color.observe(this) {
+            binding.colorView.setBackgroundColor(it)
+            binding.shapesView.color = it
         }
         viewModel.loading.observe(this) {
             binding.progressBar.isVisible = it
+        }
+        viewModel.penType.observe(this) {
+            binding.etType.setText(it.text, false)
+            binding.shapesView.geometryType = it.geometryType
         }
         lifecycleScope.launch {
             repeatOnLifecycle(Lifecycle.State.STARTED) {
@@ -94,17 +106,17 @@ class MainActivity : AppCompatActivity(), ShapesView.OnShapeChanged, View.OnClic
             .setTitle("ColorPicker Dialog")
             .setPreferenceName("MyColorPickerDialog")
             .setPositiveButton(getString(android.R.string.ok), this)
-            .attachAlphaSlideBar(true) // the default value is true.
-            .attachBrightnessSlideBar(true) // the default value is true.
-            .setBottomSpace(12) // set a bottom space between the last slidebar and buttons.
+            .attachAlphaSlideBar(true)
+            .attachBrightnessSlideBar(true)
+            .setBottomSpace(12)
             .show()
     }
 
     override fun onCreateOptionsMenu(menu: Menu?): Boolean {
         menuInflater.inflate(R.menu.menu_toolbar, menu)
         this.menu = menu!!
-        menu.findItem(R.id.undo).isEnabled = false
-        menu.findItem(R.id.redo).isEnabled = false
+        menu.findItem(R.id.undo).isEnabled = viewModel.shapesList.isNotEmpty()
+        menu.findItem(R.id.redo).isEnabled = viewModel.removedShapesList.isNotEmpty()
         return true
     }
 
@@ -112,9 +124,27 @@ class MainActivity : AppCompatActivity(), ShapesView.OnShapeChanged, View.OnClic
         when (item.itemId) {
             R.id.undo -> binding.shapesView.undo()
             R.id.redo -> binding.shapesView.redo()
-            R.id.exportImage -> externalStoragePermissionLauncher.launch(arrayOf(Manifest.permission.READ_EXTERNAL_STORAGE, Manifest.permission.WRITE_EXTERNAL_STORAGE))
+            R.id.exportImage -> exportImage()
         }
         return super.onOptionsItemSelected(item)
+    }
+
+    private fun exportImage() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            try {
+                val intent = Intent(Settings.ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION)
+                val uri = Uri.fromParts("package", packageName, null)
+                intent.data = uri
+                storageActivityResultLauncher.launch(intent)
+            } catch (e : Exception) {
+                val intent = Intent(Settings.ACTION_MANAGE_ALL_FILES_ACCESS_PERMISSION)
+                val uri = Uri.fromParts("package", packageName, null)
+                intent.data = uri
+                storageActivityResultLauncher.launch(intent)
+            }
+        } else {
+            externalStoragePermissionLauncher.launch(arrayOf(Manifest.permission.READ_EXTERNAL_STORAGE, Manifest.permission.WRITE_EXTERNAL_STORAGE))
+        }
     }
 
     override fun onStackSizesChanged(addedShapesSize: Int, removedShapesSize: Int) {
@@ -133,17 +163,19 @@ class MainActivity : AppCompatActivity(), ShapesView.OnShapeChanged, View.OnClic
 
     override fun onColorSelected(envelope: ColorEnvelope?, fromUser: Boolean) {
         if (envelope == null) return
-        binding.colorView.setBackgroundColor(envelope.color)
-        binding.shapesView.color = envelope.color
+        viewModel.setColor(envelope.color)
     }
 
     override fun onItemClick(p0: AdapterView<*>?, p1: View?, position: Int, p3: Long) {
-        val option = options[position]
-        binding.etType.setText(option.text, false)
-        binding.shapesView.geometryType = option.geometryType
+        viewModel.setPenType(position)
     }
 
     override fun onValueChange(slider: Slider, value: Float, fromUser: Boolean) {
-        binding.shapesView.strokeWidth = value
+        viewModel.setStroke(value)
+    }
+
+    override fun onStop() {
+        super.onStop()
+        viewModel.saveShapes(binding.shapesView.getShapesList(), binding.shapesView.getRemovedShapesList())
     }
 }

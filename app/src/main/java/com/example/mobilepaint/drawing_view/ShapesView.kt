@@ -33,6 +33,9 @@ class ShapesView @JvmOverloads constructor(
     private val shapes = LinkedList<Shape>()
     private val removedShapes = LinkedList<Shape>()
 
+    fun getShapesList() : List<Shape> = shapes
+    fun getRemovedShapesList() : List<Shape> = removedShapes
+
     private var currentShape: Shape? = null
 
     interface OnShapeChanged {
@@ -47,6 +50,14 @@ class ShapesView @JvmOverloads constructor(
     fun addNewShape(shape: Shape) {
         shapes.push(shape)
         onShapeChanged?.onStackSizesChanged(shapes.size, removedShapes.size)
+    }
+
+    fun addShapes(shapes: LinkedList<Shape>, removedShapes : LinkedList<Shape>) {
+        this.shapes.clear()
+        this.removedShapes.clear()
+        this.shapes.addAll(shapes)
+        this.removedShapes.addAll(removedShapes)
+        invalidate()
     }
 
     fun removeShape(shape: Shape) {
@@ -80,8 +91,6 @@ class ShapesView @JvmOverloads constructor(
                 deselectShape()
         }
 
-    private val handleSize = 10.toPx
-
     private var selectedShape: Shape? = null
 
     private val selectionColors = intArrayOf(
@@ -90,12 +99,6 @@ class ShapesView @JvmOverloads constructor(
         ContextCompat.getColor(context, R.color.green),
         ContextCompat.getColor(context, R.color.yellow),
     )
-
-    private var startX = 0f
-    private var startY = 0f
-    private var isShapeMoving = false
-    private var isShapeResizing = false
-    private var handleIndex = -1
 
     private val handler = Handler(Looper.getMainLooper())
     private val onLongPressed = Runnable {
@@ -170,6 +173,8 @@ class ShapesView @JvmOverloads constructor(
                         shape.fillColor(color)
                     else
                         canvasColor = color
+                } else if (geometryType == GeometryType.HAND) {
+                    handler.postDelayed(onLongPressed, 1000)
                 } else {
                     currentShape = when (geometryType) {
                         GeometryType.PATH -> CustomPath(handlePaint, boundingBoxPaint, shader, createPathPaint())
@@ -186,14 +191,16 @@ class ShapesView @JvmOverloads constructor(
                 }
             }
             MotionEvent.ACTION_MOVE -> {
+                handler.removeCallbacks(onLongPressed)
                 selectedShape?.move(touchX, touchY)
                 currentShape?.move(touchX, touchY)
             }
             MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> {
+                handler.removeCallbacks(onLongPressed)
                 if (geometryType == GeometryType.HAND) {
                     selectedShape?.up(touchX, touchY)
                     deselectShape()
-                    selectedShape = shapes.firstOrNull { it.isInside(touchX, touchY) }
+                    selectedShape = shapes.lastOrNull { it.isInside(touchX, touchY) }
                     selectedShape?.setSelected(true)
                 } else {
                     currentShape?.up(touchX, touchY)
@@ -207,12 +214,6 @@ class ShapesView @JvmOverloads constructor(
         return true
     }
 
-    private fun updateSelectionShader() {
-        selectedShape?.let {
-            it.applyShader(shader)
-        }
-    }
-
     private fun deselectShape() {
         selectedShape?.setSelected(false)
         selectedShape = null
@@ -223,8 +224,6 @@ class ShapesView @JvmOverloads constructor(
         canvas.drawColor(canvasColor)
         for (shape in shapes.descendingIterator())
             shape.drawInCanvas(canvas)
-
-        //selection?.drawInCanvas(canvas)
     }
 
     fun getBitmap(): Bitmap {

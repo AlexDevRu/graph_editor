@@ -53,6 +53,14 @@ class CustomView @JvmOverloads constructor(
             path.transform(matrix1)
             invalidate()
             delay(1000)
+            matrix2.setScale(2f, 2f, bounds.left, bounds.top)
+            path.transform(matrix2)
+            invalidate()
+            delay(1000)
+            matrix2.setScale(0.5f, 0.5f, bounds.left, bounds.top)
+            path.transform(matrix2)
+            invalidate()
+            /*delay(1000)
             path.computeBounds(bounds, true)
             matrix2.invert(inverse)
             path.transform(inverse)
@@ -63,9 +71,9 @@ class CustomView @JvmOverloads constructor(
             path.computeBounds(bounds, true)
             matrix2.invert(inverse)
             path.transform(inverse)
-            matrix2.setScale(0.8f, 0.8f, bounds.right, bounds.top)
+            matrix2.setScale(0.8f, 0.8f, bounds.right, bounds.bottom)
             path.transform(matrix2)
-            invalidate()
+            invalidate()*/
         }
     }
 

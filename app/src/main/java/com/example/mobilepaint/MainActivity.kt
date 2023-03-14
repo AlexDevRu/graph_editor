@@ -1,12 +1,12 @@
 package com.example.mobilepaint
 
-import android.content.Intent
 import android.os.Bundle
 import android.view.Menu
 import android.view.MenuItem
 import android.view.View
 import android.widget.AdapterView
 import android.widget.Toast
+import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.isVisible
 import androidx.lifecycle.Lifecycle
@@ -14,6 +14,7 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import com.example.mobilepaint.databinding.ActivityMainBinding
+import com.example.mobilepaint.databinding.DialogStrokeBinding
 import com.example.mobilepaint.databinding.ViewTabBinding
 import com.google.android.material.slider.Slider
 import com.google.android.material.tabs.TabLayout
@@ -48,7 +49,7 @@ class MainActivity : AppCompatActivity(), View.OnClickListener,
         binding.etType.onItemClickListener = this
 
         binding.colorView.setOnClickListener(this)
-        binding.strokeWidthSlider.addOnChangeListener(this)
+        binding.tvStroke.setOnClickListener(this)
 
         binding.viewPager.isUserInputEnabled = false
         binding.viewPager.adapter = canvasAdapter
@@ -61,7 +62,7 @@ class MainActivity : AppCompatActivity(), View.OnClickListener,
                 canvasAdapter.removeCanvas(viewModel.canvases, position)
                 changeRemoveButtonVisibility()
             }
-            tabBinding.text.text = "Canvas ${(position + 1)}"
+            tabBinding.text.text = getString(R.string.canvas_n, position + 1)
             tab.customView = tabBinding.root
         }.attach()
 
@@ -93,7 +94,7 @@ class MainActivity : AppCompatActivity(), View.OnClickListener,
 
     private fun observe() {
         viewModel.stroke.observe(this) {
-            binding.strokeWidthSlider.value = it
+            binding.tvStroke.text = getString(R.string.stroke_n, it.toInt())
         }
         viewModel.color.observe(this) {
             binding.colorView.setBackgroundColor(it)
@@ -103,6 +104,7 @@ class MainActivity : AppCompatActivity(), View.OnClickListener,
         }
         viewModel.penType.observe(this) {
             binding.etType.setText(it.text, false)
+            binding.tlType.setStartIconDrawable(it.iconRes)
         }
         lifecycleScope.launch {
             repeatOnLifecycle(Lifecycle.State.STARTED) {
@@ -122,15 +124,30 @@ class MainActivity : AppCompatActivity(), View.OnClickListener,
         }*/
     }
 
-    override fun onClick(p0: View?) {
-        ColorPickerDialog.Builder(this)
-            .setTitle("ColorPicker Dialog")
-            .setPreferenceName("MyColorPickerDialog")
-            .setPositiveButton(getString(android.R.string.ok), this)
-            .attachAlphaSlideBar(true)
-            .attachBrightnessSlideBar(true)
-            .setBottomSpace(12)
-            .show()
+    override fun onClick(view: View?) {
+        when (view?.id) {
+            R.id.colorView -> {
+                ColorPickerDialog.Builder(this)
+                    .setTitle("ColorPicker Dialog")
+                    .setPreferenceName("MyColorPickerDialog")
+                    .setPositiveButton(getString(android.R.string.ok), this)
+                    .attachAlphaSlideBar(true)
+                    .attachBrightnessSlideBar(true)
+                    .setBottomSpace(12)
+                    .show()
+            }
+            R.id.tvStroke -> {
+                val strokeBinding = DialogStrokeBinding.inflate(layoutInflater)
+                strokeBinding.etType.setText(viewModel.stroke.value?.toInt()?.toString())
+                AlertDialog.Builder(this)
+                    .setTitle(R.string.stroke)
+                    .setView(strokeBinding.root)
+                    .setPositiveButton(android.R.string.ok) { _, _ ->
+                        viewModel.setStroke(strokeBinding.etType.text?.toString()?.toFloatOrNull() ?: 1f)
+                    }
+                    .show()
+            }
+        }
     }
 
     override fun onCreateOptionsMenu(menu: Menu?): Boolean {

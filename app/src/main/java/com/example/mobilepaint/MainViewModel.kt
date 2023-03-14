@@ -53,7 +53,7 @@ class MainViewModel(private val app : Application): AndroidViewModel(app) {
     private val _openFile = MutableSharedFlow<Uri>()
     val openFile = _openFile.asSharedFlow()
 
-    val canvases = mutableListOf<ShapeWrapper>()
+    val canvases = mutableListOf(ShapeWrapper())
 
     fun addCanvas() {
         canvases.add(ShapeWrapper())
@@ -61,10 +61,6 @@ class MainViewModel(private val app : Application): AndroidViewModel(app) {
 
     fun removeCanvas(position: Int) {
         canvases.removeAt(position)
-    }
-
-    init {
-        canvases.add(ShapeWrapper())
     }
 
     fun setStroke(stroke : Float) {
@@ -80,7 +76,8 @@ class MainViewModel(private val app : Application): AndroidViewModel(app) {
     }
 
     fun saveShapes(position: Int, shapesList : LinkedList<Shape>, removedShapesList : LinkedList<Shape>) {
-        canvases[position] = ShapeWrapper(shapesList, removedShapesList)
+        if (position < canvases.size)
+            canvases[position] = ShapeWrapper(shapesList, removedShapesList)
     }
 
     fun saveImageToExternalStorage(image : Bitmap, filename: String) {

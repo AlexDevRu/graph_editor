@@ -15,8 +15,8 @@
 
     <androidx.appcompat.widget.AppCompatImageButton
         android:id="@+id/btnRemove"
-        android:layout_width="16dp"
-        android:layout_height="16dp"
+        android:layout_width="24dp"
+        android:layout_height="24dp"
         android:layout_marginStart="10dp"
         android:background="@null"
         android:src="@drawable/ic_close"

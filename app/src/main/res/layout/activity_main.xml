@@ -27,22 +27,20 @@
                 android:layout_height="40dp"
                 android:background="@color/black" />
 
-            <com.google.android.material.slider.Slider
-                android:id="@+id/strokeWidthSlider"
-                android:layout_width="match_parent"
+            <TextView
+                android:id="@+id/tvStroke"
+                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_gravity="bottom"
-                android:layout_weight="1"
-                android:stepSize="1"
-                android:valueFrom="1"
-                android:valueTo="10" />
+                android:layout_marginHorizontal="10dp"
+                android:textStyle="bold"
+                android:textSize="16sp"
+                tools:text="Stroke: 5" />
 
             <com.google.android.material.textfield.TextInputLayout
                 android:id="@+id/tlType"
                 style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox.ExposedDropdownMenu"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginStart="10dp"
                 android:layout_weight="1"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
@@ -74,6 +72,7 @@
         android:id="@+id/tabLayout"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:elevation="6dp"
         app:tabGravity="start"
         app:tabMode="scrollable"
         app:layout_constraintBottom_toBottomOf="parent" />

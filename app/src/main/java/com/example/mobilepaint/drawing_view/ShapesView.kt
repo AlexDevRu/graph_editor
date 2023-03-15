@@ -224,9 +224,17 @@ class ShapesView @JvmOverloads constructor(
         selectedShape = null
     }
 
+    private val borderPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        color = Color.BLACK
+        style = Paint.Style.STROKE
+        strokeWidth = 4.toPx
+        pathEffect = DashPathEffect(floatArrayOf(50.toPx, 10.toPx, 5.toPx, 10.toPx), 25f)
+    }
+
     override fun onDraw(canvas: Canvas) {
         super.onDraw(canvas)
         canvas.drawColor(canvasColor)
+        //canvas.drawRect(0f, 0f, width.toFloat(), height.toFloat(), borderPaint)
         for (shape in shapes.descendingIterator())
             shape.drawInCanvas(canvas)
     }

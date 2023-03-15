@@ -25,7 +25,7 @@ class CustomView @JvmOverloads constructor(
 
     val paint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
         style = Paint.Style.STROKE
-        strokeWidth = 5.toPx
+        strokeWidth = 4.toPx
         color = Color.BLACK
     }
 
@@ -34,7 +34,7 @@ class CustomView @JvmOverloads constructor(
 
     private val matrix1 = Matrix()
     private val matrix2 = Matrix()
-    private val inverse = Matrix()
+    private val matrix3 = Matrix()
 
     private val bounds = RectF()
 
@@ -53,13 +53,23 @@ class CustomView @JvmOverloads constructor(
             path.transform(matrix1)
             invalidate()
             delay(1000)
-            matrix2.setScale(2f, 2f, bounds.left, bounds.top)
+            matrix2.setScale(1.2f, 1.2f, bounds.left, bounds.top)
             path.transform(matrix2)
             invalidate()
             delay(1000)
+            path.computeBounds(bounds, true)
+            matrix3.setRotate(45f, bounds.centerX(), bounds.centerY())
+            path.transform(matrix3)
+            invalidate()
+            delay(1000)
+            path.computeBounds(bounds, true)
+            matrix3.setRotate(45f, bounds.centerX(), bounds.centerY())
+            path.transform(matrix3)
+            invalidate()
+            /*delay(1000)
             matrix2.setScale(0.5f, 0.5f, bounds.left, bounds.top)
             path.transform(matrix2)
-            invalidate()
+            invalidate()*/
             /*delay(1000)
             path.computeBounds(bounds, true)
             matrix2.invert(inverse)

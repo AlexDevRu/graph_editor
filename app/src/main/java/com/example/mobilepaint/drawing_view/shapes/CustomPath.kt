@@ -2,8 +2,10 @@ package com.example.mobilepaint.drawing_view.shapes
 
 import android.graphics.*
 import android.util.Log
+import androidx.core.graphics.transform
 import com.example.mobilepaint.Utils.toPx
 import kotlin.math.abs
+import kotlin.math.atan2
 
 class CustomPath(
     private val handlePaint : Paint,
@@ -14,9 +16,11 @@ class CustomPath(
 
     private val bounds = RectF()
     private val bounds1 = RectF()
+    private val handlePoints = FloatArray(10)
 
     private val translateMatrix = Matrix()
     private val scaleMatrix = Matrix()
+    private val rotateMatrix = Matrix()
 
     private var selected = false
 
@@ -26,31 +30,50 @@ class CustomPath(
     private var trPointMoving = false
     private var blPointMoving = false
     private var brPointMoving = false
+    private var rotationPointMoving = false
 
     private var isTranslating = false
     private var startX = 0f
     private var startY = 0f
 
+    private var rotation = 0f
+
     private val initialBounds = RectF(0f, 0f, 0f, 0f)
+
+    private val boundsPath = Path()
+
+    private val rotateHandlePaint = Paint(handlePaint).apply {
+        color = Color.GREEN
+    }
+
+    private var sx = 1f
+    private var sy = 1f
 
     override fun drawInCanvas(canvas: Canvas) {
         canvas.drawPath(this, paint)
         if (selected) {
-            canvas.drawRect(bounds, boundingBoxPaint)
-            canvas.drawCircle(bounds.left, bounds.top, handleRadius, handlePaint)
+            canvas.drawPath(boundsPath, boundingBoxPaint)
+            //canvas.drawRect(bounds, boundingBoxPaint)
+            canvas.drawCircle(handlePoints[8], handlePoints[9], handleRadius, rotateHandlePaint)
+            canvas.drawCircle(handlePoints[0], handlePoints[1], handleRadius, handlePaint)
+            canvas.drawCircle(handlePoints[2], handlePoints[3], handleRadius, handlePaint)
+            canvas.drawCircle(handlePoints[4], handlePoints[5], handleRadius, handlePaint)
+            canvas.drawCircle(handlePoints[6], handlePoints[7], handleRadius, handlePaint)
+            /*canvas.drawCircle(bounds.left, bounds.top, handleRadius, handlePaint)
             canvas.drawCircle(bounds.right, bounds.top, handleRadius, handlePaint)
             canvas.drawCircle(bounds.left, bounds.bottom, handleRadius, handlePaint)
-            canvas.drawCircle(bounds.right, bounds.bottom, handleRadius, handlePaint)
+            canvas.drawCircle(bounds.right, bounds.bottom, handleRadius, handlePaint)*/
         }
     }
 
     override fun down(x: Float, y: Float) {
         if (selected) {
-            tlPointMoving = abs(x - bounds1.left) < handleRadius && abs(y - bounds1.top) < handleRadius
-            trPointMoving = abs(x - bounds1.right) < handleRadius && abs(y - bounds1.top) < handleRadius
-            blPointMoving = abs(x - bounds1.left) < handleRadius && abs(y - bounds1.bottom) < handleRadius
-            brPointMoving = abs(x - bounds1.right) < handleRadius && abs(y - bounds1.bottom) < handleRadius
-            isTranslating = !tlPointMoving && !trPointMoving && !blPointMoving && !brPointMoving && isInside(x, y)
+            tlPointMoving = abs(x - handlePoints[0]) < handleRadius && abs(y - handlePoints[1]) < handleRadius
+            trPointMoving = abs(x - handlePoints[2]) < handleRadius && abs(y - handlePoints[3]) < handleRadius
+            blPointMoving = abs(x - handlePoints[6]) < handleRadius && abs(y - handlePoints[7]) < handleRadius
+            brPointMoving = abs(x - handlePoints[4]) < handleRadius && abs(y - handlePoints[5]) < handleRadius
+            rotationPointMoving = abs(x - handlePoints[8]) < handleRadius && abs(y - handlePoints[9]) < handleRadius
+            isTranslating = !tlPointMoving && !trPointMoving && !blPointMoving && !brPointMoving && !rotationPointMoving && isInside(x, y)
             startX = x
             startY = y
         } else {
@@ -62,18 +85,36 @@ class CustomPath(
         scaleMatrix.reset()
         scaleMatrix.setScale(sx, sy, px, py)
         transform(scaleMatrix)
+        boundsPath.transform(scaleMatrix)
+        scaleMatrix.mapPoints(handlePoints)
     }
 
-    private var sx = 1f
-    private var sy = 1f
-
-    private var initialWidth = 0f
-    private var initialHeight = 0f
+    private fun rotate(degrees: Float) {
+        rotateMatrix.reset()
+        rotateMatrix.setRotate(degrees, bounds.centerX(), bounds.centerY())
+        transform(rotateMatrix)
+        boundsPath.transform(rotateMatrix)
+        rotateMatrix.mapPoints(handlePoints)
+    }
 
     override fun move(x: Float, y: Float) {
         Log.d(TAG, "move: x=$x")
         Log.d(TAG, "move: y=$y")
         if (selected) {
+            if (rotationPointMoving) {
+                val xx = x - bounds1.centerX()
+                val yy = -(y - bounds1.centerY())
+                val newR = 90 - Math.toDegrees(atan2(yy, xx).toDouble()).toFloat()
+                val extraRotation = newR - rotation
+                Log.d(TAG, "move: newR=$newR")
+                Log.d(TAG, "move: rotation=$rotation")
+                Log.d(TAG, "move: extraRotation=$extraRotation")
+                Log.d(TAG, "=============================")
+                rotation = newR
+                rotate(extraRotation)
+                return
+            }
+
             val dx = x - startX
             val dy = y - startY
 
@@ -111,21 +152,21 @@ class CustomPath(
             val newSx = sx / this.sx
             val newSy = sy / this.sy
 
-            Log.d(TAG, "move: oldWidth=$initialWidth")
-            Log.d(TAG, "move: oldHeight=$initialHeight")
             Log.d(TAG, "move: newWidth=$newWidth")
             Log.d(TAG, "move: newHeight=$newHeight")
             Log.d(TAG, "move: sx=$sx")
             Log.d(TAG, "move: sy=$sy")
 
             when {
-                tlPointMoving -> scale(newSx, newSy, bounds1.right, bounds1.bottom)
-                trPointMoving -> scale(newSx, newSy, bounds1.left, bounds1.bottom)
-                blPointMoving -> scale(newSx, newSy, bounds1.right, bounds1.top)
-                brPointMoving -> scale(newSx, newSy, bounds1.left, bounds1.top)
+                tlPointMoving -> scale(newSx, newSy, handlePoints[4], handlePoints[5])
+                trPointMoving -> scale(newSx, newSy, handlePoints[6], handlePoints[7])
+                blPointMoving -> scale(newSx, newSy, handlePoints[2], handlePoints[3])
+                brPointMoving -> scale(newSx, newSy, handlePoints[0], handlePoints[1])
                 isTranslating -> {
                     translateMatrix.setTranslate(dx, dy)
                     transform(translateMatrix)
+                    translateMatrix.mapPoints(handlePoints)
+                    boundsPath.transform(translateMatrix)
                 }
             }
 
@@ -150,12 +191,21 @@ class CustomPath(
         Log.d(TAG, "=============================")
         if (initialBounds.left == 0f) {
             initialBounds.set(bounds)
-            initialWidth = initialBounds.width()
-            initialHeight = initialBounds.height()
             bounds1.set(bounds)
-        } else {
-            initialWidth = bounds.width()
-            initialHeight = bounds.height()
+
+            handlePoints[0] = bounds.left
+            handlePoints[1] = bounds.top
+            handlePoints[2] = bounds.right
+            handlePoints[3] = bounds.top
+            handlePoints[4] = bounds.right
+            handlePoints[5] = bounds.bottom
+            handlePoints[6] = bounds.left
+            handlePoints[7] = bounds.bottom
+            handlePoints[8] = bounds.centerX()
+            handlePoints[9] = bounds.top - 20.toPx
+
+            boundsPath.reset()
+            boundsPath.addRect(bounds, Direction.CW)
         }
     }
 
@@ -179,6 +229,7 @@ class CustomPath(
         blPointMoving = false
         brPointMoving = false
         isTranslating = false
+        rotationPointMoving = false
     }
 
     companion object {

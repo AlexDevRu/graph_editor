@@ -11,6 +11,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:textColor="@color/color_tab_text"
+        android:textSize="16sp"
         tools:text="Canvas 1" />
 
     <androidx.appcompat.widget.AppCompatImageButton

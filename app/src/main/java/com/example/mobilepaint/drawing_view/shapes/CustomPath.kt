@@ -46,10 +46,10 @@ class CustomPath(
 
     override fun down(x: Float, y: Float) {
         if (selected) {
-            tlPointMoving = abs(x - bounds.left) < handleRadius && abs(y - bounds.top) < handleRadius
-            trPointMoving = abs(x - bounds.right) < handleRadius && abs(y - bounds.top) < handleRadius
-            blPointMoving = abs(x - bounds.left) < handleRadius && abs(y - bounds.bottom) < handleRadius
-            brPointMoving = abs(x - bounds.right) < handleRadius && abs(y - bounds.bottom) < handleRadius
+            tlPointMoving = abs(x - bounds1.left) < handleRadius && abs(y - bounds1.top) < handleRadius
+            trPointMoving = abs(x - bounds1.right) < handleRadius && abs(y - bounds1.top) < handleRadius
+            blPointMoving = abs(x - bounds1.left) < handleRadius && abs(y - bounds1.bottom) < handleRadius
+            brPointMoving = abs(x - bounds1.right) < handleRadius && abs(y - bounds1.bottom) < handleRadius
             isTranslating = !tlPointMoving && !trPointMoving && !blPointMoving && !brPointMoving && isInside(x, y)
             startX = x
             startY = y
@@ -119,10 +119,10 @@ class CustomPath(
             Log.d(TAG, "move: sy=$sy")
 
             when {
-                tlPointMoving -> scale(newSx, newSy, bounds.right, bounds.bottom)
-                trPointMoving -> scale(newSx, newSy, bounds.left, bounds.bottom)
-                blPointMoving -> scale(newSx, newSy, bounds.right, bounds.top)
-                brPointMoving -> scale(newSx, newSy, bounds.left, bounds.top)
+                tlPointMoving -> scale(newSx, newSy, bounds1.right, bounds1.bottom)
+                trPointMoving -> scale(newSx, newSy, bounds1.left, bounds1.bottom)
+                blPointMoving -> scale(newSx, newSy, bounds1.right, bounds1.top)
+                brPointMoving -> scale(newSx, newSy, bounds1.left, bounds1.top)
                 isTranslating -> {
                     translateMatrix.setTranslate(dx, dy)
                     transform(translateMatrix)
@@ -146,13 +146,13 @@ class CustomPath(
 
     override fun up(x: Float, y: Float) {
         computeBounds(bounds, true)
-        bounds1.set(bounds)
         Log.d(TAG, "up: bounds=$bounds")
         Log.d(TAG, "=============================")
         if (initialBounds.left == 0f) {
             initialBounds.set(bounds)
             initialWidth = initialBounds.width()
             initialHeight = initialBounds.height()
+            bounds1.set(bounds)
         } else {
             initialWidth = bounds.width()
             initialHeight = bounds.height()

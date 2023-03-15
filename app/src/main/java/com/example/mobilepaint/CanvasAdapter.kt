@@ -6,20 +6,15 @@ import androidx.viewpager2.adapter.FragmentStateAdapter
 
 class CanvasAdapter(
     fragment : FragmentActivity,
-    private var canvases: List<MainViewModel.ShapeWrapper> = listOf()
+    private var canvases: List<CanvasData> = listOf()
 ) : FragmentStateAdapter(fragment) {
 
-    fun setCanvases(canvases : List<MainViewModel.ShapeWrapper>) {
-        this.canvases = canvases
-        notifyDataSetChanged()
-    }
-
-    fun addCanvas(canvases : List<MainViewModel.ShapeWrapper>) {
+    fun addCanvas(canvases : List<CanvasData>) {
         this.canvases = canvases
         notifyItemInserted(canvases.size - 1)
     }
 
-    fun removeCanvas(canvases : List<MainViewModel.ShapeWrapper>, position: Int) {
+    fun removeCanvas(canvases : List<CanvasData>, position: Int) {
         this.canvases = canvases
         notifyItemRemoved(position)
     }

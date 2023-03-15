@@ -30,11 +30,6 @@ class MainViewModel(private val app : Application): AndroidViewModel(app) {
         PenType(app.getString(R.string.fill), R.drawable.ic_paint, GeometryType.PAINT),
     )
 
-    data class ShapeWrapper(
-        val shapesList : LinkedList<Shape> = LinkedList(),
-        val removedShapesList : LinkedList<Shape> = LinkedList()
-    )
-
     private val _stroke = MutableLiveData(5f)
     val stroke : LiveData<Float> = _stroke
 
@@ -53,10 +48,10 @@ class MainViewModel(private val app : Application): AndroidViewModel(app) {
     private val _openFile = MutableSharedFlow<Uri>()
     val openFile = _openFile.asSharedFlow()
 
-    val canvases = mutableListOf(ShapeWrapper())
+    val canvases = mutableListOf(CanvasData())
 
     fun addCanvas() {
-        canvases.add(ShapeWrapper())
+        canvases.add(CanvasData())
     }
 
     fun removeCanvas(position: Int) {
@@ -77,7 +72,7 @@ class MainViewModel(private val app : Application): AndroidViewModel(app) {
 
     fun saveShapes(position: Int, shapesList : LinkedList<Shape>, removedShapesList : LinkedList<Shape>) {
         if (position < canvases.size)
-            canvases[position] = ShapeWrapper(shapesList, removedShapesList)
+            canvases[position] = CanvasData(canvases[position].width, canvases[position].height, shapesList, removedShapesList)
     }
 
     fun saveImageToExternalStorage(image : Bitmap, filename: String) {

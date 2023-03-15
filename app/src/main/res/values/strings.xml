@@ -5,6 +5,7 @@
     <string name="new_canvas">New canvas</string>
 
     <string name="cursor">Cursor</string>
+    <string name="selection">Selection</string>
     <string name="path">Path</string>
     <string name="line">Line</string>
     <string name="ellipse">Ellipse</string>

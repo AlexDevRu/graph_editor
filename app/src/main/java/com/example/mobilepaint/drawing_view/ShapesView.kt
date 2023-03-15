@@ -6,6 +6,8 @@ import android.graphics.*
 import android.os.Handler
 import android.os.Looper
 import android.util.AttributeSet
+import android.view.GestureDetector
+import android.view.GestureDetector.SimpleOnGestureListener
 import android.view.MotionEvent
 import android.view.View
 import androidx.annotation.ColorInt
@@ -35,6 +37,21 @@ class ShapesView @JvmOverloads constructor(
 
     private var currentShape: Shape? = null
 
+    var a = GestureDetector(context, object : SimpleOnGestureListener() {
+        override fun onSingleTapConfirmed(e: MotionEvent): Boolean {
+            val touchX = e.x
+            val touchY = e.y
+            if (geometryType == GeometryType.HAND) {
+                selectedShape?.up(touchX, touchY)
+                deselectShape()
+                selectedShape = shapes.lastOrNull { it.isInside(touchX, touchY) }
+                selectedShape?.setSelected(true)
+                return selectedShape != null
+            }
+            return false
+        }
+    })
+
     interface OnShapeChanged {
         fun onStackSizesChanged(addedShapesSize: Int, removedShapesSize: Int)
         fun onShapeLongClick(shape: Shape)
@@ -58,6 +75,13 @@ class ShapesView @JvmOverloads constructor(
     }
 
     private val bitmapPaint = Paint(Paint.ANTI_ALIAS_FLAG)
+
+    private val borderPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        color = Color.BLACK
+        style = Paint.Style.STROKE
+        strokeWidth = 4.toPx
+        pathEffect = DashPathEffect(floatArrayOf(50.toPx, 10.toPx, 5.toPx, 10.toPx), 25f)
+    }
 
     fun addBitmap(bitmap: Bitmap) {
         val customBitmap = CustomBitmap(bitmap, handlePaint, boundingBoxPaint, null, bitmapPaint)
@@ -162,6 +186,8 @@ class ShapesView @JvmOverloads constructor(
         strokeCap = Paint.Cap.ROUND
     }
 
+    private var startClickTime = 0L
+
     @SuppressLint("ClickableViewAccessibility")
     override fun onTouchEvent(event: MotionEvent?): Boolean {
         if (event == null || geometryType == GeometryType.TEXT)
@@ -224,17 +250,10 @@ class ShapesView @JvmOverloads constructor(
         selectedShape = null
     }
 
-    private val borderPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-        color = Color.BLACK
-        style = Paint.Style.STROKE
-        strokeWidth = 4.toPx
-        pathEffect = DashPathEffect(floatArrayOf(50.toPx, 10.toPx, 5.toPx, 10.toPx), 25f)
-    }
-
     override fun onDraw(canvas: Canvas) {
         super.onDraw(canvas)
         canvas.drawColor(canvasColor)
-        //canvas.drawRect(0f, 0f, width.toFloat(), height.toFloat(), borderPaint)
+        canvas.drawRect(0f, 0f, width.toFloat(), height.toFloat(), borderPaint)
         for (shape in shapes.descendingIterator())
             shape.drawInCanvas(canvas)
     }

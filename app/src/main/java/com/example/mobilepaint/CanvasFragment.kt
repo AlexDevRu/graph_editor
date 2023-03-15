@@ -19,6 +19,7 @@ import androidx.core.os.bundleOf
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
 import com.example.mobilepaint.databinding.FragmentCanvasBinding
+import com.example.mobilepaint.drawing_view.GeometryType
 import com.example.mobilepaint.drawing_view.ShapesView
 import com.example.mobilepaint.drawing_view.shapes.Shape
 
@@ -37,7 +38,7 @@ class CanvasFragment : Fragment(), ShapesView.OnShapeChanged {
         ActivityResultContracts.RequestMultiplePermissions()
     ) { result ->
         if (result.all { it.value }) {
-            viewModel.saveImageToExternalStorage(binding.shapesView.getBitmap(), System.currentTimeMillis().toString())
+            viewModel.saveImageToExternalStorage(shapesView.getBitmap(), System.currentTimeMillis().toString())
         }
     }
 
@@ -46,7 +47,7 @@ class CanvasFragment : Fragment(), ShapesView.OnShapeChanged {
         ActivityResultContracts.StartActivityForResult()
     ) { result ->
         if (Environment.isExternalStorageManager()) {
-            viewModel.saveImageToExternalStorage(binding.shapesView.getBitmap(), System.currentTimeMillis().toString())
+            viewModel.saveImageToExternalStorage(shapesView.getBitmap(), System.currentTimeMillis().toString())
         }
     }
 
@@ -61,7 +62,7 @@ class CanvasFragment : Fragment(), ShapesView.OnShapeChanged {
                 val source = ImageDecoder.createSource(requireContext().contentResolver, uri)
                 ImageDecoder.decodeBitmap(source)
             }
-            binding.shapesView.addBitmap(bitmap)
+            shapesView.addBitmap(bitmap)
         }
     }
 
@@ -79,32 +80,46 @@ class CanvasFragment : Fragment(), ShapesView.OnShapeChanged {
         return binding.root
     }
 
+    val shapesView by lazy {
+        ShapesView(requireContext())
+    }
+
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         key = arguments?.getInt(KEY) ?: 0
 
-        binding.shapesView.setOnShapeChangedListener(this)
+        shapesView.setOnShapeChangedListener(this)
 
-        binding.shapesView.addShapes(viewModel.canvases[key].shapesList, viewModel.canvases[key].removedShapesList)
+        shapesView.addShapes(viewModel.canvases[key].shapesList, viewModel.canvases[key].removedShapesList)
+
+        shapesView.layoutParams = ViewGroup.LayoutParams(
+            viewModel.canvases[key].width,
+            viewModel.canvases[key].height
+        )
+        binding.root.addView(shapesView)
+        /*binding.shapesView.updateLayoutParams<ViewGroup.LayoutParams> {
+            width = viewModel.canvases[key].width
+            height = viewModel.canvases[key].height
+        }*/
 
         observe()
     }
 
     override fun onResume() {
         super.onResume()
-        onStackSizesChanged(binding.shapesView.shapes.size, binding.shapesView.removedShapes.size)
+        onStackSizesChanged(shapesView.shapes.size, shapesView.removedShapes.size)
     }
 
     override fun onCreateOptionsMenu(menu: Menu, inflater: MenuInflater) {
         super.onCreateOptionsMenu(menu, inflater)
         this.menu = menu
-        onStackSizesChanged(binding.shapesView.shapes.size, binding.shapesView.removedShapes.size)
+        onStackSizesChanged(shapesView.shapes.size, shapesView.removedShapes.size)
     }
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         when (item.itemId) {
-            R.id.undo -> binding.shapesView.undo()
-            R.id.redo -> binding.shapesView.redo()
+            R.id.undo -> shapesView.undo()
+            R.id.redo -> shapesView.redo()
             R.id.exportImage -> exportImage()
             R.id.importImage -> importImage()
         }
@@ -137,26 +152,29 @@ class CanvasFragment : Fragment(), ShapesView.OnShapeChanged {
 
     private fun observe() {
         viewModel.stroke.observe(viewLifecycleOwner) {
-            binding.shapesView.strokeWidth = it
+            shapesView.strokeWidth = it
         }
         viewModel.color.observe(viewLifecycleOwner) {
-            binding.shapesView.color = it
+            shapesView.color = it
         }
         viewModel.penType.observe(viewLifecycleOwner) {
-            binding.shapesView.geometryType = it.geometryType
+            shapesView.geometryType = it.geometryType
+            val enabled = it.geometryType == GeometryType.ZOOM
+            binding.root.touchable = enabled
+            //binding.root.setClickable(enabled)
         }
     }
 
     override fun onStop() {
         super.onStop()
-        viewModel.saveShapes(key, binding.shapesView.shapes, binding.shapesView.removedShapes)
+        viewModel.saveShapes(key, shapesView.shapes, shapesView.removedShapes)
     }
 
     override fun onShapeLongClick(shape: Shape) {
         AlertDialog.Builder(requireContext())
             .setTitle(R.string.remove_shape_question)
             .setPositiveButton(android.R.string.ok) { _, _ ->
-                binding.shapesView.removeShape(shape)
+                shapesView.removeShape(shape)
             }
             .show()
     }
@@ -169,7 +187,7 @@ class CanvasFragment : Fragment(), ShapesView.OnShapeChanged {
     companion object {
         private const val KEY = "KEY"
 
-        fun createInstance(position : Int) : CanvasFragment {
+        fun createInstance(position: Int) : CanvasFragment {
             val fragment = CanvasFragment()
             fragment.arguments = bundleOf(KEY to position)
             return fragment

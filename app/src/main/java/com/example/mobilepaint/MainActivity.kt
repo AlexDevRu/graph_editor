@@ -40,6 +40,8 @@ class MainActivity : AppCompatActivity(), View.OnClickListener,
         ViewModelProvider(this)[MainViewModel::class.java]
     }
 
+    private var firstCreation = false
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = ActivityMainBinding.inflate(layoutInflater)
@@ -67,6 +69,18 @@ class MainActivity : AppCompatActivity(), View.OnClickListener,
         }.attach()
 
         observe()
+
+        firstCreation = savedInstanceState == null
+    }
+
+    override fun onStart() {
+        super.onStart()
+        if (firstCreation) {
+            binding.viewPager.post {
+                viewModel.setFirstCanvas(binding.viewPager.width, binding.viewPager.height)
+                canvasAdapter.setCanvases(viewModel.canvases)
+            }
+        }
     }
 
     private fun changeRemoveButtonVisibility() {
@@ -158,7 +172,7 @@ class MainActivity : AppCompatActivity(), View.OnClickListener,
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         when (item.itemId) {
             R.id.newCanvas -> {
-                viewModel.addCanvas()
+                viewModel.addCanvas(binding.viewPager.width, binding.viewPager.height)
                 val tab = binding.tabLayout.newTab()
                 binding.tabLayout.addTab(tab)
                 canvasAdapter.addCanvas(viewModel.canvases)

@@ -9,6 +9,11 @@ class CanvasAdapter(
     private var canvases: List<CanvasData> = listOf()
 ) : FragmentStateAdapter(fragment) {
 
+    fun setCanvases(canvases : List<CanvasData>) {
+        this.canvases = canvases
+        notifyDataSetChanged()
+    }
+
     fun addCanvas(canvases : List<CanvasData>) {
         this.canvases = canvases
         notifyItemInserted(canvases.size - 1)

@@ -21,7 +21,8 @@ import java.util.*
 class MainViewModel(private val app : Application): AndroidViewModel(app) {
 
     val options = listOf(
-        PenType(app.getString(R.string.cursor), R.drawable.ic_hand, GeometryType.HAND),
+        PenType(app.getString(R.string.cursor), R.drawable.ic_cursor, GeometryType.ZOOM),
+        PenType(app.getString(R.string.selection), R.drawable.ic_hand, GeometryType.HAND),
         PenType(app.getString(R.string.path), R.drawable.ic_curve, GeometryType.PATH),
         PenType(app.getString(R.string.line), R.drawable.ic_line, GeometryType.LINE),
         PenType(app.getString(R.string.ellipse), R.drawable.ic_ellipse, GeometryType.ELLIPSE),
@@ -48,10 +49,19 @@ class MainViewModel(private val app : Application): AndroidViewModel(app) {
     private val _openFile = MutableSharedFlow<Uri>()
     val openFile = _openFile.asSharedFlow()
 
-    val canvases = mutableListOf(CanvasData())
+    private var minWidth = 0
+    private var minHeight = 0
 
-    fun addCanvas() {
-        canvases.add(CanvasData())
+    val canvases = mutableListOf<CanvasData>()
+
+    fun setFirstCanvas(minWidth: Int, minHeight: Int) {
+        this.minWidth = minWidth
+        this.minHeight = minHeight
+        addCanvas(minWidth, minHeight)
+    }
+
+    fun addCanvas(width: Int, height: Int) {
+        canvases.add(CanvasData(width, height))
     }
 
     fun removeCanvas(position: Int) {

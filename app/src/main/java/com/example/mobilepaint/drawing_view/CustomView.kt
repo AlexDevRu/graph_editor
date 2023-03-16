@@ -66,6 +66,14 @@ class CustomView @JvmOverloads constructor(
             matrix3.setRotate(45f, bounds.centerX(), bounds.centerY())
             path.transform(matrix3)
             invalidate()
+            for (i in 1..8) {
+                delay(300)
+                path.computeBounds(bounds, true)
+                matrix2.setScale(0.9f, 0.9f, bounds.left, bounds.top)
+                path.transform(matrix2)
+                invalidate()
+            }
+
             /*delay(1000)
             matrix2.setScale(0.5f, 0.5f, bounds.left, bounds.top)
             path.transform(matrix2)

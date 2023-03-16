@@ -177,8 +177,6 @@ class CustomEllipse(
         }
     }
 
-    private var drawn = false
-
     override fun up(x: Float, y: Float) {
         calculateCoordinates()
         if (initialBounds.left == 0f) {
@@ -199,7 +197,6 @@ class CustomEllipse(
             boundsPath.reset()
             boundsPath.addOval(this, Path.Direction.CW)
         }
-        drawn = true
     }
 
     private fun calculateCoordinates() {

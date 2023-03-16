@@ -76,8 +76,6 @@ class CustomLine(
         paint.color = color
     }
 
-    override fun getBoundingBox() = this
-
     override fun isInside(x: Float, y: Float) = contains(x, y)
 
     override fun setSelected(selected: Boolean) {

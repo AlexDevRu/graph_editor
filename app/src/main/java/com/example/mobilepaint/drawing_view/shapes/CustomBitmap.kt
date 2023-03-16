@@ -1,66 +1,91 @@
 package com.example.mobilepaint.drawing_view.shapes
 
 import android.graphics.*
-import android.util.Log
-import kotlin.math.min
+import com.example.mobilepaint.SelectionBorderOptions
 
 class CustomBitmap(
     private val bitmap: Bitmap,
-    handlePaint: Paint,
-    boundingBoxPaint: Paint,
-    selectionShader: Shader?,
-    paint: Paint
-): CustomRectF(handlePaint, boundingBoxPaint, selectionShader, paint) {
+    selectionBorderOptions: SelectionBorderOptions,
+    override val paint: Paint
+): Path(), Shape, SelectionBorder.Listener {
+
+    private val selectionBorder = SelectionBorder(selectionBorderOptions, this)
+
+    private var fillPaint : Paint? = null
+
+    private var selected = false
 
     private var imageSize = 300
 
     private var scaledBitmap = Bitmap.createScaledBitmap(bitmap, imageSize, imageSize,true)
 
-    private val matrix = Matrix()
+    private val bounds = RectF()
+
+    private var matrix = Matrix()
 
     init {
-        left = 0f
-        top = 0f
-        right = imageSize.toFloat()
-        bottom = imageSize.toFloat()
+        moveTo(0f, 0f)
+        lineTo(imageSize.toFloat(), imageSize.toFloat())
+        bounds.set(0f, 0f, imageSize.toFloat(), imageSize.toFloat())
+        selectionBorder.up(bounds)
+    }
+
+    override fun onTransform(matrix: Matrix) {
+        this.matrix.setConcat(this.matrix, matrix)
+        //scaledBitmap = Bitmap.createBitmap(bitmap, 0, 0, bitmap.width, bitmap.height, matrix, true)
+        transform(matrix)
+        /*computeBounds(bounds, true)
+        selectionBorder.up(bounds)*/
+    }
+
+    /*override fun onScale(matrix: Matrix) {
+        this.matrix.setConcat(this.matrix, matrix)
+        //this.matrix = matrix
+        //scaledBitmap = Bitmap.createBitmap(bitmap, 0, 0, bitmap.width, bitmap.height, matrix, true)
+        transform(matrix)
+    }*/
+
+    override fun down(x: Float, y: Float) {
+        if (selected) {
+            selectionBorder.down(x, y)
+        }
     }
 
     override fun move(x: Float, y: Float) {
-        super.move(x, y)
-        if (width() != imageSize.toFloat() || height() != imageSize.toFloat()) {
-            imageSize = min(width().toInt(), height().toInt())
-
-            val point = when {
-                tlPointMoving -> PointF(right, bottom)
-                trPointMoving -> PointF(left, bottom)
-                blPointMoving -> PointF(right, top)
-                brPointMoving -> PointF(left, top)
-                else -> return
-            }
-
-            val sx = imageSize.toFloat() / bitmap.width
-            val sy = imageSize.toFloat() / bitmap.height
-            Log.d(TAG, "move: sx=$sx")
-            Log.d(TAG, "move: sy=$sy")
-            matrix.reset()
-            matrix.setScale(sx, sy, point.x, point.y)
-            scaledBitmap = Bitmap.createBitmap(bitmap, 0, 0, bitmap.width, bitmap.height, matrix, true)
+        if (selected) {
+            selectionBorder.move(x, y)
         }
+    }
+
+    override fun up(x: Float, y: Float) {
+        computeBounds(bounds, true)
+        selectionBorder.up(bounds)
     }
 
     override fun drawInCanvas(canvas: Canvas) {
-        canvas.drawBitmap(scaledBitmap, left, top, paint)
-        if (selected1) {
-            canvas.drawRect(this, boundingBoxPaint)
-            canvas.drawCircle(left, top, handleRadius, handlePaint)
-            canvas.drawCircle(right, top, handleRadius, handlePaint)
-            canvas.drawCircle(left, bottom, handleRadius, handlePaint)
-            canvas.drawCircle(right, bottom, handleRadius, handlePaint)
+        canvas.drawBitmap(scaledBitmap, matrix, paint)
+        if (selected) {
+            selectionBorder.drawInCanvas(canvas)
         }
     }
 
-    companion object {
-        private const val TAG = "CustomBitmap"
+    override fun changeColor(color: Int) {
+        paint.color = color
+    }
+
+    override fun fillColor(color: Int): Boolean {
+        if (fillPaint == null)
+            fillPaint = Paint().apply {
+                style = Paint.Style.FILL
+            }
+        fillPaint?.color = color
+        return true
+    }
+
+    override fun isInside(x: Float, y: Float) = bounds.contains(x, y)
+
+    override fun setSelected(selected: Boolean) {
+        this.selected = selected
     }
 
 }

@@ -119,10 +119,6 @@ class CustomArrow(
         return bounds.contains(x, y)
     }
 
-    override fun getBoundingBox(): RectF {
-        return bounds
-    }
-
     private fun applyShader(shader: Shader?) {
         paint.shader = shader
         trianglePaint.shader = shader

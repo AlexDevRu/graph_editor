@@ -6,13 +6,12 @@ import android.graphics.*
 import android.os.Handler
 import android.os.Looper
 import android.util.AttributeSet
-import android.view.GestureDetector
-import android.view.GestureDetector.SimpleOnGestureListener
 import android.view.MotionEvent
 import android.view.View
 import androidx.annotation.ColorInt
 import androidx.core.content.ContextCompat
 import com.example.mobilepaint.R
+import com.example.mobilepaint.SelectionBorderOptions
 import com.example.mobilepaint.Utils.toPx
 import com.example.mobilepaint.drawing_view.shapes.*
 import java.util.*
@@ -32,25 +31,16 @@ class ShapesView @JvmOverloads constructor(
     private val arrowWidth = resources.getDimension(R.dimen.drawing_view_arrow_width)
     private val arrowHeight = arrowWidth * 1.2f
 
+    private val handleRadius = 8.toPx
+
     val shapes = LinkedList<Shape>()
     val removedShapes = LinkedList<Shape>()
 
     private var currentShape: Shape? = null
 
-    var a = GestureDetector(context, object : SimpleOnGestureListener() {
-        override fun onSingleTapConfirmed(e: MotionEvent): Boolean {
-            val touchX = e.x
-            val touchY = e.y
-            if (geometryType == GeometryType.HAND) {
-                selectedShape?.up(touchX, touchY)
-                deselectShape()
-                selectedShape = shapes.lastOrNull { it.isInside(touchX, touchY) }
-                selectedShape?.setSelected(true)
-                return selectedShape != null
-            }
-            return false
-        }
-    })
+    private fun getSelectionBorderOptions() = SelectionBorderOptions(
+        handlePaint, handleRadius, boundingBoxPaint
+    )
 
     interface OnShapeChanged {
         fun onStackSizesChanged(addedShapesSize: Int, removedShapesSize: Int)
@@ -84,7 +74,7 @@ class ShapesView @JvmOverloads constructor(
     }
 
     fun addBitmap(bitmap: Bitmap) {
-        val customBitmap = CustomBitmap(bitmap, handlePaint, boundingBoxPaint, null, bitmapPaint)
+        val customBitmap = CustomBitmap(bitmap, getSelectionBorderOptions(), bitmapPaint)
         shapes.push(customBitmap)
         addNewShape(customBitmap)
     }
@@ -186,8 +176,6 @@ class ShapesView @JvmOverloads constructor(
         strokeCap = Paint.Cap.ROUND
     }
 
-    private var startClickTime = 0L
-
     @SuppressLint("ClickableViewAccessibility")
     override fun onTouchEvent(event: MotionEvent?): Boolean {
         if (event == null || geometryType == GeometryType.TEXT)
@@ -209,10 +197,10 @@ class ShapesView @JvmOverloads constructor(
                     selectedShape?.down(touchX, touchY)
                 } else {
                     currentShape = when (geometryType) {
-                        GeometryType.PATH -> CustomPath(handlePaint, boundingBoxPaint, shader, createPathPaint())
+                        GeometryType.PATH -> CustomPath(getSelectionBorderOptions(), shader, createPathPaint())
                         GeometryType.LINE -> CustomLine(handlePaint, shader, createPaint())
-                        GeometryType.RECT -> CustomRectF(handlePaint, boundingBoxPaint, shader, createPaint())
-                        GeometryType.ELLIPSE -> CustomEllipse(handlePaint, boundingBoxPaint, shader, createPaint())
+                        GeometryType.RECT -> CustomRectF(getSelectionBorderOptions(), shader, createPaint())
+                        GeometryType.ELLIPSE -> CustomEllipse(getSelectionBorderOptions(), shader, createPaint())
                         GeometryType.ARROW -> CustomArrow(arrowWidth, arrowHeight, handlePaint, shader, createPaint())
                         else -> null
                     }

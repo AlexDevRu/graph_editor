@@ -70,15 +70,6 @@ class CustomText(
         return false
     }
 
-    override fun getBoundingBox(): RectF {
-        TODO("Not yet implemented")
-    }
-
-    override fun translate(dx: Float, dy: Float) {
-        x += dx
-        y += dy
-    }
-
     override fun changeColor(color: Int) {
         paint.color = color
     }

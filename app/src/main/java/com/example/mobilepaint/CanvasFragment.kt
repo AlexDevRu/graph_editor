@@ -82,7 +82,7 @@ class CanvasFragment : Fragment(), ShapesView.OnShapeChanged {
         return binding.root
     }
 
-    val shapesView by lazy {
+    private val shapesView by lazy {
         ShapesView(requireContext())
     }
 
@@ -144,7 +144,7 @@ class CanvasFragment : Fragment(), ShapesView.OnShapeChanged {
                     .show()
             }
         }
-        return super.onOptionsItemSelected(item)
+        return true
     }
 
     private fun importImage() {

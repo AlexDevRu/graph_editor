@@ -16,8 +16,10 @@ import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.os.bundleOf
+import androidx.core.view.updateLayoutParams
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
+import com.example.mobilepaint.databinding.DialogChangeCanvasSizeBinding
 import com.example.mobilepaint.databinding.FragmentCanvasBinding
 import com.example.mobilepaint.drawing_view.GeometryType
 import com.example.mobilepaint.drawing_view.ShapesView
@@ -122,6 +124,25 @@ class CanvasFragment : Fragment(), ShapesView.OnShapeChanged {
             R.id.redo -> shapesView.redo()
             R.id.exportImage -> exportImage()
             R.id.importImage -> importImage()
+            R.id.changeCanvasSize -> {
+                val changeCanvasSizeBinding = DialogChangeCanvasSizeBinding.inflate(layoutInflater)
+                changeCanvasSizeBinding.etWidth.setText(shapesView.width.toString())
+                changeCanvasSizeBinding.etHeight.setText(shapesView.height.toString())
+                AlertDialog.Builder(requireContext())
+                    .setTitle(R.string.change_canvas_size)
+                    .setView(changeCanvasSizeBinding.root)
+                    .setPositiveButton(android.R.string.ok) { _, _ ->
+                        val newWidth = changeCanvasSizeBinding.etWidth.text?.toString()?.toIntOrNull()
+                        val newHeight = changeCanvasSizeBinding.etHeight.text?.toString()?.toIntOrNull()
+                        shapesView.updateLayoutParams<ViewGroup.LayoutParams> {
+                            if (newWidth != null && newWidth > 0)
+                                width = newWidth
+                            if (newHeight != null && newHeight > 0)
+                                height = newHeight
+                        }
+                    }
+                    .show()
+            }
         }
         return super.onOptionsItemSelected(item)
     }

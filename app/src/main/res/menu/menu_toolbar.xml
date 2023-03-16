@@ -20,6 +20,12 @@
         app:iconTint="@color/white"
         app:showAsAction="ifRoom" />
     <item
+        android:id="@+id/changeCanvasSize"
+        android:icon="@drawable/ic_add"
+        android:title="@string/change_canvas_size"
+        app:iconTint="@color/white"
+        app:showAsAction="ifRoom" />
+    <item
         android:id="@+id/importImage"
         android:icon="@drawable/ic_upload"
         android:title="@string/import_image"

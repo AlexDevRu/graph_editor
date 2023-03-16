@@ -3,6 +3,7 @@
     <string name="undo">Undo</string>
     <string name="redo">Redo</string>
     <string name="new_canvas">New canvas</string>
+    <string name="change_canvas_size">Change canvas size</string>
 
     <string name="cursor">Cursor</string>
     <string name="selection">Selection</string>
@@ -23,4 +24,7 @@
     <string name="remove_shape_question">Do you want to remove selected shape?</string>
 
     <string name="canvas_n">Canvas %d</string>
+
+    <string name="width">Width</string>
+    <string name="height">Height</string>
 </resources>

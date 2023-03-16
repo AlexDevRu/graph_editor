@@ -53,16 +53,11 @@ class CustomPath(
         canvas.drawPath(this, paint)
         if (selected) {
             canvas.drawPath(boundsPath, boundingBoxPaint)
-            //canvas.drawRect(bounds, boundingBoxPaint)
             canvas.drawCircle(handlePoints[8], handlePoints[9], handleRadius, rotateHandlePaint)
             canvas.drawCircle(handlePoints[0], handlePoints[1], handleRadius, handlePaint)
             canvas.drawCircle(handlePoints[2], handlePoints[3], handleRadius, handlePaint)
             canvas.drawCircle(handlePoints[4], handlePoints[5], handleRadius, handlePaint)
             canvas.drawCircle(handlePoints[6], handlePoints[7], handleRadius, handlePaint)
-            /*canvas.drawCircle(bounds.left, bounds.top, handleRadius, handlePaint)
-            canvas.drawCircle(bounds.right, bounds.top, handleRadius, handlePaint)
-            canvas.drawCircle(bounds.left, bounds.bottom, handleRadius, handlePaint)
-            canvas.drawCircle(bounds.right, bounds.bottom, handleRadius, handlePaint)*/
         }
     }
 
@@ -208,6 +203,8 @@ class CustomPath(
             boundsPath.addRect(bounds, Direction.CW)
         }
     }
+
+
 
     override fun isInside(x: Float, y: Float): Boolean {
         return bounds.contains(x, y)

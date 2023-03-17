@@ -2,8 +2,7 @@ package com.example.mobilepaint.drawing_view.shapes
 
 import android.graphics.*
 import com.example.mobilepaint.SelectionBorderOptions
-import kotlin.math.max
-import kotlin.math.min
+import com.example.mobilepaint.drawing_view.Operation
 
 class CustomEllipse(
     selectionBorderOptions: SelectionBorderOptions,
@@ -20,7 +19,11 @@ class CustomEllipse(
     private val shape = Path()
     private val bounds = RectF()
 
+    private val matrix = Matrix()
+    private val inverse = Matrix()
+
     override fun onTransform(matrix: Matrix) {
+        this.matrix.setConcat(this.matrix, matrix)
         shape.transform(matrix)
     }
 
@@ -44,22 +47,21 @@ class CustomEllipse(
         }
     }
 
-    override fun up(x: Float, y: Float) {
+    override fun up(x: Float, y: Float) : Operation? {
+        val firstTimeUp = shape.isEmpty
         if (selectionBorder.isEmpty)
             shape.addOval(this, Path.Direction.CW)
         shape.computeBounds(bounds, true)
         selectionBorder.up(bounds)
-    }
-
-    private fun calculateCoordinates() {
-        val xMin = min(left, right)
-        val xMax = max(left, right)
-        val yMin = min(top, bottom)
-        val yMax = max(top, bottom)
-        left = xMin
-        top = yMin
-        right = xMax
-        bottom = yMax
+        return when {
+            firstTimeUp -> Operation.Creation(this)
+            !matrix.isIdentity -> {
+                matrix.invert(inverse)
+                matrix.reset()
+                Operation.Transformation(this, inverse)
+            }
+            else -> null
+        }
     }
 
     override fun drawInCanvas(canvas: Canvas) {
@@ -69,7 +71,7 @@ class CustomEllipse(
             canvas.drawPath(shape, paint)
 
         fillPaint?.let {
-            canvas.drawPath(selectionBorder, it)
+            canvas.drawPath(shape, it)
         }
 
         if (selected) {
@@ -95,6 +97,18 @@ class CustomEllipse(
     override fun setSelected(selected: Boolean) {
         this.selected = selected
         paint.shader = if (selected) selectionShader else null
+    }
+
+    override fun applyOperation(operation: Operation): Operation? {
+        if (operation is Operation.Transformation) {
+            selectionBorder.applyMatrix(operation.matrix)
+            shape.transform(operation.matrix)
+            shape.computeBounds(bounds, true)
+            selectionBorder.up(bounds)
+            operation.matrix.invert(inverse)
+            return Operation.Transformation(this, inverse)
+        }
+        return null
     }
 
     companion object {

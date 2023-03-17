@@ -36,6 +36,9 @@ class ShapesView @JvmOverloads constructor(
     val shapes = LinkedList<Shape>()
     val removedShapes = LinkedList<Shape>()
 
+    private val operations = LinkedList<Operation>()
+    private val removedOperations = LinkedList<Operation>()
+
     private var currentShape: Shape? = null
 
     private fun getSelectionBorderOptions() = SelectionBorderOptions(
@@ -130,21 +133,39 @@ class ShapesView @JvmOverloads constructor(
         LinearGradient(0f, 0f, 100f, 20f, selectionColors, null, Shader.TileMode.MIRROR)
 
     fun undo() {
-        if (shapes.isNotEmpty()) {
-            val shape = shapes.pop()
-            if (shape == selectedShape)
-                deselectShape()
-            removedShapes.push(shape)
-            onShapeChanged?.onStackSizesChanged(shapes.size, removedShapes.size)
+        if (operations.isNotEmpty()) {
+            when(val operation = operations.pop()) {
+                is Operation.Creation -> {
+                    shapes.remove(operation.shape)
+                    removedShapes.push(operation.shape)
+                    removedOperations.push(operation)
+                }
+                else -> {
+                    val invertOperation = operation.shape.applyOperation(operation)
+                    if (invertOperation != null)
+                        removedOperations.push(invertOperation)
+                }
+            }
+            onShapeChanged?.onStackSizesChanged(operations.size, removedOperations.size)
             invalidate()
         }
     }
 
     fun redo() {
-        if (removedShapes.isNotEmpty()) {
-            val shape = removedShapes.pop()
-            shapes.push(shape)
-            onShapeChanged?.onStackSizesChanged(shapes.size, removedShapes.size)
+        if (removedOperations.isNotEmpty()) {
+            when(val operation = removedOperations.pop()) {
+                is Operation.Creation -> {
+                    removedShapes.remove(operation.shape)
+                    shapes.push(operation.shape)
+                    operations.push(operation)
+                }
+                else -> {
+                    val invertOperation = operation.shape.applyOperation(operation)
+                    if (invertOperation != null)
+                        operations.push(invertOperation)
+                }
+            }
+            onShapeChanged?.onStackSizesChanged(operations.size, removedOperations.size)
             invalidate()
         }
     }
@@ -217,12 +238,16 @@ class ShapesView @JvmOverloads constructor(
             MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> {
                 handler.removeCallbacks(onLongPressed)
                 if (geometryType == GeometryType.HAND) {
-                    selectedShape?.up(touchX, touchY)
+                    val operation = selectedShape?.up(touchX, touchY)
+                    if (operation != null)
+                        operations.push(operation)
                     deselectShape()
                     selectedShape = shapes.lastOrNull { it.isInside(touchX, touchY) }
                     selectedShape?.setSelected(true)
                 } else {
-                    currentShape?.up(touchX, touchY)
+                    val operation = currentShape?.up(touchX, touchY)
+                    if (operation != null)
+                        operations.push(operation)
                     currentShape = null
                 }
             }

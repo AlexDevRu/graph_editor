@@ -1,7 +1,10 @@
 package com.example.mobilepaint.drawing_view.shapes
 
 import android.graphics.*
+import android.util.Log
+import androidx.core.graphics.values
 import com.example.mobilepaint.SelectionBorderOptions
+import com.example.mobilepaint.drawing_view.Operation
 
 class CustomBitmap(
     private val bitmap: Bitmap,
@@ -21,7 +24,11 @@ class CustomBitmap(
 
     private val bounds = RectF()
 
-    private var matrix = Matrix()
+    private val matrix = Matrix()
+    private val matrix1 = Matrix()
+
+    private var x = 0f
+    private var y = 0f
 
     init {
         moveTo(0f, 0f)
@@ -32,18 +39,16 @@ class CustomBitmap(
 
     override fun onTransform(matrix: Matrix) {
         this.matrix.setConcat(this.matrix, matrix)
-        //scaledBitmap = Bitmap.createBitmap(bitmap, 0, 0, bitmap.width, bitmap.height, matrix, true)
+        this.matrix1.setConcat(this.matrix1, matrix)
+        Log.d(TAG, "onTransform: matrix1=${matrix1.toShortString()}")
+        //x = matrix1.values()[2]
+        //y = matrix1.values()[5]
+        //scaledBitmap = Bitmap.createBitmap(bitmap, 0, 0, bitmap.width, bitmap.height, matrix1, true)
         transform(matrix)
+
         /*computeBounds(bounds, true)
         selectionBorder.up(bounds)*/
     }
-
-    /*override fun onScale(matrix: Matrix) {
-        this.matrix.setConcat(this.matrix, matrix)
-        //this.matrix = matrix
-        //scaledBitmap = Bitmap.createBitmap(bitmap, 0, 0, bitmap.width, bitmap.height, matrix, true)
-        transform(matrix)
-    }*/
 
     override fun down(x: Float, y: Float) {
         if (selected) {
@@ -57,13 +62,20 @@ class CustomBitmap(
         }
     }
 
-    override fun up(x: Float, y: Float) {
+    override fun up(x: Float, y: Float) : Operation? {
         computeBounds(bounds, true)
         selectionBorder.up(bounds)
+        return null
     }
 
     override fun drawInCanvas(canvas: Canvas) {
-        canvas.drawBitmap(scaledBitmap, matrix, paint)
+        /*canvas.save()
+        canvas.translate(x, y)
+        canvas.scale(selectionBorder.sx, selectionBorder.sy, selectionBorder.bounds.centerX(), selectionBorder.bounds.centerY())
+        canvas.rotate(selectionBorder.rotation, selectionBorder.bounds.centerX(), selectionBorder.bounds.centerY())
+        canvas.drawBitmap(scaledBitmap, x, y, paint)
+        canvas.restore()*/
+        canvas.drawBitmap(scaledBitmap, matrix1, paint)
         if (selected) {
             selectionBorder.drawInCanvas(canvas)
         }
@@ -86,6 +98,10 @@ class CustomBitmap(
 
     override fun setSelected(selected: Boolean) {
         this.selected = selected
+    }
+
+    companion object {
+        private const val TAG = "CustomBitmap"
     }
 
 }

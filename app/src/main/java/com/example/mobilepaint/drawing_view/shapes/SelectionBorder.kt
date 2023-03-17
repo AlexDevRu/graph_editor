@@ -14,11 +14,9 @@ class SelectionBorder(
 
     interface Listener {
         fun onTransform(matrix: Matrix) = Unit
-        /*fun onScale(matrix: Matrix) = Unit
-        fun onRotate(matrix: Matrix) = Unit*/
     }
 
-    private val bounds = RectF()
+    val bounds = RectF()
 
     private val handlePoints = FloatArray(8)
     private val matrix = Matrix()
@@ -32,10 +30,10 @@ class SelectionBorder(
     private var startX = 0f
     private var startY = 0f
 
-    private var rotation = 0f
+    var rotation = 0f
 
-    private var sx = 1f
-    private var sy = 1f
+    var sx = 1f
+    var sy = 1f
 
     private var centerX = 0f
     private var centerY = 0f
@@ -59,17 +57,20 @@ class SelectionBorder(
     private fun scale(sx: Float, sy: Float, px: Float, py: Float) {
         matrix.reset()
         matrix.setScale(sx, sy, px, py)
-        transform(matrix)
-        matrix.mapPoints(handlePoints)
+        applyMatrix(matrix)
         listener.onTransform(matrix)
     }
 
     private fun rotate(degrees: Float) {
         matrix.reset()
         matrix.setRotate(degrees, bounds.centerX(), bounds.centerY())
+        applyMatrix(matrix)
+        listener.onTransform(matrix)
+    }
+
+    fun applyMatrix(matrix: Matrix) {
         transform(matrix)
         matrix.mapPoints(handlePoints)
-        listener.onTransform(matrix)
     }
 
     fun down(x: Float, y: Float) {

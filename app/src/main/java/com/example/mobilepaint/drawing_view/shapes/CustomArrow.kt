@@ -2,6 +2,7 @@ package com.example.mobilepaint.drawing_view.shapes
 
 import android.graphics.*
 import com.example.mobilepaint.Utils.toPx
+import com.example.mobilepaint.drawing_view.Operation
 import kotlin.math.abs
 import kotlin.math.atan
 
@@ -30,6 +31,9 @@ class CustomArrow(
     private val triangleBounds = RectF()
     private val bounds = RectF()
 
+    private var startX = 0f
+    private var startY = 0f
+
     private val trianglePaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
         style = Paint.Style.FILL
         color = paint.color
@@ -48,6 +52,16 @@ class CustomArrow(
         if (selected) {
             startPointMoving = abs(x - left) < handleRadius && abs(y - top) < handleRadius
             endPointMoving = abs(x - right) < handleRadius && abs(y - bottom) < handleRadius
+            if (startPointMoving) {
+                startX = left
+                startY = top
+            } else if (endPointMoving) {
+                startX = right
+                startY = bottom
+            } else {
+                startX = 0f
+                startY = 0f
+            }
         } else {
             left = x
             top = y
@@ -107,12 +121,17 @@ class CustomArrow(
             calculateArrowCoordinates(x, y)
     }
 
-    override fun up(x: Float, y: Float) {
+    override fun up(x: Float, y: Float) : Operation {
         triangle.computeBounds(triangleBounds, true)
         bounds.left = minOf(left, right, triangleBounds.left, triangleBounds.right)
         bounds.right = maxOf(left, right, triangleBounds.left, triangleBounds.right)
         bounds.top = minOf(top, bottom, triangleBounds.top, triangleBounds.bottom)
         bounds.bottom = maxOf(top, bottom, triangleBounds.top, triangleBounds.bottom)
+        return when {
+            startPointMoving -> Operation.PointMoving(this, false, startX, startY)
+            endPointMoving -> Operation.PointMoving(this, false, startX, startY)
+            else -> Operation.Creation(this)
+        }
     }
 
     override fun isInside(x: Float, y: Float): Boolean {
@@ -138,5 +157,26 @@ class CustomArrow(
         }
         startPointMoving = false
         endPointMoving = false
+    }
+
+    override fun applyOperation(operation: Operation) : Operation? {
+        if (operation is Operation.PointMoving) {
+            val x: Float
+            val y: Float
+            if (operation.isStartPoint) {
+                x = left
+                y = top
+                left = operation.x
+                top = operation.y
+            } else {
+                x = right
+                y = bottom
+                right = operation.x
+                bottom = operation.y
+            }
+            calculateArrowCoordinates(right, bottom)
+            return Operation.PointMoving(this, operation.isStartPoint, x, y)
+        }
+        return null
     }
 }

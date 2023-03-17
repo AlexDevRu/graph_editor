@@ -3,6 +3,7 @@ package com.example.mobilepaint.drawing_view.shapes
 import android.graphics.*
 import android.util.Log
 import com.example.mobilepaint.SelectionBorderOptions
+import com.example.mobilepaint.drawing_view.Operation
 
 class CustomPath(
     selectionBorderOptions: SelectionBorderOptions,
@@ -16,7 +17,11 @@ class CustomPath(
 
     private val selectionBorder = SelectionBorder(selectionBorderOptions, this)
 
+    private val matrix = Matrix()
+    private val inverse = Matrix()
+
     override fun onTransform(matrix: Matrix) {
+        this.matrix.setConcat(this.matrix, matrix)
         transform(matrix)
     }
 
@@ -45,9 +50,22 @@ class CustomPath(
         }
     }
 
-    override fun up(x: Float, y: Float) {
+    private var firstTimeUp = true
+
+    override fun up(x: Float, y: Float) : Operation? {
         computeBounds(bounds, true)
         selectionBorder.up(bounds)
+        val operation = when {
+            firstTimeUp -> Operation.Creation(this)
+            !matrix.isIdentity -> {
+                matrix.invert(inverse)
+                matrix.reset()
+                Operation.Transformation(this, inverse)
+            }
+            else -> null
+        }
+        firstTimeUp = false
+        return operation
     }
 
     override fun changeColor(color: Int) {
@@ -61,6 +79,18 @@ class CustomPath(
 
     override fun isInside(x: Float, y: Float): Boolean {
         return bounds.contains(x, y)
+    }
+
+    override fun applyOperation(operation: Operation): Operation? {
+        if (operation is Operation.Transformation) {
+            selectionBorder.applyMatrix(operation.matrix)
+            transform(operation.matrix)
+            computeBounds(bounds, true)
+            selectionBorder.up(bounds)
+            operation.matrix.invert(inverse)
+            return Operation.Transformation(this, inverse)
+        }
+        return null
     }
 
     companion object {

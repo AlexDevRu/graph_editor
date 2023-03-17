@@ -14,7 +14,6 @@ class CustomZoomLayout @JvmOverloads constructor(
 ): ZoomLayout(context, attrs, defStyleAttr) {
 
     var touchable = true
-    var isTouchable : (() -> Boolean)? = null
 
     @SuppressLint("ClickableViewAccessibility")
     override fun onTouchEvent(ev: MotionEvent): Boolean {

@@ -182,7 +182,6 @@ class CanvasFragment : Fragment(), ShapesView.OnShapeChanged {
             shapesView.geometryType = it.geometryType
             val enabled = it.geometryType == GeometryType.ZOOM
             binding.root.touchable = enabled
-            //binding.root.setClickable(enabled)
         }
     }
 

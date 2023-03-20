@@ -40,8 +40,6 @@ class MainActivity : AppCompatActivity(), View.OnClickListener,
         ViewModelProvider(this)[MainViewModel::class.java]
     }
 
-    private var firstCreation = false
-
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = ActivityMainBinding.inflate(layoutInflater)
@@ -70,12 +68,7 @@ class MainActivity : AppCompatActivity(), View.OnClickListener,
 
         observe()
 
-        firstCreation = savedInstanceState == null
-    }
-
-    override fun onStart() {
-        super.onStart()
-        if (firstCreation) {
+        if (savedInstanceState == null) {
             binding.viewPager.post {
                 viewModel.setFirstCanvas(binding.viewPager.width, binding.viewPager.height)
                 canvasAdapter.setCanvases(viewModel.canvases)

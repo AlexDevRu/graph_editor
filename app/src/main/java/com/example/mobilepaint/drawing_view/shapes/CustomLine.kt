@@ -3,6 +3,10 @@ package com.example.mobilepaint.drawing_view.shapes
 import android.graphics.*
 import com.example.mobilepaint.Utils.toPx
 import com.example.mobilepaint.drawing_view.Operation
+import com.example.mobilepaint.models.json.LineData
+import com.example.mobilepaint.models.json.PointData
+import com.example.mobilepaint.models.json.ShapeData
+import com.google.gson.Gson
 import kotlin.math.abs
 import kotlin.math.max
 import kotlin.math.min
@@ -120,6 +124,23 @@ class CustomLine(
             return Operation.PointMoving(this, operation.isStartPoint, x, y)
         }
         return null
+    }
+
+    override fun toJson(gson: Gson): String {
+        val lineData = LineData(
+            shapeData = ShapeData(paint.color, null, paint.strokeWidth),
+            start = PointData.fromPoint(startPoint),
+            end = PointData.fromPoint(endPoint),
+        )
+        return gson.toJson(lineData)
+    }
+
+    fun addData(lineData: LineData) {
+        paint.color = lineData.shapeData.color
+        paint.strokeWidth = lineData.shapeData.stroke
+        down(lineData.start.x, lineData.start.y)
+        move(lineData.end.x, lineData.end.y)
+        up(lineData.end.x, lineData.end.y)
     }
 
 }

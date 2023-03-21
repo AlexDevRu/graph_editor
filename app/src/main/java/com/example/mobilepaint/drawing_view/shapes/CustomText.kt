@@ -1,6 +1,7 @@
 package com.example.mobilepaint.drawing_view.shapes
 
 import android.graphics.*
+import com.google.gson.Gson
 
 class CustomText(
     override val paint: Paint,
@@ -75,6 +76,10 @@ class CustomText(
     }
 
     override fun setSelected(selected: Boolean) {
+        TODO("Not yet implemented")
+    }
+
+    override fun toJson(gson: Gson): String {
         TODO("Not yet implemented")
     }
 }

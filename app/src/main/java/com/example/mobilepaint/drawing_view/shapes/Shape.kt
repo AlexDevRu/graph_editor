@@ -4,6 +4,7 @@ import android.graphics.Canvas
 import android.graphics.Paint
 import androidx.annotation.ColorInt
 import com.example.mobilepaint.drawing_view.Operation
+import com.google.gson.Gson
 
 interface Shape {
     val paint: Paint
@@ -17,4 +18,5 @@ interface Shape {
     fun fillColor(@ColorInt color: Int) = false
     fun setSelected(selected: Boolean)
     fun applyOperation(operation: Operation) : Operation? = null
+    fun toJson(gson: Gson) : String
 }

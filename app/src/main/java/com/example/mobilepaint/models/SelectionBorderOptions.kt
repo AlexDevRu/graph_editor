@@ -1,4 +1,4 @@
-package com.example.mobilepaint
+package com.example.mobilepaint.models
 
 import android.graphics.Paint
 

@@ -10,6 +10,10 @@ import androidx.core.net.toUri
 import androidx.lifecycle.*
 import com.example.mobilepaint.drawing_view.GeometryType
 import com.example.mobilepaint.drawing_view.shapes.Shape
+import com.example.mobilepaint.models.CanvasData
+import com.example.mobilepaint.models.PenType
+import com.example.mobilepaint.models.json.CanvasJson
+import com.google.gson.Gson
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
@@ -54,6 +58,10 @@ class MainViewModel(private val app : Application): AndroidViewModel(app) {
 
     val canvases = mutableListOf<CanvasData>()
 
+    val gson = Gson()
+
+    var saveImage = 0
+
     fun setFirstCanvas(minWidth: Int, minHeight: Int) {
         this.minWidth = minWidth
         this.minHeight = minHeight
@@ -62,6 +70,10 @@ class MainViewModel(private val app : Application): AndroidViewModel(app) {
 
     fun addCanvas(width: Int, height: Int) {
         canvases.add(CanvasData(width, height))
+    }
+
+    fun addCanvas(canvasData: CanvasData) {
+        canvases.add(canvasData)
     }
 
     fun removeCanvas(position: Int) {
@@ -80,16 +92,21 @@ class MainViewModel(private val app : Application): AndroidViewModel(app) {
         _penType.value = options[position]
     }
 
-    fun saveShapes(position: Int, shapesList : LinkedList<Shape>, removedShapesList : LinkedList<Shape>) {
+    fun saveShapes(position: Int, shapesList : List<Shape>, removedShapesList : List<Shape>) {
         if (position < canvases.size)
             canvases[position] = CanvasData(canvases[position].width, canvases[position].height, shapesList, removedShapesList)
     }
 
-    fun saveImageToExternalStorage(image : Bitmap, filename: String) {
+    /*fun saveCanvas(position: Int, canvasData: CanvasData) {
+        if (position < canvases.size)
+            canvases[position] = canvasData
+    }*/
+
+    fun saveImageToExternalStorage(image : Bitmap) {
         viewModelScope.launch(Dispatchers.IO) {
             _loading.postValue(true)
             val directory = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES)
-            val file = File(directory, "$filename.jpeg")
+            val file = File(directory, "$${System.currentTimeMillis()}.jpeg")
             val outputStream = FileOutputStream(file)
             image.compress(Bitmap.CompressFormat.JPEG, 100, outputStream)
             outputStream.flush()
@@ -99,6 +116,20 @@ class MainViewModel(private val app : Application): AndroidViewModel(app) {
             _loading.postValue(false)
             _message.emit("Saved")
             _openFile.emit(file.toUri())
+        }
+    }
+
+    fun exportJson(key: Int, shapesList : List<Shape>, removedShapesList : List<Shape>) {
+        saveShapes(key, shapesList, removedShapesList)
+        viewModelScope.launch(Dispatchers.IO) {
+            _loading.postValue(true)
+            val json = canvases[key].toJson(gson)
+            val directory = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES)
+            val file = File(directory, "${System.currentTimeMillis()}.json")
+            file.appendText(json)
+            file.createNewFile()
+            _loading.postValue(false)
+            _message.emit("Saved")
         }
     }
 }

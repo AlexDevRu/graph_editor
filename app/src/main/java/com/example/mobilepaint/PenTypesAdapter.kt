@@ -8,6 +8,7 @@ import android.widget.ArrayAdapter
 import android.widget.TextView
 import androidx.core.content.ContextCompat
 import com.example.mobilepaint.Utils.toPx
+import com.example.mobilepaint.models.PenType
 
 class PenTypesAdapter(
     context: Context,

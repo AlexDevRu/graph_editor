@@ -166,13 +166,15 @@ class MainActivity : AppCompatActivity(), View.OnClickListener,
         when (item.itemId) {
             R.id.newCanvas -> {
                 viewModel.addCanvas(binding.viewPager.width, binding.viewPager.height)
-                val tab = binding.tabLayout.newTab()
-                binding.tabLayout.addTab(tab)
-                canvasAdapter.addCanvas(viewModel.canvases)
-                changeRemoveButtonVisibility()
+                createNewTab()
             }
         }
         return super.onOptionsItemSelected(item)
+    }
+
+    fun createNewTab() {
+        canvasAdapter.addCanvas(viewModel.canvases)
+        changeRemoveButtonVisibility()
     }
 
     override fun onColorSelected(envelope: ColorEnvelope?, fromUser: Boolean) {

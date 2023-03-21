@@ -2,8 +2,13 @@ package com.example.mobilepaint.drawing_view.shapes
 
 import android.graphics.*
 import android.util.Log
-import com.example.mobilepaint.SelectionBorderOptions
+import androidx.core.graphics.values
+import com.example.mobilepaint.models.SelectionBorderOptions
 import com.example.mobilepaint.drawing_view.Operation
+import com.example.mobilepaint.models.json.PathData
+import com.example.mobilepaint.models.json.PointData
+import com.example.mobilepaint.models.json.ShapeData
+import com.google.gson.Gson
 
 class CustomPath(
     selectionBorderOptions: SelectionBorderOptions,
@@ -18,9 +23,13 @@ class CustomPath(
     private val selectionBorder = SelectionBorder(selectionBorderOptions, this)
 
     private val matrix = Matrix()
+    private val matrix1 = Matrix()
     private val inverse = Matrix()
 
+    private val points = mutableListOf<PointData>()
+
     override fun onTransform(matrix: Matrix) {
+        this.matrix1.setConcat(this.matrix1, matrix)
         this.matrix.setConcat(this.matrix, matrix)
         transform(matrix)
     }
@@ -36,6 +45,7 @@ class CustomPath(
         if (selected) {
             selectionBorder.down(x, y)
         } else {
+            points.add(PointData(x, y))
             moveTo(x, y)
         }
     }
@@ -46,6 +56,7 @@ class CustomPath(
         if (selected) {
             selectionBorder.move(x, y)
         } else {
+            points.add(PointData(x, y))
             lineTo(x, y)
         }
     }
@@ -57,9 +68,9 @@ class CustomPath(
         selectionBorder.up(bounds)
         val operation = when {
             firstTimeUp -> Operation.Creation(this)
-            !matrix.isIdentity -> {
-                matrix.invert(inverse)
-                matrix.reset()
+            !matrix1.isIdentity -> {
+                matrix1.invert(inverse)
+                matrix1.reset()
                 Operation.Transformation(this, inverse)
             }
             else -> null
@@ -91,6 +102,33 @@ class CustomPath(
             return Operation.Transformation(this, inverse)
         }
         return null
+    }
+
+    override fun toJson(gson: Gson): String {
+        val pathData = PathData(
+            shapeData = ShapeData(paint.color, null, paint.strokeWidth),
+            points = points,
+            matrix = matrix.values()
+        )
+        return gson.toJson(pathData)
+    }
+
+    fun addData(pathData: PathData) {
+        paint.color = pathData.shapeData.color
+        paint.strokeWidth = pathData.shapeData.stroke
+        points.addAll(pathData.points)
+
+        pathData.points.forEachIndexed { index, pointData ->
+            if (index == 0) down(pointData.x, pointData.y)
+            else move(pointData.x, pointData.y)
+        }
+        up(0f, 0f)
+
+        matrix.setValues(pathData.matrix)
+        selectionBorder.applyMatrix(matrix)
+        transform(matrix)
+
+        up(0f, 0f)
     }
 
     companion object {

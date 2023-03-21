@@ -2,12 +2,9 @@ package com.example.mobilepaint
 
 import android.Manifest
 import android.content.Intent
-import android.graphics.Bitmap
 import android.graphics.ImageDecoder
 import android.net.Uri
-import android.os.Build
-import android.os.Bundle
-import android.os.Environment
+import android.os.*
 import android.provider.MediaStore
 import android.provider.Settings
 import android.view.*
@@ -16,6 +13,7 @@ import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.os.bundleOf
+import androidx.core.os.postDelayed
 import androidx.core.view.updateLayoutParams
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
@@ -24,6 +22,7 @@ import com.example.mobilepaint.databinding.FragmentCanvasBinding
 import com.example.mobilepaint.drawing_view.GeometryType
 import com.example.mobilepaint.drawing_view.ShapesView
 import com.example.mobilepaint.drawing_view.shapes.Shape
+import java.io.File
 
 class CanvasFragment : Fragment(), ShapesView.OnShapeChanged {
 
@@ -40,16 +39,22 @@ class CanvasFragment : Fragment(), ShapesView.OnShapeChanged {
         ActivityResultContracts.RequestMultiplePermissions()
     ) { result ->
         if (result.all { it.value }) {
-            viewModel.saveImageToExternalStorage(shapesView.getBitmap(), System.currentTimeMillis().toString())
+            if (viewModel.saveImage == 0)
+                viewModel.saveImageToExternalStorage(shapesView.getBitmap())
+            else
+                viewModel.exportJson(key, shapesView.shapes, shapesView.removedShapes)
         }
     }
 
     @RequiresApi(Build.VERSION_CODES.R)
     private val storageActivityResultLauncher = registerForActivityResult(
         ActivityResultContracts.StartActivityForResult()
-    ) { result ->
+    ) {
         if (Environment.isExternalStorageManager()) {
-            viewModel.saveImageToExternalStorage(shapesView.getBitmap(), System.currentTimeMillis().toString())
+            if (viewModel.saveImage == 0)
+                viewModel.saveImageToExternalStorage(shapesView.getBitmap())
+            else
+                viewModel.exportJson(key, shapesView.shapes, shapesView.removedShapes)
         }
     }
 
@@ -65,6 +70,20 @@ class CanvasFragment : Fragment(), ShapesView.OnShapeChanged {
                 ImageDecoder.decodeBitmap(source)
             }
             shapesView.addBitmap(bitmap)
+        }
+    }
+
+    private val pickFileActivityResultLauncher = registerForActivityResult(
+        ActivityResultContracts.StartActivityForResult()
+    ) { result ->
+        if (result.resultCode == AppCompatActivity.RESULT_OK) {
+            val fileName = result.data?.data?.lastPathSegment ?: return@registerForActivityResult
+            val directory = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES)
+            val json = File(directory, fileName).readText()
+            viewModel.addCanvas(shapesView.fromJson(json, viewModel.gson))
+            Handler(Looper.getMainLooper()).postDelayed({
+                (activity as MainActivity).createNewTab()
+            }, 200)
         }
     }
 
@@ -122,7 +141,19 @@ class CanvasFragment : Fragment(), ShapesView.OnShapeChanged {
         when (item.itemId) {
             R.id.undo -> shapesView.undo()
             R.id.redo -> shapesView.redo()
-            R.id.exportImage -> exportImage()
+            R.id.exportImage -> {
+                viewModel.saveImage = 0
+                exportImage()
+            }
+            R.id.exportJson -> {
+                viewModel.saveImage = 1
+                exportImage()
+            }
+            R.id.openJson -> {
+                val intent = Intent(Intent.ACTION_GET_CONTENT)
+                intent.type = "file/json"
+                pickFileActivityResultLauncher.launch(intent)
+            }
             R.id.importImage -> importImage()
             R.id.changeCanvasSize -> {
                 val changeCanvasSizeBinding = DialogChangeCanvasSizeBinding.inflate(layoutInflater)

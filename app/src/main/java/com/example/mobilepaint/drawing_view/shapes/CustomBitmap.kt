@@ -1,25 +1,35 @@
 package com.example.mobilepaint.drawing_view.shapes
 
 import android.graphics.*
+import android.util.Base64
 import android.util.Log
-import com.example.mobilepaint.SelectionBorderOptions
+import androidx.core.graphics.values
 import com.example.mobilepaint.drawing_view.Operation
+import com.example.mobilepaint.models.SelectionBorderOptions
+import com.example.mobilepaint.models.json.BitmapData
+import com.example.mobilepaint.models.json.PointData
+import com.example.mobilepaint.models.json.ShapeData
+import com.google.gson.Gson
+import java.io.ByteArrayOutputStream
+
 
 class CustomBitmap(
-    bitmap: Bitmap,
+    private val bitmap: Bitmap,
     selectionBorderOptions: SelectionBorderOptions,
     override val paint: Paint
 ): Path(), Shape, SelectionBorder.Listener {
 
-    private val selectionBorder = SelectionBorder(selectionBorderOptions, this)
+    private val IMAGE_SIZE = bitmap.width
+    private val CENTER = IMAGE_SIZE / 2f
+
+    private val selectionBorder = SelectionBorder(selectionBorderOptions, this, PointF(CENTER, CENTER))
 
     private var selected = false
 
-    private val scaledBitmap = Bitmap.createScaledBitmap(bitmap, IMAGE_SIZE, IMAGE_SIZE,true)
-
     private val bounds = RectF()
 
-    private val matrix = Matrix()
+    private val matrix1 = Matrix()
+    private val matrix2 = Matrix()
 
     private var x = 0f
     private var y = 0f
@@ -35,14 +45,15 @@ class CustomBitmap(
     }
 
     override fun onTransform(matrix: Matrix) {
+        this.matrix1.setConcat(this.matrix1, matrix)
         transform(matrix)
     }
 
     override fun onScale(sx: Float, sy: Float, rotation: Float) {
-        matrix.reset()
-        matrix.setScale(sx, sy, CENTER, CENTER)
-        matrix.postRotate(rotation, CENTER, CENTER)
-        Log.d(TAG, "onScale: matrix=${matrix.toShortString()}")
+        matrix2.reset()
+        matrix2.setScale(sx, sy, CENTER, CENTER)
+        matrix2.postRotate(rotation, CENTER, CENTER)
+        Log.d(TAG, "onScale: matrix=${matrix2.toShortString()}")
     }
 
     override fun onTranslated(dx: Float, dy: Float) {
@@ -72,7 +83,7 @@ class CustomBitmap(
     override fun drawInCanvas(canvas: Canvas) {
         canvas.save()
         canvas.translate(x, y)
-        canvas.drawBitmap(scaledBitmap, matrix, null)
+        canvas.drawBitmap(bitmap, matrix2, null)
         canvas.restore()
         if (selected) {
             selectionBorder.drawInCanvas(canvas)
@@ -85,10 +96,45 @@ class CustomBitmap(
         this.selected = selected
     }
 
+    override fun toJson(gson: Gson): String {
+        val byteArrayOutputStream = ByteArrayOutputStream()
+        bitmap.compress(Bitmap.CompressFormat.JPEG, 100, byteArrayOutputStream)
+        val byteArray = byteArrayOutputStream.toByteArray()
+        val base64 = Base64.encodeToString(byteArray, Base64.DEFAULT)
+
+        val bitmapData = BitmapData(
+            shapeData = ShapeData(paint.color, null, paint.strokeWidth),
+            base64 = base64,
+            matrix1 = matrix1.values(),
+            matrix2 = matrix2.values(),
+            point = PointData(x, y),
+            sx = selectionBorder.sx,
+            sy = selectionBorder.sy,
+            rotation = selectionBorder.rotation,
+        )
+
+        return gson.toJson(bitmapData)
+    }
+
+    fun addData(bitmapData: BitmapData) {
+        selectionBorder.sx = bitmapData.sx
+        selectionBorder.sy = bitmapData.sy
+        selectionBorder.rotation = bitmapData.rotation
+
+        matrix1.setValues(bitmapData.matrix1)
+        transform(matrix1)
+        selectionBorder.applyMatrix(matrix1)
+
+        matrix2.setValues(bitmapData.matrix2)
+
+        x = bitmapData.point.x
+        y = bitmapData.point.y
+
+        up(0f, 0f)
+    }
+
     companion object {
-        private const val TAG = "CustomBitmap"
-        private const val IMAGE_SIZE = 300
-        private const val CENTER = IMAGE_SIZE / 2f
+        private const val TAG = "BitmapData"
     }
 
 }

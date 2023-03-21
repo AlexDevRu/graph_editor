@@ -11,9 +11,13 @@ import android.view.View
 import androidx.annotation.ColorInt
 import androidx.core.content.ContextCompat
 import com.example.mobilepaint.R
-import com.example.mobilepaint.SelectionBorderOptions
+import com.example.mobilepaint.Utils
+import com.example.mobilepaint.models.SelectionBorderOptions
 import com.example.mobilepaint.Utils.toPx
 import com.example.mobilepaint.drawing_view.shapes.*
+import com.example.mobilepaint.models.CanvasData
+import com.example.mobilepaint.models.json.*
+import com.google.gson.Gson
 import java.util.*
 
 
@@ -22,6 +26,10 @@ class ShapesView @JvmOverloads constructor(
     attrs: AttributeSet? = null,
     defStyle: Int = 0
 ) : View(context, attrs, defStyle) {
+
+    companion object {
+        private const val IMAGE_SIZE = 300
+    }
 
     init {
         isFocusable = true
@@ -33,8 +41,8 @@ class ShapesView @JvmOverloads constructor(
 
     private val handleRadius = 8.toPx
 
-    val shapes = LinkedList<Shape>()
-    val removedShapes = LinkedList<Shape>()
+    val shapes = mutableListOf<Shape>()
+    val removedShapes = mutableListOf<Shape>()
 
     private val operations = LinkedList<Operation>()
     private val removedOperations = LinkedList<Operation>()
@@ -55,11 +63,11 @@ class ShapesView @JvmOverloads constructor(
     val hasModifications get() = shapes.isNotEmpty()
 
     fun addNewShape(shape: Shape) {
-        shapes.push(shape)
+        shapes.add(shape)
         onShapeChanged?.onStackSizesChanged(shapes.size, removedShapes.size)
     }
 
-    fun addShapes(shapes: LinkedList<Shape>, removedShapes : LinkedList<Shape>) {
+    fun addShapes(shapes: List<Shape>, removedShapes : List<Shape>) {
         this.shapes.clear()
         this.removedShapes.clear()
         this.shapes.addAll(shapes)
@@ -77,8 +85,9 @@ class ShapesView @JvmOverloads constructor(
     }
 
     fun addBitmap(bitmap: Bitmap) {
-        val customBitmap = CustomBitmap(bitmap, getSelectionBorderOptions(), bitmapPaint)
-        shapes.push(customBitmap)
+        val scaledBitmap = Bitmap.createScaledBitmap(bitmap, IMAGE_SIZE, IMAGE_SIZE,true)
+        val customBitmap = CustomBitmap(scaledBitmap, getSelectionBorderOptions(), bitmapPaint)
+        shapes.add(customBitmap)
         addNewShape(customBitmap)
     }
 
@@ -137,7 +146,7 @@ class ShapesView @JvmOverloads constructor(
             when(val operation = operations.pop()) {
                 is Operation.Creation -> {
                     shapes.remove(operation.shape)
-                    removedShapes.push(operation.shape)
+                    removedShapes.add(operation.shape)
                     removedOperations.push(operation)
                 }
                 else -> {
@@ -156,7 +165,7 @@ class ShapesView @JvmOverloads constructor(
             when(val operation = removedOperations.pop()) {
                 is Operation.Creation -> {
                     removedShapes.remove(operation.shape)
-                    shapes.push(operation.shape)
+                    shapes.add(operation.shape)
                     operations.push(operation)
                 }
                 else -> {
@@ -267,7 +276,7 @@ class ShapesView @JvmOverloads constructor(
         super.onDraw(canvas)
         canvas.drawColor(canvasColor)
         canvas.drawRect(0f, 0f, width.toFloat(), height.toFloat(), borderPaint)
-        for (shape in shapes.descendingIterator())
+        for (shape in shapes)
             shape.drawInCanvas(canvas)
     }
 
@@ -277,5 +286,57 @@ class ShapesView @JvmOverloads constructor(
         val canvas = Canvas(bitmap)
         draw(canvas)
         return bitmap
+    }
+
+    fun fromJson(json : String, gson: Gson) : CanvasData {
+        val canvasJson = gson.fromJson(json, CanvasJson::class.java)
+        val shapes = canvasJson.shapesList.map {
+            when (it.type) {
+                GeometryType.LINE.name -> {
+                    val lineData = gson.fromJson(it.data, LineData::class.java)
+                    CustomLine(handlePaint, shader, createPaint()).apply {
+                        addData(lineData)
+                    }
+                }
+                GeometryType.PATH.name -> {
+                    val pathData = gson.fromJson(it.data, PathData::class.java)
+                    CustomPath(getSelectionBorderOptions(), shader, createPathPaint()).apply {
+                        addData(pathData)
+                    }
+                }
+                GeometryType.RECT.name -> {
+                    val rectData = gson.fromJson(it.data, RectData::class.java)
+                    CustomRectF(getSelectionBorderOptions(), shader, createPaint()).apply {
+                        addData(rectData)
+                    }
+                }
+                GeometryType.ELLIPSE.name -> {
+                    val rectData = gson.fromJson(it.data, RectData::class.java)
+                    CustomEllipse(getSelectionBorderOptions(), shader, createPaint()).apply {
+                        addData(rectData)
+                    }
+                }
+                GeometryType.ARROW.name -> {
+                    val lineData = gson.fromJson(it.data, LineData::class.java)
+                    CustomArrow(arrowWidth, arrowHeight, handlePaint, shader, createPaint()).apply {
+                        addData(lineData)
+                    }
+                }
+                GeometryType.BITMAP.name -> {
+                    val bitmapData = gson.fromJson(it.data, BitmapData::class.java)
+                    val bitmap = Utils.convert(bitmapData.base64)
+                    CustomBitmap(bitmap, getSelectionBorderOptions(), bitmapPaint).apply {
+                        addData(bitmapData)
+                    }
+                }
+                else -> throw IllegalStateException()
+            }
+        }
+
+        return CanvasData(
+            width = canvasJson.width,
+            height = canvasJson.height,
+            shapesList = shapes
+        )
     }
 }

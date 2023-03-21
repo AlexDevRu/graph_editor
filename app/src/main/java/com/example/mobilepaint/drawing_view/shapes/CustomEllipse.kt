@@ -1,8 +1,12 @@
 package com.example.mobilepaint.drawing_view.shapes
 
 import android.graphics.*
-import com.example.mobilepaint.SelectionBorderOptions
+import androidx.core.graphics.values
+import com.example.mobilepaint.models.SelectionBorderOptions
 import com.example.mobilepaint.drawing_view.Operation
+import com.example.mobilepaint.models.json.RectData
+import com.example.mobilepaint.models.json.ShapeData
+import com.google.gson.Gson
 
 class CustomEllipse(
     selectionBorderOptions: SelectionBorderOptions,
@@ -20,10 +24,12 @@ class CustomEllipse(
     private val bounds = RectF()
 
     private val matrix = Matrix()
+    private val matrix1 = Matrix()
     private val inverse = Matrix()
 
     override fun onTransform(matrix: Matrix) {
         this.matrix.setConcat(this.matrix, matrix)
+        this.matrix1.setConcat(this.matrix1, matrix)
         shape.transform(matrix)
     }
 
@@ -55,9 +61,9 @@ class CustomEllipse(
         selectionBorder.up(bounds)
         return when {
             firstTimeUp -> Operation.Creation(this)
-            !matrix.isIdentity -> {
-                matrix.invert(inverse)
-                matrix.reset()
+            !matrix1.isIdentity -> {
+                matrix1.invert(inverse)
+                matrix1.reset()
                 Operation.Transformation(this, inverse)
             }
             else -> null
@@ -109,6 +115,33 @@ class CustomEllipse(
             return Operation.Transformation(this, inverse)
         }
         return null
+    }
+
+    override fun toJson(gson: Gson): String {
+        val rectData = RectData(
+            shapeData = ShapeData(paint.color, fillPaint?.color, paint.strokeWidth),
+            left = left,
+            top = top,
+            right = right,
+            bottom = bottom,
+            matrix = matrix.values()
+        )
+        return gson.toJson(rectData)
+    }
+
+    fun addData(rectData: RectData) {
+        paint.color = rectData.shapeData.color
+        if (rectData.shapeData.fillColor != null)
+            fillColor(rectData.shapeData.fillColor)
+        paint.strokeWidth = rectData.shapeData.stroke
+        matrix.setValues(rectData.matrix)
+
+        down(rectData.left, rectData.top)
+        move(rectData.right, rectData.bottom)
+        up(rectData.right, rectData.bottom)
+
+        selectionBorder.applyMatrix(matrix)
+        shape.transform(matrix)
     }
 
     companion object {

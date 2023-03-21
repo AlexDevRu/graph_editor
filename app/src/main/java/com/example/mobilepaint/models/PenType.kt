@@ -1,4 +1,4 @@
-package com.example.mobilepaint
+package com.example.mobilepaint.models
 
 import androidx.annotation.DrawableRes
 import com.example.mobilepaint.drawing_view.GeometryType

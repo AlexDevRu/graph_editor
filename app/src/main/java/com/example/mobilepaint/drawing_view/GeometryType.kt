@@ -4,6 +4,7 @@ enum class GeometryType {
     HAND,
     ZOOM,
     PATH,
+    BITMAP,
     LINE,
     ELLIPSE,
     RECT,

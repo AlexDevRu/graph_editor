@@ -2,14 +2,15 @@ package com.example.mobilepaint.drawing_view.shapes
 
 import android.graphics.*
 import android.util.Log
-import com.example.mobilepaint.SelectionBorderOptions
+import com.example.mobilepaint.models.SelectionBorderOptions
 import kotlin.math.abs
 import kotlin.math.atan2
 import kotlin.math.hypot
 
 class SelectionBorder(
     private val selectionBorderOptions : SelectionBorderOptions,
-    private val listener: Listener
+    private val listener: Listener,
+    private val pivotXY: PointF? = null
 ): Path() {
 
     interface Listener {
@@ -114,9 +115,11 @@ class SelectionBorder(
             val newScale = newR / startR * startScale
             val newRotation = newA - startA + startRotation
 
+            val px = bounds.centerX()
+            val py = bounds.centerY()
             matrix.reset()
-            matrix.setScale(newScale / sx, newScale / sy, bounds.centerX(), bounds.centerY())
-            matrix.postRotate(newRotation - rotation, bounds.centerX(), bounds.centerY())
+            matrix.setScale(newScale / sx, newScale / sy, px, py)
+            matrix.postRotate(newRotation - rotation, px, py)
             applyMatrix(matrix)
             listener.onTransform(matrix)
             listener.onScale(newScale, newScale, newRotation)

@@ -208,7 +208,7 @@ class ShapesView @JvmOverloads constructor(
         when (event.actionMasked) {
             MotionEvent.ACTION_DOWN -> {
                 if (geometryType == GeometryType.PAINT) {
-                    val shape = shapes.lastOrNull { it.isInside(touchX, touchY) }
+                    val shape = shapes.firstOrNull { it.isInside(touchX, touchY) }
                     if (shape != null)
                         shape.fillColor(color)
                     else
@@ -242,7 +242,7 @@ class ShapesView @JvmOverloads constructor(
                     if (operation != null)
                         operations.push(operation)
                     deselectShape()
-                    selectedShape = shapes.lastOrNull { it.isInside(touchX, touchY) }
+                    selectedShape = shapes.firstOrNull { it.isInside(touchX, touchY) }
                     selectedShape?.setSelected(true)
                 } else {
                     val operation = currentShape?.up(touchX, touchY)

@@ -13,7 +13,7 @@ interface Shape {
     fun move(x: Float, y: Float)
     fun up(x: Float, y: Float) : Operation? = null
     fun isInside(x: Float, y: Float) : Boolean
-    fun changeColor(@ColorInt color: Int)
+    fun changeColor(@ColorInt color: Int) = Unit
     fun fillColor(@ColorInt color: Int) = false
     fun setSelected(selected: Boolean)
     fun applyOperation(operation: Operation) : Operation? = null

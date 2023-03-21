@@ -14,9 +14,11 @@ class SelectionBorder(
 
     interface Listener {
         fun onTransform(matrix: Matrix) = Unit
+        fun onScale(sx : Float, sy : Float, rotation : Float) = Unit
+        fun onTranslated(dx : Float, dy : Float) = Unit
     }
 
-    val bounds = RectF()
+    private val bounds = RectF()
 
     private val handlePoints = FloatArray(8)
     private val matrix = Matrix()
@@ -52,20 +54,6 @@ class SelectionBorder(
         canvas.drawCircle(handlePoints[2], handlePoints[3], handleRadius, handlePaint)
         canvas.drawCircle(handlePoints[4], handlePoints[5], handleRadius, handlePaint)
         canvas.drawCircle(handlePoints[6], handlePoints[7], handleRadius, handlePaint)
-    }
-
-    private fun scale(sx: Float, sy: Float, px: Float, py: Float) {
-        matrix.reset()
-        matrix.setScale(sx, sy, px, py)
-        applyMatrix(matrix)
-        listener.onTransform(matrix)
-    }
-
-    private fun rotate(degrees: Float) {
-        matrix.reset()
-        matrix.setRotate(degrees, bounds.centerX(), bounds.centerY())
-        applyMatrix(matrix)
-        listener.onTransform(matrix)
     }
 
     fun applyMatrix(matrix: Matrix) {
@@ -126,8 +114,12 @@ class SelectionBorder(
             val newScale = newR / startR * startScale
             val newRotation = newA - startA + startRotation
 
-            scale(newScale / sx, newScale / sy, bounds.centerX(), bounds.centerY())
-            rotate(newRotation - rotation)
+            matrix.reset()
+            matrix.setScale(newScale / sx, newScale / sy, bounds.centerX(), bounds.centerY())
+            matrix.postRotate(newRotation - rotation, bounds.centerX(), bounds.centerY())
+            applyMatrix(matrix)
+            listener.onTransform(matrix)
+            listener.onScale(newScale, newScale, newRotation)
 
             Log.d(TAG, "move: newRotation=$newRotation")
 
@@ -137,11 +129,17 @@ class SelectionBorder(
         } else if (isTranslating) {
             val dx = x - startX
             val dy = y - startY
+
             matrix.reset()
             matrix.setTranslate(dx, dy)
             matrix.mapPoints(handlePoints)
             transform(matrix)
+
+            Log.d(TAG, "move: translating ${matrix.toShortString()}")
+
             listener.onTransform(matrix)
+            listener.onTranslated(dx, dy)
+
             startX = x
             startY = y
         }

@@ -22,7 +22,7 @@ class CustomBitmap(
     private val IMAGE_SIZE = bitmap.width
     private val CENTER = IMAGE_SIZE / 2f
 
-    private val selectionBorder = SelectionBorder(selectionBorderOptions, this, PointF(CENTER, CENTER))
+    private val selectionBorder = SelectionBorder(selectionBorderOptions, this)
 
     private var selected = false
 
@@ -30,6 +30,7 @@ class CustomBitmap(
 
     private val matrix1 = Matrix()
     private val matrix2 = Matrix()
+    private val matrix3 = Matrix()
 
     private var x = 0f
     private var y = 0f
@@ -39,7 +40,7 @@ class CustomBitmap(
         lineTo(IMAGE_SIZE.toFloat(), 0f)
         lineTo(IMAGE_SIZE.toFloat(), IMAGE_SIZE.toFloat())
         lineTo(0f, IMAGE_SIZE.toFloat())
-        close()
+        lineTo(0f, 0f)
 
         up(0f, 0f)
     }
@@ -117,18 +118,22 @@ class CustomBitmap(
     }
 
     fun addData(bitmapData: BitmapData) {
+        x = bitmapData.point.x
+        y = bitmapData.point.y
+
         selectionBorder.sx = bitmapData.sx
         selectionBorder.sy = bitmapData.sy
         selectionBorder.rotation = bitmapData.rotation
 
         matrix1.setValues(bitmapData.matrix1)
-        transform(matrix1)
-        selectionBorder.applyMatrix(matrix1)
+
+        up(0f, 0f)
 
         matrix2.setValues(bitmapData.matrix2)
-
-        x = bitmapData.point.x
-        y = bitmapData.point.y
+        matrix3.setValues(matrix2.values())
+        matrix3.postTranslate(x, y)
+        selectionBorder.applyMatrix(matrix3)
+        transform(matrix3)
 
         up(0f, 0f)
     }

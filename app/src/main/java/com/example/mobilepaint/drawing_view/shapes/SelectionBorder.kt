@@ -9,8 +9,7 @@ import kotlin.math.hypot
 
 class SelectionBorder(
     private val selectionBorderOptions : SelectionBorderOptions,
-    private val listener: Listener,
-    private val pivotXY: PointF? = null
+    private val listener: Listener
 ): Path() {
 
     interface Listener {

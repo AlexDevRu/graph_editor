@@ -87,7 +87,6 @@ class ShapesView @JvmOverloads constructor(
     fun addBitmap(bitmap: Bitmap) {
         val scaledBitmap = Bitmap.createScaledBitmap(bitmap, IMAGE_SIZE, IMAGE_SIZE,true)
         val customBitmap = CustomBitmap(scaledBitmap, getSelectionBorderOptions(), bitmapPaint)
-        shapes.add(customBitmap)
         addNewShape(customBitmap)
     }
 

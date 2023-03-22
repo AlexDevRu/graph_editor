@@ -1,4 +1,4 @@
-package com.example.mobilepaint
+package com.example.mobilepaint.adapters
 
 import android.content.Context
 import android.view.LayoutInflater

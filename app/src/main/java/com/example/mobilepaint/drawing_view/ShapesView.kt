@@ -49,6 +49,8 @@ class ShapesView @JvmOverloads constructor(
 
     private var currentShape: Shape? = null
 
+    private var isBorderDrawing = true
+
     private fun getSelectionBorderOptions() = SelectionBorderOptions(
         handlePaint, handleRadius, boundingBoxPaint
     )
@@ -274,16 +276,19 @@ class ShapesView @JvmOverloads constructor(
     override fun onDraw(canvas: Canvas) {
         super.onDraw(canvas)
         canvas.drawColor(canvasColor)
-        canvas.drawRect(0f, 0f, width.toFloat(), height.toFloat(), borderPaint)
+        if (isBorderDrawing)
+            canvas.drawRect(0f, 0f, width.toFloat(), height.toFloat(), borderPaint)
         for (shape in shapes)
             shape.drawInCanvas(canvas)
     }
 
     fun getBitmap(): Bitmap {
         deselectShape()
+        isBorderDrawing = false
         val bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
         val canvas = Canvas(bitmap)
         draw(canvas)
+        isBorderDrawing = true
         return bitmap
     }
 

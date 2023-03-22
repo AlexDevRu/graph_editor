@@ -25,5 +25,9 @@
     app:verticalPanEnabled="true"
     app:zoomEnabled="true">
 
+    <com.example.mobilepaint.drawing_view.ShapesView
+        android:id="@+id/shapesView"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"/>
 
 </com.example.mobilepaint.drawing_view.CustomZoomLayout>

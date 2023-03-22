@@ -8,8 +8,8 @@ import com.google.gson.Gson
 import java.util.*
 
 data class CanvasData(
-    val width: Int = 0,
-    val height: Int = 0,
+    var width: Int = 0,
+    var height: Int = 0,
     val shapesList : List<Shape> = LinkedList(),
     val removedShapesList : List<Shape> = LinkedList()
 ) {

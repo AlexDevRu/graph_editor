@@ -1,8 +1,9 @@
-package com.example.mobilepaint
+package com.example.mobilepaint.adapters
 
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.FragmentActivity
 import androidx.viewpager2.adapter.FragmentStateAdapter
+import com.example.mobilepaint.CanvasFragment
 import com.example.mobilepaint.models.CanvasData
 
 class CanvasAdapter(

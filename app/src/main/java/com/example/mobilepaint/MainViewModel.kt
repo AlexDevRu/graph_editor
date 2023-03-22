@@ -22,7 +22,9 @@ import java.io.File
 import java.io.FileOutputStream
 import java.util.*
 
-class MainViewModel(private val app : Application): AndroidViewModel(app) {
+class MainViewModel(
+    private val app : Application
+): AndroidViewModel(app) {
 
     val options = listOf(
         PenType(app.getString(R.string.cursor), R.drawable.ic_cursor, GeometryType.ZOOM),
@@ -34,6 +36,8 @@ class MainViewModel(private val app : Application): AndroidViewModel(app) {
         PenType(app.getString(R.string.arrow), R.drawable.ic_arrow, GeometryType.ARROW),
         PenType(app.getString(R.string.fill), R.drawable.ic_paint, GeometryType.PAINT),
     )
+
+    private val sharedPrefsUtils = SharedPrefsUtils(getApplication())
 
     private val _stroke = MutableLiveData(5f)
     val stroke : LiveData<Float> = _stroke
@@ -61,6 +65,11 @@ class MainViewModel(private val app : Application): AndroidViewModel(app) {
     val gson = Gson()
 
     var saveImage = 0
+
+    init {
+        _stroke.value = sharedPrefsUtils.strokeWidth
+        _color.value = sharedPrefsUtils.color
+    }
 
     fun setFirstCanvas(minWidth: Int, minHeight: Int) {
         this.minWidth = minWidth
@@ -101,6 +110,13 @@ class MainViewModel(private val app : Application): AndroidViewModel(app) {
         if (position < canvases.size)
             canvases[position] = canvasData
     }*/
+
+    fun updateCanvasSize(key: Int, width: Int, height: Int) {
+        if (width > 0)
+            canvases[key].width = width
+        if (height > 0)
+            canvases[key].height = height
+    }
 
     fun saveImageToExternalStorage(image : Bitmap) {
         viewModelScope.launch(Dispatchers.IO) {

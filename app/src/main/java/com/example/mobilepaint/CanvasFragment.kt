@@ -35,6 +35,10 @@ class CanvasFragment : Fragment(), ShapesView.OnShapeChanged {
         ViewModelProvider(requireActivity())[MainViewModel::class.java]
     }
 
+    private val shapesView by lazy {
+        binding.shapesView
+    }
+
     private val externalStoragePermissionLauncher = registerForActivityResult(
         ActivityResultContracts.RequestMultiplePermissions()
     ) { result ->
@@ -101,27 +105,20 @@ class CanvasFragment : Fragment(), ShapesView.OnShapeChanged {
         return binding.root
     }
 
-    private val shapesView by lazy {
-        ShapesView(requireContext())
-    }
-
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         key = arguments?.getInt(KEY) ?: 0
 
         shapesView.setOnShapeChangedListener(this)
 
-        shapesView.addShapes(viewModel.canvases[key].shapesList, viewModel.canvases[key].removedShapesList)
+        val canvasData = viewModel.canvases[key]
 
-        shapesView.layoutParams = ViewGroup.LayoutParams(
-            viewModel.canvases[key].width,
-            viewModel.canvases[key].height
-        )
-        binding.root.addView(shapesView)
-        /*binding.shapesView.updateLayoutParams<ViewGroup.LayoutParams> {
-            width = viewModel.canvases[key].width
-            height = viewModel.canvases[key].height
-        }*/
+        shapesView.addShapes(canvasData.shapesList, canvasData.removedShapesList)
+
+        shapesView.updateLayoutParams<ViewGroup.LayoutParams> {
+            width = canvasData.width
+            height = canvasData.height
+        }
 
         observe()
     }
@@ -163,14 +160,15 @@ class CanvasFragment : Fragment(), ShapesView.OnShapeChanged {
                     .setTitle(R.string.change_canvas_size)
                     .setView(changeCanvasSizeBinding.root)
                     .setPositiveButton(android.R.string.ok) { _, _ ->
-                        val newWidth = changeCanvasSizeBinding.etWidth.text?.toString()?.toIntOrNull()
-                        val newHeight = changeCanvasSizeBinding.etHeight.text?.toString()?.toIntOrNull()
+                        val newWidth = changeCanvasSizeBinding.etWidth.text?.toString()?.toIntOrNull() ?: return@setPositiveButton
+                        val newHeight = changeCanvasSizeBinding.etHeight.text?.toString()?.toIntOrNull() ?: return@setPositiveButton
                         shapesView.updateLayoutParams<ViewGroup.LayoutParams> {
-                            if (newWidth != null && newWidth > 0)
+                            if (newWidth > 0)
                                 width = newWidth
-                            if (newHeight != null && newHeight > 0)
+                            if (newHeight > 0)
                                 height = newHeight
                         }
+                        viewModel.updateCanvasSize(key, newWidth, newHeight)
                     }
                     .show()
             }

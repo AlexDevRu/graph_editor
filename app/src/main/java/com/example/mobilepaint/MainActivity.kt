@@ -13,6 +13,8 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
+import com.example.mobilepaint.adapters.CanvasAdapter
+import com.example.mobilepaint.adapters.PenTypesAdapter
 import com.example.mobilepaint.databinding.ActivityMainBinding
 import com.example.mobilepaint.databinding.DialogStrokeBinding
 import com.example.mobilepaint.databinding.ViewTabBinding
@@ -38,6 +40,10 @@ class MainActivity : AppCompatActivity(), View.OnClickListener,
 
     private val viewModel by lazy {
         ViewModelProvider(this)[MainViewModel::class.java]
+    }
+
+    private val sharedPrefsUtils by lazy {
+        SharedPrefsUtils(this)
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -170,6 +176,12 @@ class MainActivity : AppCompatActivity(), View.OnClickListener,
             }
         }
         return super.onOptionsItemSelected(item)
+    }
+
+    override fun onStop() {
+        super.onStop()
+        sharedPrefsUtils.color = viewModel.color.value!!
+        sharedPrefsUtils.strokeWidth = viewModel.stroke.value!!
     }
 
     fun createNewTab() {

@@ -76,7 +76,7 @@ class CustomText(
     }
 
     override fun setSelected(selected: Boolean) {
-        TODO("Not yet implemented")
+
     }
 
     override fun toJson(gson: Gson): String {

@@ -34,6 +34,7 @@ class MainViewModel(
         PenType(app.getString(R.string.ellipse), R.drawable.ic_ellipse, GeometryType.ELLIPSE),
         PenType(app.getString(R.string.rectangle), R.drawable.ic_rectangle, GeometryType.RECT),
         PenType(app.getString(R.string.arrow), R.drawable.ic_arrow, GeometryType.ARROW),
+        PenType(app.getString(R.string.text), R.drawable.ic_arrow, GeometryType.TEXT),
         PenType(app.getString(R.string.fill), R.drawable.ic_paint, GeometryType.PAINT),
     )
 

@@ -13,7 +13,6 @@ import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.os.bundleOf
-import androidx.core.os.postDelayed
 import androidx.core.view.updateLayoutParams
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
@@ -46,7 +45,7 @@ class CanvasFragment : Fragment(), ShapesView.OnShapeChanged {
             if (viewModel.saveImage == 0)
                 viewModel.saveImageToExternalStorage(shapesView.getBitmap())
             else
-                viewModel.exportJson(key, shapesView.shapes, shapesView.removedShapes)
+                viewModel.exportJson(key, shapesView.color, shapesView.shapes, shapesView.removedShapes)
         }
     }
 
@@ -58,7 +57,7 @@ class CanvasFragment : Fragment(), ShapesView.OnShapeChanged {
             if (viewModel.saveImage == 0)
                 viewModel.saveImageToExternalStorage(shapesView.getBitmap())
             else
-                viewModel.exportJson(key, shapesView.shapes, shapesView.removedShapes)
+                viewModel.exportJson(key, shapesView.color, shapesView.shapes, shapesView.removedShapes)
         }
     }
 
@@ -216,7 +215,7 @@ class CanvasFragment : Fragment(), ShapesView.OnShapeChanged {
 
     override fun onStop() {
         super.onStop()
-        viewModel.saveShapes(key, shapesView.shapes, shapesView.removedShapes)
+        viewModel.saveShapes(key, shapesView.color, shapesView.shapes, shapesView.removedShapes)
     }
 
     override fun onShapeLongClick(shape: Shape) {

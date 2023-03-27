@@ -9,4 +9,6 @@ sealed class Operation {
     data class Creation(override val shape: Shape) : Operation()
     data class PointMoving(override val shape: Shape, val isStartPoint: Boolean, val x : Float, val y : Float) : Operation()
     data class Transformation(override val shape: Shape, val matrix : Matrix) : Operation()
+    data class BitmapTransformation(override val shape: Shape, val matrix : Matrix, val bitmapMatrix : Matrix) : Operation()
+    data class BitmapTranslation(override val shape: Shape, val x : Float, val y : Float) : Operation()
 }

@@ -6,22 +6,13 @@ import android.graphics.*
 import android.os.Handler
 import android.os.Looper
 import android.util.AttributeSet
-import android.view.KeyEvent
-import android.view.LayoutInflater
 import android.view.MotionEvent
 import android.view.View
-import android.view.inputmethod.EditorInfo
-import android.view.inputmethod.InputMethodManager
-import android.widget.FrameLayout
-import android.widget.TextView
 import androidx.annotation.ColorInt
 import androidx.core.content.ContextCompat
-import androidx.core.view.isVisible
-import androidx.core.view.updateLayoutParams
 import com.example.mobilepaint.R
 import com.example.mobilepaint.Utils
 import com.example.mobilepaint.Utils.toPx
-import com.example.mobilepaint.databinding.LayoutEdittextBinding
 import com.example.mobilepaint.drawing_view.shapes.*
 import com.example.mobilepaint.models.CanvasData
 import com.example.mobilepaint.models.SelectionBorderOptions
@@ -34,34 +25,16 @@ class ShapesView @JvmOverloads constructor(
     context: Context,
     attrs: AttributeSet? = null,
     defStyle: Int = 0
-) : FrameLayout(context, attrs, defStyle), TextView.OnEditorActionListener {
+) : View(context, attrs, defStyle) {
 
     companion object {
         private const val IMAGE_SIZE = 300
     }
 
-    private val editText = LayoutEdittextBinding.inflate(LayoutInflater.from(context), this, false).root
-
     init {
         isFocusable = true
         isFocusableInTouchMode = true
-        setWillNotDraw(false)
-        editText.isVisible = false
-        addView(editText)
-        editText.setOnEditorActionListener(this)
     }
-
-    override fun onEditorAction(p0: TextView?, actionId: Int, p2: KeyEvent?): Boolean {
-        if (actionId == EditorInfo.IME_ACTION_DONE) {
-            val textPaint = Paint(editText.paint)
-            val text = CustomText(textPaint, editText.rotation, editText.scaleX)
-            addNewShape(text)
-            return true
-        }
-        return false
-    }
-
-    private val im = context.getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
 
     private val arrowWidth = resources.getDimension(R.dimen.drawing_view_arrow_width)
     private val arrowHeight = arrowWidth * 1.2f
@@ -150,7 +123,8 @@ class ShapesView @JvmOverloads constructor(
                 deselectShape()
         }
 
-    private var selectedShape: Shape? = null
+    var selectedShape: Shape? = null
+        private set
 
     private val selectionColors = intArrayOf(
         ContextCompat.getColor(context, R.color.red),
@@ -234,38 +208,9 @@ class ShapesView @JvmOverloads constructor(
         strokeCap = Paint.Cap.ROUND
     }
 
-    /*override fun onKeyUp(keyCode: Int, event: KeyEvent?): Boolean {
-        if (selectedShape !is CustomText)
-            return false
-
-        if (
-            keyCode >= KeyEvent.KEYCODE_A && keyCode <= KeyEvent.KEYCODE_Z ||
-            keyCode >= KeyEvent.KEYCODE_0 && keyCode <= KeyEvent.KEYCODE_9
-        ) {
-            val s = event!!.unicodeChar.toChar()
-            (selectedShape as? CustomText)?.addChar(s)
-            invalidate()
-            return true
-        } else if (keyCode == KeyEvent.KEYCODE_DEL) {
-            (selectedShape as? CustomText)?.popChar()
-            invalidate()
-            return true
-        } else if (event?.action == KeyEvent.ACTION_UP && event.keyCode == KeyEvent.KEYCODE_ENTER) {
-            (selectedShape as? CustomText)?.addChar('\n')
-            invalidate()
-            return true
-        }
-
-        return super.onKeyUp(keyCode, event)
-    }*/
-
-    private fun createTextPaint() = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-        textSize = 18.toPx
-    }
-
     @SuppressLint("ClickableViewAccessibility")
     override fun onTouchEvent(event: MotionEvent?): Boolean {
-        if (event == null)
+        if (event == null || geometryType == GeometryType.TEXT)
             return false
 
         val touchX = event.x
@@ -273,14 +218,7 @@ class ShapesView @JvmOverloads constructor(
 
         when (event.actionMasked) {
             MotionEvent.ACTION_DOWN -> {
-                if (geometryType == GeometryType.TEXT) {
-                    editText.updateLayoutParams<MarginLayoutParams> {
-                        leftMargin = touchX.toInt()
-                        topMargin = touchY.toInt()
-                    }
-                    editText.isVisible = true
-                    editText.requestFocus()
-                } else if (geometryType == GeometryType.PAINT) {
+                if (geometryType == GeometryType.PAINT) {
                     val shape = shapes.firstOrNull { it.isInside(touchX, touchY) }
                     if (shape != null)
                         shape.fillColor(color)
@@ -317,7 +255,11 @@ class ShapesView @JvmOverloads constructor(
                     deselectShape()
                     selectedShape = shapes.firstOrNull { it.isInside(touchX, touchY) }
                     selectedShape?.setSelected(true)
-                } else if (geometryType != GeometryType.TEXT) {
+                    if (selectedShape is CustomText) {
+                        val text = selectedShape as CustomText
+                        onTextSelected?.invoke(text)
+                    }
+                } else {
                     val operation = currentShape?.up(touchX, touchY)
                     if (operation != null)
                         operations.push(operation)
@@ -331,7 +273,9 @@ class ShapesView @JvmOverloads constructor(
         return true
     }
 
-    private fun deselectShape() {
+    var onTextSelected: ((CustomText) -> Unit)? = null
+
+    fun deselectShape() {
         selectedShape?.setSelected(false)
         selectedShape = null
     }
@@ -355,7 +299,7 @@ class ShapesView @JvmOverloads constructor(
         return bitmap
     }
 
-    fun fromJson(json : String, gson: Gson) : CanvasData {
+    fun fromJson(editTextPaint: Paint, json : String, gson: Gson) : CanvasData {
         val canvasJson = gson.fromJson(json, CanvasJson::class.java)
         val shapes = canvasJson.shapesList.map {
             when (it.type) {
@@ -396,6 +340,10 @@ class ShapesView @JvmOverloads constructor(
                         addData(bitmapData)
                     }
                 }
+                GeometryType.TEXT.name -> {
+                    val textData = gson.fromJson(it.data, TextData::class.java)
+                    CustomText(editTextPaint, textData)
+                }
                 else -> throw IllegalStateException()
             }
         }
@@ -403,6 +351,7 @@ class ShapesView @JvmOverloads constructor(
         return CanvasData(
             width = canvasJson.width,
             height = canvasJson.height,
+            bg = canvasJson.bg,
             shapesList = shapes
         )
     }

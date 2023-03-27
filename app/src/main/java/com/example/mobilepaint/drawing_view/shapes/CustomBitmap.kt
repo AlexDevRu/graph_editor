@@ -31,9 +31,13 @@ class CustomBitmap(
     private val matrix1 = Matrix()
     private val matrix2 = Matrix()
     private val matrix3 = Matrix()
+    private var matrix4 = Matrix()
 
     private var x = 0f
     private var y = 0f
+
+    var sumDx = 0f
+    var sumDy = 0f
 
     init {
         moveTo(0f, 0f)
@@ -46,6 +50,7 @@ class CustomBitmap(
     }
 
     override fun onTransform(matrix: Matrix) {
+        matrix4 = matrix
         this.matrix1.setConcat(this.matrix1, matrix)
         transform(matrix)
     }
@@ -58,6 +63,8 @@ class CustomBitmap(
     }
 
     override fun onTranslated(dx: Float, dy: Float) {
+        sumDx += dx
+        sumDy += dy
         x += dx
         y += dy
     }
@@ -74,11 +81,31 @@ class CustomBitmap(
         }
     }
 
+    private var firstTimeUp = true
+
     override fun up(x: Float, y: Float) : Operation? {
         computeBounds(bounds, true)
         Log.e(TAG, "up: bounds=$bounds")
         selectionBorder.up(bounds)
-        return null
+        return when {
+            firstTimeUp -> {
+                firstTimeUp = false
+                Operation.Creation(this)
+            }
+            sumDx > 0f || sumDy > 0f -> {
+                val operation = Operation.BitmapTranslation(this, -sumDx, -sumDy)
+                sumDx = 0f
+                sumDx = 0f
+                operation
+            }
+            !matrix2.isIdentity || !matrix4.isIdentity -> {
+                val operation = Operation.BitmapTransformation(this, matrix4, matrix2)
+                matrix4.reset()
+                matrix2.reset()
+                operation
+            }
+            else -> null
+        }
     }
 
     override fun drawInCanvas(canvas: Canvas) {
@@ -95,6 +122,23 @@ class CustomBitmap(
 
     override fun setSelected(selected: Boolean) {
         this.selected = selected
+    }
+
+    override fun applyOperation(operation: Operation): Operation? {
+        return when (operation) {
+            is Operation.BitmapTranslation -> {
+                x += operation.x
+                y += operation.y
+                val matrix = Matrix().apply {
+                    postTranslate(operation.x, operation.y)
+                }
+                transform(matrix)
+                selectionBorder.applyMatrix(matrix)
+                val invert = Operation.BitmapTranslation(this, -operation.x, -operation.y)
+                invert
+            }
+            else -> null
+        }
     }
 
     override fun toJson(gson: Gson): String {

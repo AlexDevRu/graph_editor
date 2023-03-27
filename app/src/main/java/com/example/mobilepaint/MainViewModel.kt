@@ -34,7 +34,7 @@ class MainViewModel(
         PenType(app.getString(R.string.ellipse), R.drawable.ic_ellipse, GeometryType.ELLIPSE),
         PenType(app.getString(R.string.rectangle), R.drawable.ic_rectangle, GeometryType.RECT),
         PenType(app.getString(R.string.arrow), R.drawable.ic_arrow, GeometryType.ARROW),
-        PenType(app.getString(R.string.text), R.drawable.ic_arrow, GeometryType.TEXT),
+        PenType(app.getString(R.string.text), R.drawable.ic_text, GeometryType.TEXT),
         PenType(app.getString(R.string.fill), R.drawable.ic_paint, GeometryType.PAINT),
     )
 
@@ -79,7 +79,7 @@ class MainViewModel(
     }
 
     fun addCanvas(width: Int, height: Int) {
-        canvases.add(CanvasData(width, height))
+        canvases.add(CanvasData(width, height, Color.WHITE))
     }
 
     fun addCanvas(canvasData: CanvasData) {
@@ -102,9 +102,9 @@ class MainViewModel(
         _penType.value = options[position]
     }
 
-    fun saveShapes(position: Int, shapesList : List<Shape>, removedShapesList : List<Shape>) {
+    fun saveShapes(position: Int, color: Int, shapesList : List<Shape>, removedShapesList : List<Shape>) {
         if (position < canvases.size)
-            canvases[position] = CanvasData(canvases[position].width, canvases[position].height, shapesList, removedShapesList)
+            canvases[position] = CanvasData(canvases[position].width, canvases[position].height, color, shapesList, removedShapesList)
     }
 
     /*fun saveCanvas(position: Int, canvasData: CanvasData) {
@@ -136,8 +136,8 @@ class MainViewModel(
         }
     }
 
-    fun exportJson(key: Int, shapesList : List<Shape>, removedShapesList : List<Shape>) {
-        saveShapes(key, shapesList, removedShapesList)
+    fun exportJson(key: Int, color: Int, shapesList : List<Shape>, removedShapesList : List<Shape>) {
+        saveShapes(key, color, shapesList, removedShapesList)
         viewModelScope.launch(Dispatchers.IO) {
             _loading.postValue(true)
             val json = canvases[key].toJson(gson)

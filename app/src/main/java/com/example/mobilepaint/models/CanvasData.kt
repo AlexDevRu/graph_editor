@@ -10,8 +10,9 @@ import java.util.*
 data class CanvasData(
     var width: Int = 0,
     var height: Int = 0,
-    val shapesList : List<Shape> = LinkedList(),
-    val removedShapesList : List<Shape> = LinkedList()
+    var bg: Int,
+    val shapesList: List<Shape> = LinkedList(),
+    val removedShapesList: List<Shape> = LinkedList()
 ) {
     private fun getType(shape: Shape) = when (shape) {
         is CustomLine -> GeometryType.LINE
@@ -20,6 +21,7 @@ data class CanvasData(
         is CustomEllipse -> GeometryType.ELLIPSE
         is CustomPath -> GeometryType.PATH
         is CustomBitmap -> GeometryType.BITMAP
+        is CustomText -> GeometryType.TEXT
         else -> throw IllegalStateException()
     }
 
@@ -28,6 +30,7 @@ data class CanvasData(
         val canvasJson = CanvasJson(
             width = width,
             height = height,
+            bg = bg,
             shapesList = jsonShapes,
         )
         return gson.toJson(canvasJson)

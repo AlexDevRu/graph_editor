@@ -3,6 +3,7 @@ package com.example.mobilepaint.models.json
 class CanvasJson(
     val width: Int,
     val height: Int,
+    val bg: Int,
     val shapesList : List<ShapeJson>
 )
 

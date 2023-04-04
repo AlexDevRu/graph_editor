@@ -6,6 +6,7 @@ import android.graphics.*
 import android.os.Handler
 import android.os.Looper
 import android.util.AttributeSet
+import android.util.Log
 import android.view.MotionEvent
 import android.view.View
 import androidx.annotation.ColorInt
@@ -29,6 +30,7 @@ class ShapesView @JvmOverloads constructor(
 
     companion object {
         private const val IMAGE_SIZE = 300
+        private const val TAG = "ShapesView"
     }
 
     init {
@@ -157,6 +159,8 @@ class ShapesView @JvmOverloads constructor(
                         removedOperations.push(invertOperation)
                 }
             }
+            Log.e(TAG, "onTouchEvent: operation undo ${operations.size} operations=$operations")
+            Log.e(TAG, "onTouchEvent: operation undo ${removedOperations.size} removedOperations=$removedOperations")
             onShapeChanged?.onStackSizesChanged(operations.size, removedOperations.size)
             invalidate()
         }
@@ -250,8 +254,10 @@ class ShapesView @JvmOverloads constructor(
                 handler.removeCallbacks(onLongPressed)
                 if (geometryType == GeometryType.HAND) {
                     val operation = selectedShape?.up(touchX, touchY)
-                    if (operation != null)
+                    if (operation != null) {
                         operations.push(operation)
+                        Log.e(TAG, "onTouchEvent: operation added $operations")
+                    }
                     deselectShape()
                     selectedShape = shapes.firstOrNull { it.isInside(touchX, touchY) }
                     selectedShape?.setSelected(true)
@@ -261,8 +267,10 @@ class ShapesView @JvmOverloads constructor(
                     }
                 } else {
                     val operation = currentShape?.up(touchX, touchY)
-                    if (operation != null)
+                    if (operation != null) {
                         operations.push(operation)
+                        Log.e(TAG, "onTouchEvent: operation added $operations")
+                    }
                     currentShape = null
                 }
             }

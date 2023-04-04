@@ -4,7 +4,6 @@ import android.graphics.*
 import androidx.core.graphics.values
 import com.example.mobilepaint.models.SelectionBorderOptions
 import com.example.mobilepaint.drawing_view.Operation
-import com.example.mobilepaint.models.json.PathData
 import com.example.mobilepaint.models.json.RectData
 import com.example.mobilepaint.models.json.ShapeData
 import com.google.gson.Gson
@@ -26,7 +25,6 @@ class CustomRectF(
 
     private val matrix = Matrix()
     private val matrix1 = Matrix()
-    private val inverse = Matrix()
 
     override fun onTransform(matrix: Matrix) {
         this.matrix.setConcat(this.matrix, matrix)
@@ -63,6 +61,7 @@ class CustomRectF(
         return when {
             firstTimeUp -> Operation.Creation(this)
             !matrix1.isIdentity -> {
+                val inverse = Matrix()
                 matrix1.invert(inverse)
                 matrix1.reset()
                 Operation.Transformation(this, inverse)
@@ -112,6 +111,7 @@ class CustomRectF(
             shape.transform(operation.matrix)
             shape.computeBounds(bounds, true)
             selectionBorder.up(bounds)
+            val inverse = Matrix()
             operation.matrix.invert(inverse)
             return Operation.Transformation(this, inverse)
         }

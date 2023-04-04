@@ -132,8 +132,9 @@ class CustomBitmap(
                 val matrix = Matrix().apply {
                     postTranslate(operation.x, operation.y)
                 }
-                transform(matrix)
                 selectionBorder.applyMatrix(matrix)
+                transform(matrix)
+                computeBounds(bounds, true)
                 val invert = Operation.BitmapTranslation(this, -operation.x, -operation.y)
                 invert
             }

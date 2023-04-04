@@ -125,16 +125,22 @@ class CustomArrow(
             calculateArrowCoordinates(x, y)
     }
 
-    override fun up(x: Float, y: Float) : Operation {
+    private var firstTimeUp = true
+
+    override fun up(x: Float, y: Float) : Operation? {
         triangle.computeBounds(triangleBounds, true)
         bounds.left = minOf(left, right, triangleBounds.left, triangleBounds.right)
         bounds.right = maxOf(left, right, triangleBounds.left, triangleBounds.right)
         bounds.top = minOf(top, bottom, triangleBounds.top, triangleBounds.bottom)
         bounds.bottom = maxOf(top, bottom, triangleBounds.top, triangleBounds.bottom)
         return when {
-            startPointMoving -> Operation.PointMoving(this, false, startX, startY)
+            startPointMoving -> Operation.PointMoving(this, true, startX, startY)
             endPointMoving -> Operation.PointMoving(this, false, startX, startY)
-            else -> Operation.Creation(this)
+            firstTimeUp -> {
+                firstTimeUp = false
+                Operation.Creation(this)
+            }
+            else -> null
         }
     }
 

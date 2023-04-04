@@ -67,12 +67,18 @@ class CustomLine(
         }
     }
 
-    override fun up(x: Float, y: Float) : Operation {
+    private var firstTimeUp = true
+
+    override fun up(x: Float, y: Float) : Operation? {
         calculateCoordinates()
         return when {
-            startPointMoving -> Operation.PointMoving(this, false,startX, startY)
+            startPointMoving -> Operation.PointMoving(this, true, startX, startY)
             endPointMoving -> Operation.PointMoving(this, false, startX, startY)
-            else -> Operation.Creation(this)
+            firstTimeUp -> {
+                firstTimeUp = false
+                Operation.Creation(this)
+            }
+            else -> null
         }
     }
 

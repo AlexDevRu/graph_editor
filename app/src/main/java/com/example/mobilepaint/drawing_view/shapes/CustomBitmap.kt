@@ -4,6 +4,7 @@ import android.graphics.*
 import android.util.Base64
 import android.util.Log
 import androidx.core.graphics.values
+import com.example.mobilepaint.Utils.isTranslation
 import com.example.mobilepaint.drawing_view.Operation
 import com.example.mobilepaint.models.SelectionBorderOptions
 import com.example.mobilepaint.models.json.BitmapData
@@ -31,13 +32,11 @@ class CustomBitmap(
     private val matrix1 = Matrix()
     private val matrix2 = Matrix()
     private val matrix3 = Matrix()
-    private var matrix4 = Matrix()
+    private val matrix4 = Matrix()
+    private val matrix5 = Matrix()
 
     private var x = 0f
     private var y = 0f
-
-    var sumDx = 0f
-    var sumDy = 0f
 
     init {
         moveTo(0f, 0f)
@@ -50,7 +49,10 @@ class CustomBitmap(
     }
 
     override fun onTransform(matrix: Matrix) {
-        matrix4 = matrix
+        if (matrix5.isIdentity && !matrix.isTranslation) {
+            matrix5.set(matrix2)
+        }
+        matrix4.setConcat(matrix4, matrix)
         this.matrix1.setConcat(this.matrix1, matrix)
         transform(matrix)
     }
@@ -63,8 +65,6 @@ class CustomBitmap(
     }
 
     override fun onTranslated(dx: Float, dy: Float) {
-        sumDx += dx
-        sumDy += dy
         x += dx
         y += dy
     }
@@ -81,27 +81,19 @@ class CustomBitmap(
         }
     }
 
-    private var firstTimeUp = true
-
     override fun up(x: Float, y: Float) : Operation? {
         computeBounds(bounds, true)
         Log.e(TAG, "up: bounds=$bounds")
         selectionBorder.up(bounds)
         return when {
-            firstTimeUp -> {
-                firstTimeUp = false
-                Operation.Creation(this)
-            }
-            sumDx > 0f || sumDy > 0f -> {
-                val operation = Operation.BitmapTranslation(this, -sumDx, -sumDy)
-                sumDx = 0f
-                sumDx = 0f
-                operation
-            }
-            !matrix2.isIdentity || !matrix4.isIdentity -> {
-                val operation = Operation.BitmapTransformation(this, matrix4, matrix2)
+            !matrix4.isIdentity -> {
+                val matrix4Inverse = Matrix()
+                matrix4.invert(matrix4Inverse)
+                val matrix5Inverse = Matrix()
+                matrix5.invert(matrix5Inverse)
+                val operation = Operation.BitmapTransformation(this, matrix4Inverse, matrix5Inverse)
                 matrix4.reset()
-                matrix2.reset()
+                matrix5.reset()
                 operation
             }
             else -> null
@@ -126,16 +118,22 @@ class CustomBitmap(
 
     override fun applyOperation(operation: Operation): Operation? {
         return when (operation) {
-            is Operation.BitmapTranslation -> {
-                x += operation.x
-                y += operation.y
-                val matrix = Matrix().apply {
-                    postTranslate(operation.x, operation.y)
+            is Operation.BitmapTransformation -> {
+                if (operation.matrix.isTranslation) {
+                    val values = operation.matrix.values()
+                    x += values[Matrix.MTRANS_X]
+                    y += values[Matrix.MTRANS_Y]
+                } else {
+                    matrix2.setValues(operation.bitmapMatrix.values())
                 }
-                selectionBorder.applyMatrix(matrix)
-                transform(matrix)
+                selectionBorder.applyMatrix(operation.matrix)
+                transform(operation.matrix)
                 computeBounds(bounds, true)
-                val invert = Operation.BitmapTranslation(this, -operation.x, -operation.y)
+                val matrix4Inverse = Matrix()
+                operation.matrix.invert(matrix4Inverse)
+                val matrix5Inverse = Matrix()
+                operation.bitmapMatrix.invert(matrix5Inverse)
+                val invert = Operation.BitmapTransformation(this, matrix4Inverse, matrix5Inverse)
                 invert
             }
             else -> null

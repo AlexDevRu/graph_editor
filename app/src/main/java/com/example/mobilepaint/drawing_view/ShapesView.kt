@@ -92,13 +92,14 @@ class ShapesView @JvmOverloads constructor(
         val scaledBitmap = Bitmap.createScaledBitmap(bitmap, IMAGE_SIZE, IMAGE_SIZE,true)
         val customBitmap = CustomBitmap(scaledBitmap, getSelectionBorderOptions(), bitmapPaint)
         addNewShape(customBitmap)
+        operations.add(Operation.Creation(customBitmap))
+        onShapeChanged?.onStackSizesChanged(operations.size, removedOperations.size)
     }
 
     fun removeShape(shape: Shape) {
         if (selectedShape == shape)
             deselectShape()
         shapes.remove(shape)
-        onShapeChanged?.onStackSizesChanged(shapes.size, removedShapes.size)
         invalidate()
     }
 

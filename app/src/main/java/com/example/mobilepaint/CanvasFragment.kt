@@ -183,6 +183,13 @@ class CanvasFragment : Fragment(), ShapesView.OnShapeChanged {
 
     private fun exportImage() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            if (Environment.isExternalStorageManager()) {
+                if (viewModel.saveImage == 0)
+                    viewModel.saveImageToExternalStorage(shapesView.getBitmap())
+                else
+                    viewModel.exportJson(key, shapesView.color, shapesView.shapes, shapesView.removedShapes)
+                return
+            }
             try {
                 val intent = Intent(Settings.ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION)
                 val uri = Uri.fromParts("package", requireContext().packageName, null)
@@ -190,8 +197,6 @@ class CanvasFragment : Fragment(), ShapesView.OnShapeChanged {
                 storageActivityResultLauncher.launch(intent)
             } catch (e : Exception) {
                 val intent = Intent(Settings.ACTION_MANAGE_ALL_FILES_ACCESS_PERMISSION)
-                val uri = Uri.fromParts("package", requireContext().packageName, null)
-                intent.data = uri
                 storageActivityResultLauncher.launch(intent)
             }
         } else {

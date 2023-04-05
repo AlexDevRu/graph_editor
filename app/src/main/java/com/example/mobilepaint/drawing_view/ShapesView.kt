@@ -260,7 +260,7 @@ class ShapesView @JvmOverloads constructor(
                         Log.e(TAG, "onTouchEvent: operation added $operations")
                     }
                     deselectShape()
-                    selectedShape = shapes.firstOrNull { it.isInside(touchX, touchY) }
+                    selectedShape = shapes.lastOrNull { it.isInside(touchX, touchY) }
                     selectedShape?.setSelected(true)
                     if (selectedShape is CustomText) {
                         val text = selectedShape as CustomText

@@ -61,6 +61,30 @@ class SelectionBorder(
         matrix.mapPoints(handlePoints)
     }
 
+    fun resetAndApplyMatrix(bounds: RectF, matrix: Matrix, sx: Float, sy: Float, rotation: Float) {
+        this.rotation = rotation
+        this.sx = sx
+        this.sy = sy
+
+        this.bounds.set(bounds)
+
+        handlePoints[0] = bounds.left
+        handlePoints[1] = bounds.top
+        handlePoints[2] = bounds.right
+        handlePoints[3] = bounds.top
+        handlePoints[4] = bounds.right
+        handlePoints[5] = bounds.bottom
+        handlePoints[6] = bounds.left
+        handlePoints[7] = bounds.bottom
+
+        reset()
+        addRect(bounds, Direction.CW)
+
+        applyMatrix(matrix)
+
+        computeBounds(this.bounds, true)
+    }
+
     fun down(x: Float, y: Float) {
         tlPointMoving = abs(x - handlePoints[0]) < handleRadius && abs(y - handlePoints[1]) < handleRadius
         trPointMoving = abs(x - handlePoints[2]) < handleRadius && abs(y - handlePoints[3]) < handleRadius

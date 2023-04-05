@@ -5,6 +5,7 @@ import android.util.Base64
 import android.util.Log
 import androidx.core.graphics.values
 import com.example.mobilepaint.Utils.isTranslation
+import com.example.mobilepaint.Utils.toPx
 import com.example.mobilepaint.drawing_view.Operation
 import com.example.mobilepaint.models.SelectionBorderOptions
 import com.example.mobilepaint.models.json.BitmapData
@@ -16,7 +17,7 @@ import java.io.ByteArrayOutputStream
 
 class CustomBitmap(
     private val bitmap: Bitmap,
-    selectionBorderOptions: SelectionBorderOptions,
+    val selectionBorderOptions: SelectionBorderOptions,
     override val paint: Paint
 ): Path(), Shape, SelectionBorder.Listener {
 
@@ -39,29 +40,45 @@ class CustomBitmap(
     private var y = 0f
 
     init {
-        moveTo(0f, 0f)
+        /*moveTo(0f, 0f)
         lineTo(IMAGE_SIZE.toFloat(), 0f)
         lineTo(IMAGE_SIZE.toFloat(), IMAGE_SIZE.toFloat())
         lineTo(0f, IMAGE_SIZE.toFloat())
         lineTo(0f, 0f)
 
-        up(0f, 0f)
+        up(0f, 0f)*/
+
+        reset()
+        addRect(0f, 0f, IMAGE_SIZE.toFloat(), IMAGE_SIZE.toFloat(), Direction.CW)
+        computeBounds(bounds, true)
     }
 
     override fun onTransform(matrix: Matrix) {
-        if (matrix5.isIdentity && !matrix.isTranslation) {
+        /*if (matrix5.isIdentity && !matrix.isTranslation) {
             matrix5.set(matrix2)
         }
         matrix4.setConcat(matrix4, matrix)
-        this.matrix1.setConcat(this.matrix1, matrix)
+        this.matrix1.setConcat(this.matrix1, matrix)*/
         transform(matrix)
     }
+
+    private var sx = 1f
+    private var sy = 1f
+    private var rotation = 0f
+    private var osx = 1f
+    private var osy = 1f
+    private var orotation = 0f
+    private var ox = 0f
+    private var oy = 0f
 
     override fun onScale(sx: Float, sy: Float, rotation: Float) {
         matrix2.reset()
         matrix2.setScale(sx, sy, CENTER, CENTER)
         matrix2.postRotate(rotation, CENTER, CENTER)
         Log.d(TAG, "onScale: matrix=${matrix2.toShortString()}")
+        this.sx = sx
+        this.sy = sy
+        this.rotation = rotation
     }
 
     override fun onTranslated(dx: Float, dy: Float) {
@@ -81,19 +98,32 @@ class CustomBitmap(
         }
     }
 
+    private val paint11 = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        style = Paint.Style.STROKE
+        strokeWidth = 2.toPx
+        color = Color.RED
+    }
+
     override fun up(x: Float, y: Float) : Operation? {
         computeBounds(bounds, true)
         Log.e(TAG, "up: bounds=$bounds")
         selectionBorder.up(bounds)
         return when {
-            !matrix4.isIdentity -> {
-                val matrix4Inverse = Matrix()
+            sx != osx || sy != osy || rotation != orotation || this.x != ox || this.y != oy -> {
+                /*val matrix4Inverse = Matrix()
                 matrix4.invert(matrix4Inverse)
                 val matrix5Inverse = Matrix()
                 matrix5.invert(matrix5Inverse)
                 val operation = Operation.BitmapTransformation(this, matrix4Inverse, matrix5Inverse)
                 matrix4.reset()
                 matrix5.reset()
+                operation*/
+                val operation = Operation.BitmapTransformation1(this, ox, oy, osx, osy, orotation)
+                osx = sx
+                osy = sy
+                orotation = rotation
+                ox = this.x
+                oy = this.y
                 operation
             }
             else -> null
@@ -103,7 +133,9 @@ class CustomBitmap(
     override fun drawInCanvas(canvas: Canvas) {
         canvas.save()
         canvas.translate(x, y)
-        canvas.drawBitmap(bitmap, matrix2, null)
+        canvas.scale(sx, sy, CENTER, CENTER)
+        canvas.rotate(rotation, CENTER, CENTER)
+        canvas.drawBitmap(bitmap, 0f, 0f, null)
         canvas.restore()
         if (selected) {
             selectionBorder.drawInCanvas(canvas)
@@ -134,6 +166,28 @@ class CustomBitmap(
                 val matrix5Inverse = Matrix()
                 operation.bitmapMatrix.invert(matrix5Inverse)
                 val invert = Operation.BitmapTransformation(this, matrix4Inverse, matrix5Inverse)
+                invert
+            }
+            is Operation.BitmapTransformation1 -> {
+                val invert = Operation.BitmapTransformation1(this, x, y, sx, sy, rotation)
+                sx = operation.sx
+                sy = operation.sy
+                rotation = operation.rotation
+                x = operation.x
+                y = operation.y
+                Log.d(TAG, "applyOperation: sx=$sx sy=$sy rotation=$rotation x=$x y=$y")
+
+                reset()
+                addRect(0f, 0f, IMAGE_SIZE.toFloat(), IMAGE_SIZE.toFloat(), Direction.CW)
+                val matrix = Matrix().apply {
+                    setTranslate(x, y)
+                    postScale(sx, sy, x + CENTER, y + CENTER)
+                    postRotate(rotation, x + CENTER, y + CENTER)
+                }
+                transform(matrix)
+                val bounds1 = RectF(0f, 0f, IMAGE_SIZE.toFloat(), IMAGE_SIZE.toFloat())
+                selectionBorder.resetAndApplyMatrix(bounds1, matrix, sx, sy, rotation)
+                computeBounds(bounds, true)
                 invert
             }
             else -> null

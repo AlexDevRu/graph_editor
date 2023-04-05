@@ -20,6 +20,7 @@ import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.launch
 import java.io.File
 import java.io.FileOutputStream
+import java.text.SimpleDateFormat
 import java.util.*
 
 class MainViewModel(
@@ -141,8 +142,10 @@ class MainViewModel(
         viewModelScope.launch(Dispatchers.IO) {
             _loading.postValue(true)
             val json = canvases[key].toJson(gson)
-            val directory = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES)
-            val file = File(directory, "${System.currentTimeMillis()}.json")
+            val dir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES)
+            val dateFormat = SimpleDateFormat("yyyy-MM-dd_HH_mm_ss", Locale.ENGLISH)
+            val fileName = dateFormat.format(Date())
+            val file = File(dir, "$fileName.json")
             file.appendText(json)
             file.createNewFile()
             _loading.postValue(false)

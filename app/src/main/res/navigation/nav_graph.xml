@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<navigation xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/nav_graph"
+    app:startDestination="@id/dashboardFragment">
+
+    <fragment
+        android:id="@+id/dashboardFragment"
+        android:name="com.example.mobilepaint.ui.dashboard.DashboardFragment"
+        android:label="DashboardFragment" >
+        <action
+            android:id="@+id/action_dashboardFragment_to_canvasFragment"
+            app:destination="@id/canvasFragment" />
+    </fragment>
+    <fragment
+        android:id="@+id/canvasFragment"
+        android:name="com.example.mobilepaint.CanvasFragment"
+        android:label="CanvasFragment" />
+</navigation>

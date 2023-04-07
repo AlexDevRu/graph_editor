@@ -6,85 +6,51 @@
     android:layout_height="match_parent"
     tools:context=".MainActivity">
 
-    <androidx.cardview.widget.CardView
-        android:id="@+id/cvTools"
+    <androidx.appcompat.widget.Toolbar
+        android:id="@+id/toolbar"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        app:layout_constraintTop_toTopOf="parent">
+        android:minHeight="?attr/actionBarSize"
+        app:layout_constraintTop_toTopOf="parent"
+        app:menu="@menu/menu_toolbar">
 
-        <androidx.appcompat.widget.LinearLayoutCompat
-            android:id="@+id/llTools"
-            android:layout_width="match_parent"
+        <com.google.android.gms.common.SignInButton
+            android:id="@+id/btnGoogleSignIn"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content" />
+
+        <com.google.android.material.imageview.ShapeableImageView
+            android:id="@+id/profileAvatar"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:layout_marginStart="16dp"
+            android:scaleType="centerCrop"
+            android:visibility="gone"
+            app:shapeAppearanceOverlay="@style/circleImageView"
+            tools:src="@tools:sample/avatars"
+            tools:visibility="visible" />
+
+        <Space
+            android:layout_width="16dp"
+            android:layout_height="wrap_content" />
+
+        <androidx.appcompat.widget.AppCompatImageButton
+            android:id="@+id/btnSignOut"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:gravity="center_vertical"
-            android:paddingHorizontal="10dp"
-            android:paddingTop="16dp"
-            android:paddingBottom="10dp">
+            android:contentDescription="@string/sign_out"
+            android:src="@drawable/ic_baseline_logout_24" />
 
-            <View
-                android:id="@+id/colorView"
-                android:layout_width="40dp"
-                android:layout_height="40dp"
-                android:background="@color/black" />
+    </androidx.appcompat.widget.Toolbar>
 
-            <TextView
-                android:id="@+id/tvStroke"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginHorizontal="10dp"
-                android:textStyle="bold"
-                android:textSize="16sp"
-                tools:text="Stroke: 5" />
-
-            <com.google.android.material.textfield.TextInputLayout
-                android:id="@+id/tlType"
-                style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox.ExposedDropdownMenu"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toTopOf="parent">
-
-                <com.google.android.material.textfield.MaterialAutoCompleteTextView
-                    android:id="@+id/etType"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:focusable="false"
-                    android:focusableInTouchMode="false"
-                    android:hint="@string/select_pen_type"
-                    android:inputType="none" />
-
-            </com.google.android.material.textfield.TextInputLayout>
-
-        </androidx.appcompat.widget.LinearLayoutCompat>
-
-    </androidx.cardview.widget.CardView>
-    
-    <androidx.viewpager2.widget.ViewPager2
-        android:id="@+id/viewPager"
+    <androidx.fragment.app.FragmentContainerView
+        android:id="@+id/fragmentContainerView"
+        android:name="androidx.navigation.fragment.NavHostFragment"
         android:layout_width="match_parent"
         android:layout_height="0dp"
-        app:layout_constraintBottom_toTopOf="@id/tabLayout"
-        app:layout_constraintTop_toBottomOf="@id/cvTools" />
-
-    <com.google.android.material.tabs.TabLayout
-        android:id="@+id/tabLayout"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:elevation="6dp"
-        app:tabGravity="start"
-        app:tabMode="scrollable"
-        app:layout_constraintBottom_toBottomOf="parent" />
-
-    <ProgressBar
-        android:id="@+id/progressBar"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:visibility="gone"
-        app:layout_constraintTop_toTopOf="parent"
+        app:defaultNavHost="true"
         app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent" />
+        app:layout_constraintTop_toBottomOf="@id/toolbar"
+        app:navGraph="@navigation/nav_graph" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

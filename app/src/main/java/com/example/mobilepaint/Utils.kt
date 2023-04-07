@@ -3,9 +3,11 @@ package com.example.mobilepaint
 import android.content.res.Resources
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
+import android.graphics.Canvas
 import android.graphics.Matrix
 import android.util.Base64
 import android.util.TypedValue
+import android.view.View
 import androidx.core.graphics.values
 import java.io.ByteArrayOutputStream
 
@@ -28,6 +30,13 @@ object Utils {
     fun convert(base64: String): Bitmap {
         val decodedBytes = Base64.decode(base64.substring(base64.indexOf(",")  + 1), Base64.DEFAULT)
         return BitmapFactory.decodeByteArray(decodedBytes, 0, decodedBytes.size)
+    }
+
+    fun getBitmapFromView(view: View): Bitmap {
+        val bitmap = Bitmap.createBitmap(view.width, view.height, Bitmap.Config.ARGB_8888)
+        val canvas = Canvas(bitmap)
+        view.draw(canvas)
+        return bitmap
     }
 
     val Matrix.isTranslation: Boolean

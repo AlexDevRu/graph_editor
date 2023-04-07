@@ -1,33 +1,189 @@
 <?xml version="1.0" encoding="utf-8"?>
-<com.example.mobilepaint.drawing_view.CustomZoomLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:scrollbars="vertical|horizontal"
-    app:alignment="center"
-    app:animationDuration="280"
-    app:flingEnabled="true"
-    app:hasClickableChildren="true"
-    app:horizontalPanEnabled="true"
-    app:maxZoom="100"
-    app:maxZoomType="realZoom"
-    app:minZoom="1"
-    app:minZoomType="realZoom"
-    app:oneFingerScrollEnabled="true"
-    app:overPinchable="true"
-    app:overScrollHorizontal="true"
-    app:overScrollVertical="true"
-    app:scrollEnabled="true"
-    app:threeFingersScrollEnabled="true"
-    app:transformation="centerInside"
-    app:transformationGravity="auto"
-    app:twoFingersScrollEnabled="true"
-    app:verticalPanEnabled="true"
-    app:zoomEnabled="true">
+    tools:context=".MainActivity">
 
-    <com.example.mobilepaint.drawing_view.DrawingView
-        android:id="@+id/shapesView"
+    <androidx.cardview.widget.CardView
+        android:id="@+id/cvTools"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"/>
+        android:layout_height="wrap_content"
+        app:layout_constraintTop_toTopOf="parent">
 
-</com.example.mobilepaint.drawing_view.CustomZoomLayout>
+        <androidx.appcompat.widget.LinearLayoutCompat
+            android:id="@+id/llTools"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:paddingHorizontal="16dp"
+            android:paddingVertical="8dp">
+
+            <View
+                android:id="@+id/colorView"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:background="@color/black" />
+
+            <TextView
+                android:id="@+id/tvStroke"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginHorizontal="10dp"
+                android:textSize="16sp"
+                android:textStyle="bold"
+                tools:text="Stroke: 5" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnPenType"
+                style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                android:layout_width="wrap_content"
+                android:layout_height="40dp"
+                android:insetTop="0dp"
+                android:insetBottom="0dp"
+                android:text="@string/line"
+                app:icon="@drawable/ic_line" />
+
+            <Space
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:layout_weight="1" />
+
+            <androidx.appcompat.widget.AppCompatImageButton
+                android:id="@+id/btnUndo"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:src="@drawable/ic_undo" />
+
+            <androidx.appcompat.widget.AppCompatImageButton
+                android:id="@+id/btnRedo"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:src="@drawable/ic_redo" />
+
+        </androidx.appcompat.widget.LinearLayoutCompat>
+
+    </androidx.cardview.widget.CardView>
+
+    <com.example.mobilepaint.drawing_view.CustomZoomLayout
+        android:id="@+id/zoomLayout"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:scrollbars="vertical|horizontal"
+        app:alignment="center"
+        app:animationDuration="280"
+        app:flingEnabled="true"
+        app:hasClickableChildren="true"
+        app:horizontalPanEnabled="true"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/cvTools"
+        app:maxZoom="100"
+        app:maxZoomType="realZoom"
+        app:minZoom="1"
+        app:minZoomType="realZoom"
+        app:oneFingerScrollEnabled="true"
+        app:overPinchable="true"
+        app:overScrollHorizontal="true"
+        app:overScrollVertical="true"
+        app:scrollEnabled="true"
+        app:threeFingersScrollEnabled="true"
+        app:transformation="centerInside"
+        app:transformationGravity="auto"
+        app:twoFingersScrollEnabled="true"
+        app:verticalPanEnabled="true"
+        app:zoomEnabled="true">
+
+        <com.example.mobilepaint.drawing_view.DrawingView
+            android:id="@+id/shapesView"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent" />
+
+    </com.example.mobilepaint.drawing_view.CustomZoomLayout>
+
+    <com.google.android.flexbox.FlexboxLayout
+        android:id="@+id/flPenTypes"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:background="@color/black"
+        android:paddingHorizontal="8dp"
+        android:paddingBottom="4dp"
+        android:visibility="gone"
+        app:flexWrap="wrap"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/cvTools">
+
+        <androidx.appcompat.widget.AppCompatImageButton
+            android:id="@+id/btnCursor"
+            android:layout_width="50dp"
+            android:layout_height="50dp"
+            android:src="@drawable/ic_cursor" />
+
+        <androidx.appcompat.widget.AppCompatImageButton
+            android:id="@+id/btnSelection"
+            android:layout_width="50dp"
+            android:layout_height="50dp"
+            android:src="@drawable/ic_hand" />
+
+        <androidx.appcompat.widget.AppCompatImageButton
+            android:id="@+id/btnPath"
+            android:layout_width="50dp"
+            android:layout_height="50dp"
+            android:src="@drawable/ic_curve" />
+
+        <androidx.appcompat.widget.AppCompatImageButton
+            android:id="@+id/btnLine"
+            android:layout_width="50dp"
+            android:layout_height="50dp"
+            android:src="@drawable/ic_line" />
+
+        <androidx.appcompat.widget.AppCompatImageButton
+            android:id="@+id/btnEllipse"
+            android:layout_width="50dp"
+            android:layout_height="50dp"
+            android:src="@drawable/ic_ellipse" />
+
+        <androidx.appcompat.widget.AppCompatImageButton
+            android:id="@+id/btnRect"
+            android:layout_width="50dp"
+            android:layout_height="50dp"
+            android:src="@drawable/ic_rectangle"
+            app:layout_wrapBefore="true" />
+
+        <androidx.appcompat.widget.AppCompatImageButton
+            android:id="@+id/btnArrow"
+            android:layout_width="50dp"
+            android:layout_height="50dp"
+            android:src="@drawable/ic_arrow" />
+
+        <androidx.appcompat.widget.AppCompatImageButton
+            android:id="@+id/btnText"
+            android:layout_width="50dp"
+            android:layout_height="50dp"
+            android:src="@drawable/ic_text" />
+
+        <androidx.appcompat.widget.AppCompatImageButton
+            android:id="@+id/btnFill"
+            android:layout_width="50dp"
+            android:layout_height="50dp"
+            android:src="@drawable/ic_paint" />
+
+        <androidx.appcompat.widget.AppCompatImageButton
+            android:id="@+id/btnImage"
+            android:layout_width="50dp"
+            android:layout_height="50dp"
+            android:src="@drawable/ic_image" />
+
+    </com.google.android.flexbox.FlexboxLayout>
+
+    <ProgressBar
+        android:id="@+id/progressBar"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:visibility="gone"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+</androidx.constraintlayout.widget.ConstraintLayout>

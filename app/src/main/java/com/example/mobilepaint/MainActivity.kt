@@ -1,36 +1,29 @@
 package com.example.mobilepaint
 
 import android.os.Bundle
-import android.view.Menu
-import android.view.MenuItem
 import android.view.View
-import android.widget.AdapterView
 import android.widget.Toast
-import androidx.appcompat.app.AlertDialog
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.isVisible
 import androidx.lifecycle.Lifecycle
-import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
+import com.bumptech.glide.Glide
 import com.example.mobilepaint.adapters.CanvasAdapter
-import com.example.mobilepaint.adapters.PenTypesAdapter
 import com.example.mobilepaint.databinding.ActivityMainBinding
-import com.example.mobilepaint.databinding.DialogStrokeBinding
-import com.example.mobilepaint.databinding.ViewTabBinding
-import com.google.android.material.slider.Slider
-import com.google.android.material.tabs.TabLayout
-import com.google.android.material.tabs.TabLayoutMediator
-import com.skydoves.colorpickerview.ColorEnvelope
-import com.skydoves.colorpickerview.ColorPickerDialog
-import com.skydoves.colorpickerview.listeners.ColorEnvelopeListener
+import com.google.android.gms.auth.api.signin.GoogleSignIn
+import com.google.android.gms.auth.api.signin.GoogleSignInClient
+import com.google.android.gms.common.api.ApiException
+import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
+import javax.inject.Inject
 
 
-class MainActivity : AppCompatActivity(), View.OnClickListener,
-    ColorEnvelopeListener, AdapterView.OnItemClickListener,
-    Slider.OnChangeListener, TabLayout.OnTabSelectedListener {
+@AndroidEntryPoint
+class MainActivity : AppCompatActivity(), View.OnClickListener {
 
     private lateinit var binding: ActivityMainBinding
 
@@ -38,12 +31,24 @@ class MainActivity : AppCompatActivity(), View.OnClickListener,
         CanvasAdapter(this, viewModel.canvases)
     }
 
-    private val viewModel by lazy {
-        ViewModelProvider(this)[MainViewModel::class.java]
-    }
+    private val viewModel by viewModels<MainViewModel>()
 
-    private val sharedPrefsUtils by lazy {
-        SharedPrefsUtils(this)
+    @Inject
+    lateinit var googleSignInClient: GoogleSignInClient
+
+    private val googleSignInLauncher = registerForActivityResult(
+        ActivityResultContracts.StartActivityForResult()
+    ) { result ->
+        try {
+            val task = GoogleSignIn.getSignedInAccountFromIntent(result.data)
+            val account = task.getResult(ApiException::class.java)
+            Toast.makeText(this, "account ${account.email}", Toast.LENGTH_LONG).show()
+            viewModel.saveAccount(account)
+        } catch (e: ApiException) {
+            // The ApiException status code indicates the detailed failure reason.
+            // Please refer to the GoogleSignInStatusCodes class reference for more information.
+            e.printStackTrace()
+        }
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -51,73 +56,39 @@ class MainActivity : AppCompatActivity(), View.OnClickListener,
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        binding.etType.setAdapter(PenTypesAdapter(this, viewModel.options))
-        binding.etType.onItemClickListener = this
+        //binding.etType.setAdapter(PenTypesAdapter(this, viewModel.options))
+        //binding.etType.onItemClickListener = this
 
-        binding.colorView.setOnClickListener(this)
-        binding.tvStroke.setOnClickListener(this)
-
-        binding.viewPager.isUserInputEnabled = false
-        binding.viewPager.adapter = canvasAdapter
-
-        TabLayoutMediator(binding.tabLayout, binding.viewPager) { tab, position ->
-            val tabBinding = ViewTabBinding.inflate(layoutInflater)
-            tabBinding.btnRemove.setOnClickListener {
-                viewModel.removeCanvas(position)
-                binding.tabLayout.removeTab(tab)
-                canvasAdapter.removeCanvas(viewModel.canvases, position)
-                changeRemoveButtonVisibility()
-            }
-            tabBinding.text.text = getString(R.string.canvas_n, position + 1)
-            tab.customView = tabBinding.root
-        }.attach()
+        binding.btnGoogleSignIn.setOnClickListener(this)
+        binding.btnSignOut.setOnClickListener(this)
 
         observe()
 
-        if (savedInstanceState == null) {
+        /*if (savedInstanceState == null) {
             binding.viewPager.post {
                 viewModel.setFirstCanvas(binding.viewPager.width, binding.viewPager.height)
                 canvasAdapter.setCanvases(viewModel.canvases)
             }
-        }
-    }
+        }*/
 
-    private fun changeRemoveButtonVisibility() {
-        val visible = binding.tabLayout.tabCount > 1
-        for (i in 0 until binding.tabLayout.tabCount)
-            binding.tabLayout.getTabAt(i)?.customView?.let {
-                val tabBinding = ViewTabBinding.bind(it)
-                tabBinding.btnRemove.isVisible = visible
-            }
-    }
+        setSupportActionBar(binding.toolbar)
 
-    override fun onTabSelected(tab: TabLayout.Tab?) {
-        val view = tab?.customView ?: return
-        val tabBinding = ViewTabBinding.bind(view)
-        tabBinding.text.isSelected = true
-    }
-
-    override fun onTabReselected(tab: TabLayout.Tab?) {}
-
-    override fun onTabUnselected(tab: TabLayout.Tab?) {
-        val view = tab?.customView ?: return
-        val tabBinding = ViewTabBinding.bind(view)
-        tabBinding.text.isSelected = false
+        supportActionBar?.setDisplayShowTitleEnabled(false)
     }
 
     private fun observe() {
-        viewModel.stroke.observe(this) {
-            binding.tvStroke.text = getString(R.string.stroke_n, it.toInt())
-        }
-        viewModel.color.observe(this) {
-            binding.colorView.setBackgroundColor(it)
-        }
-        viewModel.loading.observe(this) {
-            binding.progressBar.isVisible = it
-        }
-        viewModel.penType.observe(this) {
-            binding.etType.setText(it.text, false)
-            binding.tlType.setStartIconDrawable(it.iconRes)
+        viewModel.googleAccount.observe(this) {
+            binding.profileAvatar.isVisible = it != null
+            binding.btnGoogleSignIn.isVisible = it == null
+            binding.btnSignOut.isVisible = it != null
+            if (it?.photoUrl != null) {
+                Glide.with(this)
+                    .load(it.photoUrl?.toString())
+                    .error(R.drawable.no_photo)
+                    .into(binding.profileAvatar)
+            } else {
+                binding.profileAvatar.setImageResource(R.drawable.no_photo)
+            }
         }
         lifecycleScope.launch {
             repeatOnLifecycle(Lifecycle.State.STARTED) {
@@ -126,79 +97,21 @@ class MainActivity : AppCompatActivity(), View.OnClickListener,
                 }
             }
         }
-        /*lifecycleScope.launch {
-            repeatOnLifecycle(Lifecycle.State.STARTED) {
-                viewModel.openFile.collectLatest {
-                    val intent = Intent(Intent.ACTION_VIEW)
-                    intent.setDataAndType(it, "image/")
-                    startActivity(intent)
-                }
-            }
-        }*/
     }
 
     override fun onClick(view: View?) {
         when (view?.id) {
-            R.id.colorView -> {
-                ColorPickerDialog.Builder(this)
-                    .setTitle("ColorPicker Dialog")
-                    .setPreferenceName("MyColorPickerDialog")
-                    .setPositiveButton(getString(android.R.string.ok), this)
-                    .attachAlphaSlideBar(true)
-                    .attachBrightnessSlideBar(true)
-                    .setBottomSpace(12)
-                    .show()
-            }
-            R.id.tvStroke -> {
-                val strokeBinding = DialogStrokeBinding.inflate(layoutInflater)
-                strokeBinding.etType.setText(viewModel.stroke.value?.toInt()?.toString())
-                AlertDialog.Builder(this)
-                    .setTitle(R.string.stroke)
-                    .setView(strokeBinding.root)
-                    .setPositiveButton(android.R.string.ok) { _, _ ->
-                        viewModel.setStroke(strokeBinding.etType.text?.toString()?.toFloatOrNull() ?: 1f)
-                    }
-                    .show()
+            R.id.btnGoogleSignIn -> googleSignInLauncher.launch(googleSignInClient.signInIntent)
+            R.id.btnSignOut -> googleSignInClient.signOut().addOnCompleteListener {
+                if (it.isSuccessful) {
+                    viewModel.saveAccount(null)
+                }
             }
         }
-    }
-
-    override fun onCreateOptionsMenu(menu: Menu?): Boolean {
-        menuInflater.inflate(R.menu.menu_toolbar, menu)
-        return true
-    }
-
-    override fun onOptionsItemSelected(item: MenuItem): Boolean {
-        when (item.itemId) {
-            R.id.newCanvas -> {
-                viewModel.addCanvas(binding.viewPager.width, binding.viewPager.height)
-                createNewTab()
-            }
-        }
-        return super.onOptionsItemSelected(item)
     }
 
     override fun onStop() {
         super.onStop()
-        sharedPrefsUtils.color = viewModel.color.value!!
-        sharedPrefsUtils.strokeWidth = viewModel.stroke.value!!
-    }
-
-    fun createNewTab() {
-        canvasAdapter.addCanvas(viewModel.canvases)
-        changeRemoveButtonVisibility()
-    }
-
-    override fun onColorSelected(envelope: ColorEnvelope?, fromUser: Boolean) {
-        if (envelope == null) return
-        viewModel.setColor(envelope.color)
-    }
-
-    override fun onItemClick(p0: AdapterView<*>?, p1: View?, position: Int, p3: Long) {
-        viewModel.setPenType(position)
-    }
-
-    override fun onValueChange(slider: Slider, value: Float, fromUser: Boolean) {
-        viewModel.setStroke(value)
+        viewModel.saveCanvasParameters()
     }
 }

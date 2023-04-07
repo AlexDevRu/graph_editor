@@ -8,12 +8,16 @@ import android.net.Uri
 import android.os.Environment
 import androidx.core.net.toUri
 import androidx.lifecycle.*
+import com.example.mobilepaint.drawing_view.DrawingUtils
 import com.example.mobilepaint.drawing_view.GeometryType
 import com.example.mobilepaint.drawing_view.shapes.Shape
 import com.example.mobilepaint.models.CanvasData
 import com.example.mobilepaint.models.PenType
-import com.example.mobilepaint.models.json.CanvasJson
+import com.google.android.gms.auth.api.signin.GoogleSignIn
+import com.google.android.gms.auth.api.signin.GoogleSignInAccount
+import com.google.android.gms.auth.api.signin.GoogleSignInClient
 import com.google.gson.Gson
+import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
@@ -22,12 +26,16 @@ import java.io.File
 import java.io.FileOutputStream
 import java.text.SimpleDateFormat
 import java.util.*
+import javax.inject.Inject
 
-class MainViewModel(
-    private val app : Application
-): AndroidViewModel(app) {
+@HiltViewModel
+class MainViewModel @Inject constructor(
+    private val app : Application,
+    private val sharedPrefsUtils: SharedPrefsUtils,
+    private val drawingUtils: DrawingUtils
+): ViewModel() {
 
-    val options = listOf(
+    private val options = listOf(
         PenType(app.getString(R.string.cursor), R.drawable.ic_cursor, GeometryType.ZOOM),
         PenType(app.getString(R.string.selection), R.drawable.ic_hand, GeometryType.HAND),
         PenType(app.getString(R.string.path), R.drawable.ic_curve, GeometryType.PATH),
@@ -38,8 +46,6 @@ class MainViewModel(
         PenType(app.getString(R.string.text), R.drawable.ic_text, GeometryType.TEXT),
         PenType(app.getString(R.string.fill), R.drawable.ic_paint, GeometryType.PAINT),
     )
-
-    private val sharedPrefsUtils = SharedPrefsUtils(getApplication())
 
     private val _stroke = MutableLiveData(5f)
     val stroke : LiveData<Float> = _stroke
@@ -58,6 +64,9 @@ class MainViewModel(
 
     private val _openFile = MutableSharedFlow<Uri>()
     val openFile = _openFile.asSharedFlow()
+
+    private val _googleAccount = MutableLiveData(GoogleSignIn.getLastSignedInAccount(app))
+    val googleAccount : LiveData<GoogleSignInAccount?> = _googleAccount
 
     private var minWidth = 0
     private var minHeight = 0
@@ -85,6 +94,10 @@ class MainViewModel(
 
     fun addCanvas(canvasData: CanvasData) {
         canvases.add(canvasData)
+    }
+
+    fun addCanvasFromJson(json: String) {
+        addCanvas(drawingUtils.fromJson(json))
     }
 
     fun removeCanvas(position: Int) {
@@ -151,5 +164,14 @@ class MainViewModel(
             _loading.postValue(false)
             _message.emit("Saved")
         }
+    }
+
+    fun saveCanvasParameters() {
+        sharedPrefsUtils.color = color.value!!
+        sharedPrefsUtils.strokeWidth = stroke.value!!
+    }
+
+    fun saveAccount(account: GoogleSignInAccount?) {
+        _googleAccount.value = account
     }
 }

@@ -16,8 +16,9 @@
     <string name="fill">Fill</string>
     <string name="select_pen_type">Select pen type</string>
     <string name="import_image">Import image</string>
-    <string name="export">Export</string>
+    <string name="export_as_jpeg">Export as JPEG</string>
     <string name="export_as_json">Export as JSON</string>
+    <string name="login">Login</string>
     <string name="open_json">Open JSON</string>
 
     <string name="stroke">Stroke</string>
@@ -29,4 +30,7 @@
 
     <string name="width">Width</string>
     <string name="height">Height</string>
+    <string name="sign_out">Sign out</string>
+
+    <string name="web_client_id" translatable="false">1004598020314-klriisskb17ruoh6ccdmb5p1ts1c0grs.apps.googleusercontent.com</string>
 </resources>

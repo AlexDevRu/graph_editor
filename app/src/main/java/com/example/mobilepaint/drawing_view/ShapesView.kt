@@ -10,15 +10,9 @@ import android.util.Log
 import android.view.MotionEvent
 import android.view.View
 import androidx.annotation.ColorInt
-import androidx.core.content.ContextCompat
-import com.example.mobilepaint.R
-import com.example.mobilepaint.Utils
 import com.example.mobilepaint.Utils.toPx
 import com.example.mobilepaint.drawing_view.shapes.*
-import com.example.mobilepaint.models.CanvasData
-import com.example.mobilepaint.models.SelectionBorderOptions
 import com.example.mobilepaint.models.json.*
-import com.google.gson.Gson
 import java.util.*
 
 
@@ -27,21 +21,10 @@ class ShapesView @JvmOverloads constructor(
     attrs: AttributeSet? = null,
     defStyle: Int = 0
 ) : View(context, attrs, defStyle) {
-
-    companion object {
-        private const val IMAGE_SIZE = 300
-        private const val TAG = "ShapesView"
-    }
-
     init {
         isFocusable = true
         isFocusableInTouchMode = true
     }
-
-    private val arrowWidth = resources.getDimension(R.dimen.drawing_view_arrow_width)
-    private val arrowHeight = arrowWidth * 1.2f
-
-    private val handleRadius = 8.toPx
 
     val shapes = mutableListOf<Shape>()
     val removedShapes = mutableListOf<Shape>()
@@ -53,9 +36,7 @@ class ShapesView @JvmOverloads constructor(
 
     private var isBorderDrawing = true
 
-    private fun getSelectionBorderOptions() = SelectionBorderOptions(
-        handlePaint, handleRadius, boundingBoxPaint
-    )
+    private val drawingUtils = DrawingUtils(context)
 
     interface OnShapeChanged {
         fun onStackSizesChanged(addedShapesSize: Int, removedShapesSize: Int)
@@ -79,8 +60,6 @@ class ShapesView @JvmOverloads constructor(
         invalidate()
     }
 
-    private val bitmapPaint = Paint(Paint.ANTI_ALIAS_FLAG)
-
     private val borderPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
         color = Color.BLACK
         style = Paint.Style.STROKE
@@ -90,7 +69,7 @@ class ShapesView @JvmOverloads constructor(
 
     fun addBitmap(bitmap: Bitmap) {
         val scaledBitmap = Bitmap.createScaledBitmap(bitmap, IMAGE_SIZE, IMAGE_SIZE,true)
-        val customBitmap = CustomBitmap(scaledBitmap, getSelectionBorderOptions(), bitmapPaint)
+        val customBitmap = CustomBitmap(scaledBitmap, drawingUtils.getSelectionBorderOptions(), drawingUtils.bitmapPaint)
         addNewShape(customBitmap)
         operations.add(Operation.Creation(customBitmap))
         onShapeChanged?.onStackSizesChanged(operations.size, removedOperations.size)
@@ -129,22 +108,12 @@ class ShapesView @JvmOverloads constructor(
     var selectedShape: Shape? = null
         private set
 
-    private val selectionColors = intArrayOf(
-        ContextCompat.getColor(context, R.color.red),
-        ContextCompat.getColor(context, R.color.blue),
-        ContextCompat.getColor(context, R.color.green),
-        ContextCompat.getColor(context, R.color.yellow),
-    )
-
     private val handler = Handler(Looper.getMainLooper())
     private val onLongPressed = Runnable {
         selectedShape?.let {
             onShapeChanged?.onShapeLongClick(it)
         }
     }
-
-    private val shader =
-        LinearGradient(0f, 0f, 100f, 20f, selectionColors, null, Shader.TileMode.MIRROR)
 
     fun undo() {
         if (operations.isNotEmpty()) {
@@ -190,29 +159,6 @@ class ShapesView @JvmOverloads constructor(
         this.onShapeChanged = onShapeChanged
     }
 
-    private val boundingBoxPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-        style = Paint.Style.STROKE
-        strokeWidth = 2.toPx
-        color = Color.BLACK
-        pathEffect = DashPathEffect(floatArrayOf(20.toPx, 5.toPx), 0f)
-    }
-
-    private val handlePaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-        style = Paint.Style.FILL
-        color = Color.BLACK
-    }
-
-    private fun createPaint() = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-        style = Paint.Style.STROKE
-        strokeWidth = this@ShapesView.strokeWidth.toPx
-        color = this@ShapesView.color
-    }
-
-    private fun createPathPaint() = Paint(createPaint()).apply {
-        strokeJoin = Paint.Join.ROUND
-        strokeCap = Paint.Cap.ROUND
-    }
-
     @SuppressLint("ClickableViewAccessibility")
     override fun onTouchEvent(event: MotionEvent?): Boolean {
         if (event == null || geometryType == GeometryType.TEXT)
@@ -234,11 +180,11 @@ class ShapesView @JvmOverloads constructor(
                     selectedShape?.down(touchX, touchY)
                 } else {
                     currentShape = when (geometryType) {
-                        GeometryType.PATH -> CustomPath(getSelectionBorderOptions(), shader, createPathPaint())
-                        GeometryType.LINE -> CustomLine(handlePaint, shader, createPaint())
-                        GeometryType.RECT -> CustomRectF(getSelectionBorderOptions(), shader, createPaint())
-                        GeometryType.ELLIPSE -> CustomEllipse(getSelectionBorderOptions(), shader, createPaint())
-                        GeometryType.ARROW -> CustomArrow(arrowWidth, arrowHeight, handlePaint, shader, createPaint())
+                        GeometryType.PATH -> CustomPath(drawingUtils.getSelectionBorderOptions(), drawingUtils.shader, drawingUtils.createPathPaint())
+                        GeometryType.LINE -> CustomLine(drawingUtils.handlePaint, drawingUtils.shader, drawingUtils.createPaint())
+                        GeometryType.RECT -> CustomRectF(drawingUtils.getSelectionBorderOptions(), drawingUtils.shader, drawingUtils.createPaint())
+                        GeometryType.ELLIPSE -> CustomEllipse(drawingUtils.getSelectionBorderOptions(), drawingUtils.shader, drawingUtils.createPaint())
+                        GeometryType.ARROW -> CustomArrow(drawingUtils.arrowWidth, drawingUtils.arrowHeight, drawingUtils.handlePaint, drawingUtils.shader, drawingUtils.createPaint())
                         else -> null
                     }
                     currentShape?.down(touchX, touchY)
@@ -308,60 +254,8 @@ class ShapesView @JvmOverloads constructor(
         return bitmap
     }
 
-    fun fromJson(editTextPaint: Paint, json : String, gson: Gson) : CanvasData {
-        val canvasJson = gson.fromJson(json, CanvasJson::class.java)
-        val shapes = canvasJson.shapesList.map {
-            when (it.type) {
-                GeometryType.LINE.name -> {
-                    val lineData = gson.fromJson(it.data, LineData::class.java)
-                    CustomLine(handlePaint, shader, createPaint()).apply {
-                        addData(lineData)
-                    }
-                }
-                GeometryType.PATH.name -> {
-                    val pathData = gson.fromJson(it.data, PathData::class.java)
-                    CustomPath(getSelectionBorderOptions(), shader, createPathPaint()).apply {
-                        addData(pathData)
-                    }
-                }
-                GeometryType.RECT.name -> {
-                    val rectData = gson.fromJson(it.data, RectData::class.java)
-                    CustomRectF(getSelectionBorderOptions(), shader, createPaint()).apply {
-                        addData(rectData)
-                    }
-                }
-                GeometryType.ELLIPSE.name -> {
-                    val rectData = gson.fromJson(it.data, RectData::class.java)
-                    CustomEllipse(getSelectionBorderOptions(), shader, createPaint()).apply {
-                        addData(rectData)
-                    }
-                }
-                GeometryType.ARROW.name -> {
-                    val lineData = gson.fromJson(it.data, LineData::class.java)
-                    CustomArrow(arrowWidth, arrowHeight, handlePaint, shader, createPaint()).apply {
-                        addData(lineData)
-                    }
-                }
-                GeometryType.BITMAP.name -> {
-                    val bitmapData = gson.fromJson(it.data, BitmapData::class.java)
-                    val bitmap = Utils.convert(bitmapData.base64)
-                    CustomBitmap(bitmap, getSelectionBorderOptions(), bitmapPaint).apply {
-                        addData(bitmapData)
-                    }
-                }
-                GeometryType.TEXT.name -> {
-                    val textData = gson.fromJson(it.data, TextData::class.java)
-                    CustomText(editTextPaint, textData)
-                }
-                else -> throw IllegalStateException()
-            }
-        }
-
-        return CanvasData(
-            width = canvasJson.width,
-            height = canvasJson.height,
-            bg = canvasJson.bg,
-            shapesList = shapes
-        )
+    companion object {
+        private const val IMAGE_SIZE = 300
+        private const val TAG = "ShapesView"
     }
 }

@@ -13,17 +13,23 @@ import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.os.bundleOf
+import androidx.core.view.isVisible
 import androidx.core.view.updateLayoutParams
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
 import com.example.mobilepaint.databinding.DialogChangeCanvasSizeBinding
+import com.example.mobilepaint.databinding.DialogStrokeBinding
 import com.example.mobilepaint.databinding.FragmentCanvasBinding
 import com.example.mobilepaint.drawing_view.GeometryType
 import com.example.mobilepaint.drawing_view.ShapesView
 import com.example.mobilepaint.drawing_view.shapes.Shape
+import com.skydoves.colorpickerview.ColorEnvelope
+import com.skydoves.colorpickerview.ColorPickerDialog
+import com.skydoves.colorpickerview.listeners.ColorEnvelopeListener
 import java.io.File
 
-class CanvasFragment : Fragment(), ShapesView.OnShapeChanged {
+class CanvasFragment : Fragment(), ShapesView.OnShapeChanged, View.OnClickListener,
+    ColorEnvelopeListener {
 
     private lateinit var binding : FragmentCanvasBinding
 
@@ -83,10 +89,7 @@ class CanvasFragment : Fragment(), ShapesView.OnShapeChanged {
             val fileName = result.data?.data?.lastPathSegment ?: return@registerForActivityResult
             val directory = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES)
             val json = File(directory, fileName).readText()
-            viewModel.addCanvas(shapesView.fromJson(json, viewModel.gson))
-            Handler(Looper.getMainLooper()).postDelayed({
-                (activity as MainActivity).createNewTab()
-            }, 200)
+            viewModel.addCanvasFromJson(json)
         }
     }
 
@@ -119,7 +122,58 @@ class CanvasFragment : Fragment(), ShapesView.OnShapeChanged {
             height = canvasData.height
         }
 
+        binding.colorView.setOnClickListener(this)
+        binding.tvStroke.setOnClickListener(this)
+        binding.btnPenType.setOnClickListener(this)
+
+        binding.btnCursor.setOnClickListener(this)
+        binding.btnSelection.setOnClickListener(this)
+        binding.btnPath.setOnClickListener(this)
+        binding.btnLine.setOnClickListener(this)
+        binding.btnEllipse.setOnClickListener(this)
+        binding.btnRect.setOnClickListener(this)
+        binding.btnArrow.setOnClickListener(this)
+        binding.btnText.setOnClickListener(this)
+        binding.btnFill.setOnClickListener(this)
+        binding.btnImage.setOnClickListener(this)
+
         observe()
+    }
+
+    override fun onClick(p0: View?) {
+        when (view?.id) {
+            R.id.colorView -> {
+                ColorPickerDialog.Builder(requireContext())
+                    .setTitle("ColorPicker Dialog")
+                    .setPreferenceName("MyColorPickerDialog")
+                    .setPositiveButton(getString(android.R.string.ok), this)
+                    .attachAlphaSlideBar(true)
+                    .attachBrightnessSlideBar(true)
+                    .setBottomSpace(12)
+                    .show()
+            }
+            R.id.tvStroke -> {
+                val strokeBinding = DialogStrokeBinding.inflate(layoutInflater)
+                strokeBinding.etType.setText(viewModel.stroke.value?.toInt()?.toString())
+                AlertDialog.Builder(requireContext())
+                    .setTitle(R.string.stroke)
+                    .setView(strokeBinding.root)
+                    .setPositiveButton(android.R.string.ok) { _, _ ->
+                        viewModel.setStroke(strokeBinding.etType.text?.toString()?.toFloatOrNull() ?: 1f)
+                    }
+                    .show()
+            }
+            R.id.btnPenType -> changePenTypesVisibility()
+            R.id.btnCursor -> viewModel.setPenType(0).also { changePenTypesVisibility() }
+            R.id.btnSelection -> viewModel.setPenType(1).also { changePenTypesVisibility() }
+            R.id.btnPath -> viewModel.setPenType(2).also { changePenTypesVisibility() }
+            R.id.btnLine -> viewModel.setPenType(3).also { changePenTypesVisibility() }
+            R.id.btnEllipse -> viewModel.setPenType(4).also { changePenTypesVisibility() }
+            R.id.btnRect -> viewModel.setPenType(5).also { changePenTypesVisibility() }
+            R.id.btnArrow -> viewModel.setPenType(6).also { changePenTypesVisibility() }
+            R.id.btnText -> viewModel.setPenType(7).also { changePenTypesVisibility() }
+            R.id.btnFill -> viewModel.setPenType(8).also { changePenTypesVisibility() }
+        }
     }
 
     override fun onResume() {
@@ -135,8 +189,8 @@ class CanvasFragment : Fragment(), ShapesView.OnShapeChanged {
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         when (item.itemId) {
-            R.id.undo -> shapesView.undo()
-            R.id.redo -> shapesView.redo()
+            //R.id.undo -> shapesView.undo()
+            //R.id.redo -> shapesView.redo()
             R.id.exportImage -> {
                 viewModel.saveImage = 0
                 exportImage()
@@ -150,7 +204,7 @@ class CanvasFragment : Fragment(), ShapesView.OnShapeChanged {
                 intent.type = "file/json"
                 pickFileActivityResultLauncher.launch(intent)
             }
-            R.id.importImage -> importImage()
+            //R.id.importImage -> importImage()
             R.id.changeCanvasSize -> {
                 val changeCanvasSizeBinding = DialogChangeCanvasSizeBinding.inflate(layoutInflater)
                 changeCanvasSizeBinding.etWidth.setText(shapesView.width.toString())
@@ -206,16 +260,24 @@ class CanvasFragment : Fragment(), ShapesView.OnShapeChanged {
 
     private fun observe() {
         viewModel.stroke.observe(viewLifecycleOwner) {
+            binding.tvStroke.text = getString(R.string.stroke_n, it.toInt())
             shapesView.strokeWidth = it
         }
         viewModel.color.observe(viewLifecycleOwner) {
+            binding.colorView.setBackgroundColor(it)
             shapesView.color = it
         }
         viewModel.penType.observe(viewLifecycleOwner) {
             shapesView.geometryType = it.geometryType
             val enabled = it.geometryType == GeometryType.ZOOM
-            binding.root.touchable = enabled
+            binding.zoomLayout.touchable = enabled
+            binding.btnPenType.text = it.text
+            binding.btnPenType.setIconResource(it.iconRes)
         }
+    }
+
+    private fun changePenTypesVisibility() {
+        binding.flPenTypes.isVisible = !binding.flPenTypes.isVisible
     }
 
     override fun onStop() {
@@ -233,8 +295,13 @@ class CanvasFragment : Fragment(), ShapesView.OnShapeChanged {
     }
 
     override fun onStackSizesChanged(addedShapesSize: Int, removedShapesSize: Int) {
-        menu?.findItem(R.id.undo)?.isEnabled = addedShapesSize > 0
-        menu?.findItem(R.id.redo)?.isEnabled = removedShapesSize > 0
+        //menu?.findItem(R.id.undo)?.isEnabled = addedShapesSize > 0
+        //menu?.findItem(R.id.redo)?.isEnabled = removedShapesSize > 0
+    }
+
+    override fun onColorSelected(envelope: ColorEnvelope?, fromUser: Boolean) {
+        if (envelope == null) return
+        viewModel.setColor(envelope.color)
     }
 
     companion object {

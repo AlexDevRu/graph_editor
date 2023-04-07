@@ -362,8 +362,6 @@ class DrawingView @JvmOverloads constructor(
 
     fun getBitmap() = binding.shapesView.getBitmap()
 
-    fun fromJson(json : String, gson: Gson) = binding.shapesView.fromJson(binding.editText.paint, json, gson)
-
     fun addShapes(shapes: List<Shape>, removedShapes : List<Shape>) = binding.shapesView.addShapes(shapes, removedShapes)
 
     fun addBitmap(bitmap: Bitmap) = binding.shapesView.addBitmap(bitmap)

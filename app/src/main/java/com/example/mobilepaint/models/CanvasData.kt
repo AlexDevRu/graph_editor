@@ -11,8 +11,8 @@ data class CanvasData(
     var width: Int = 0,
     var height: Int = 0,
     var bg: Int,
-    val shapesList: List<Shape> = LinkedList(),
-    val removedShapesList: List<Shape> = LinkedList()
+    var shapesList: List<Shape> = LinkedList(),
+    var removedShapesList: List<Shape> = LinkedList()
 ) {
     private fun getType(shape: Shape) = when (shape) {
         is CustomLine -> GeometryType.LINE

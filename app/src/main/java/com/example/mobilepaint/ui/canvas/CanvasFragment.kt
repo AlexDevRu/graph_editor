@@ -1,4 +1,4 @@
-package com.example.mobilepaint
+package com.example.mobilepaint.ui.canvas
 
 import android.Manifest
 import android.content.Intent
@@ -13,10 +13,15 @@ import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.os.bundleOf
+import androidx.core.view.MenuHost
+import androidx.core.view.MenuProvider
 import androidx.core.view.isVisible
 import androidx.core.view.updateLayoutParams
 import androidx.fragment.app.Fragment
-import androidx.lifecycle.ViewModelProvider
+import androidx.fragment.app.viewModels
+import androidx.lifecycle.Lifecycle
+import androidx.navigation.fragment.navArgs
+import com.example.mobilepaint.R
 import com.example.mobilepaint.databinding.DialogChangeCanvasSizeBinding
 import com.example.mobilepaint.databinding.DialogStrokeBinding
 import com.example.mobilepaint.databinding.FragmentCanvasBinding
@@ -26,19 +31,18 @@ import com.example.mobilepaint.drawing_view.shapes.Shape
 import com.skydoves.colorpickerview.ColorEnvelope
 import com.skydoves.colorpickerview.ColorPickerDialog
 import com.skydoves.colorpickerview.listeners.ColorEnvelopeListener
+import dagger.hilt.android.AndroidEntryPoint
 import java.io.File
 
+@AndroidEntryPoint
 class CanvasFragment : Fragment(), ShapesView.OnShapeChanged, View.OnClickListener,
-    ColorEnvelopeListener {
+    ColorEnvelopeListener, MenuProvider {
 
     private lateinit var binding : FragmentCanvasBinding
 
-    private var key = 0
     private var menu: Menu? = null
 
-    private val viewModel by lazy {
-        ViewModelProvider(requireActivity())[MainViewModel::class.java]
-    }
+    private val viewModel by viewModels<CanvasViewModel>()
 
     private val shapesView by lazy {
         binding.shapesView
@@ -51,7 +55,7 @@ class CanvasFragment : Fragment(), ShapesView.OnShapeChanged, View.OnClickListen
             if (viewModel.saveImage == 0)
                 viewModel.saveImageToExternalStorage(shapesView.getBitmap())
             else
-                viewModel.exportJson(key, shapesView.color, shapesView.shapes, shapesView.removedShapes)
+                viewModel.exportJson(shapesView.color, shapesView.shapes, shapesView.removedShapes)
         }
     }
 
@@ -63,7 +67,7 @@ class CanvasFragment : Fragment(), ShapesView.OnShapeChanged, View.OnClickListen
             if (viewModel.saveImage == 0)
                 viewModel.saveImageToExternalStorage(shapesView.getBitmap())
             else
-                viewModel.exportJson(key, shapesView.color, shapesView.shapes, shapesView.removedShapes)
+                viewModel.exportJson(shapesView.color, shapesView.shapes, shapesView.removedShapes)
         }
     }
 
@@ -72,7 +76,7 @@ class CanvasFragment : Fragment(), ShapesView.OnShapeChanged, View.OnClickListen
     ) { result ->
         if (result.resultCode == AppCompatActivity.RESULT_OK) {
             val uri = result.data!!.data!!
-            val bitmap = if(Build.VERSION.SDK_INT < 28)
+            @Suppress("DEPRECATION") val bitmap = if(Build.VERSION.SDK_INT < 28)
                 MediaStore.Images.Media.getBitmap(requireContext().contentResolver, uri)
             else {
                 val source = ImageDecoder.createSource(requireContext().contentResolver, uri)
@@ -89,14 +93,12 @@ class CanvasFragment : Fragment(), ShapesView.OnShapeChanged, View.OnClickListen
             val fileName = result.data?.data?.lastPathSegment ?: return@registerForActivityResult
             val directory = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES)
             val json = File(directory, fileName).readText()
-            viewModel.addCanvasFromJson(json)
+            val canvasData = viewModel.addCanvasFromJson(json)
+            binding.shapesView.addCanvasData(canvasData)
         }
     }
 
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        setHasOptionsMenu(true)
-    }
+    private val args by navArgs<CanvasFragmentArgs>()
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -109,18 +111,6 @@ class CanvasFragment : Fragment(), ShapesView.OnShapeChanged, View.OnClickListen
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        key = arguments?.getInt(KEY) ?: 0
-
-        shapesView.setOnShapeChangedListener(this)
-
-        val canvasData = viewModel.canvases[key]
-
-        shapesView.addShapes(canvasData.shapesList, canvasData.removedShapesList)
-
-        shapesView.updateLayoutParams<ViewGroup.LayoutParams> {
-            width = canvasData.width
-            height = canvasData.height
-        }
 
         binding.colorView.setOnClickListener(this)
         binding.tvStroke.setOnClickListener(this)
@@ -137,10 +127,34 @@ class CanvasFragment : Fragment(), ShapesView.OnShapeChanged, View.OnClickListen
         binding.btnFill.setOnClickListener(this)
         binding.btnImage.setOnClickListener(this)
 
+        shapesView.setOnShapeChangedListener(this)
+
+        (requireActivity() as MenuHost).addMenuProvider(this, viewLifecycleOwner, Lifecycle.State.RESUMED)
+
+        if (args.fileName.isBlank()) {
+            binding.zoomLayout.post {
+                shapesView.updateLayoutParams<ViewGroup.LayoutParams> {
+                    width = binding.zoomLayout.width
+                    height = binding.zoomLayout.height
+                }
+            }
+        } else {
+            val directory = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES)
+            val json = File(directory, args.fileName).readText()
+            val canvasData = viewModel.addCanvasFromJson(json)
+            binding.shapesView.addCanvasData(canvasData)
+            binding.zoomLayout.post {
+                shapesView.updateLayoutParams<ViewGroup.LayoutParams> {
+                    width = canvasData.width
+                    height = canvasData.height
+                }
+            }
+        }
+
         observe()
     }
 
-    override fun onClick(p0: View?) {
+    override fun onClick(view: View?) {
         when (view?.id) {
             R.id.colorView -> {
                 ColorPickerDialog.Builder(requireContext())
@@ -173,6 +187,7 @@ class CanvasFragment : Fragment(), ShapesView.OnShapeChanged, View.OnClickListen
             R.id.btnArrow -> viewModel.setPenType(6).also { changePenTypesVisibility() }
             R.id.btnText -> viewModel.setPenType(7).also { changePenTypesVisibility() }
             R.id.btnFill -> viewModel.setPenType(8).also { changePenTypesVisibility() }
+            R.id.btnImage -> importImage()
         }
     }
 
@@ -181,16 +196,16 @@ class CanvasFragment : Fragment(), ShapesView.OnShapeChanged, View.OnClickListen
         onStackSizesChanged(shapesView.shapes.size, shapesView.removedShapes.size)
     }
 
-    override fun onCreateOptionsMenu(menu: Menu, inflater: MenuInflater) {
-        super.onCreateOptionsMenu(menu, inflater)
+    override fun onCreateMenu(menu: Menu, menuInflater: MenuInflater) {
+        menuInflater.inflate(R.menu.menu_toolbar, menu)
         this.menu = menu
         onStackSizesChanged(shapesView.shapes.size, shapesView.removedShapes.size)
     }
 
-    override fun onOptionsItemSelected(item: MenuItem): Boolean {
-        when (item.itemId) {
-            //R.id.undo -> shapesView.undo()
-            //R.id.redo -> shapesView.redo()
+    override fun onMenuItemSelected(menuItem: MenuItem): Boolean {
+        when (menuItem.itemId) {
+            R.id.undo -> shapesView.undo()
+            R.id.redo -> shapesView.redo()
             R.id.exportImage -> {
                 viewModel.saveImage = 0
                 exportImage()
@@ -204,7 +219,6 @@ class CanvasFragment : Fragment(), ShapesView.OnShapeChanged, View.OnClickListen
                 intent.type = "file/json"
                 pickFileActivityResultLauncher.launch(intent)
             }
-            //R.id.importImage -> importImage()
             R.id.changeCanvasSize -> {
                 val changeCanvasSizeBinding = DialogChangeCanvasSizeBinding.inflate(layoutInflater)
                 changeCanvasSizeBinding.etWidth.setText(shapesView.width.toString())
@@ -221,7 +235,7 @@ class CanvasFragment : Fragment(), ShapesView.OnShapeChanged, View.OnClickListen
                             if (newHeight > 0)
                                 height = newHeight
                         }
-                        viewModel.updateCanvasSize(key, newWidth, newHeight)
+                        viewModel.updateCanvasSize(newWidth, newHeight)
                     }
                     .show()
             }
@@ -241,7 +255,7 @@ class CanvasFragment : Fragment(), ShapesView.OnShapeChanged, View.OnClickListen
                 if (viewModel.saveImage == 0)
                     viewModel.saveImageToExternalStorage(shapesView.getBitmap())
                 else
-                    viewModel.exportJson(key, shapesView.color, shapesView.shapes, shapesView.removedShapes)
+                    viewModel.exportJson(shapesView.color, shapesView.shapes, shapesView.removedShapes)
                 return
             }
             try {
@@ -282,7 +296,8 @@ class CanvasFragment : Fragment(), ShapesView.OnShapeChanged, View.OnClickListen
 
     override fun onStop() {
         super.onStop()
-        viewModel.saveShapes(key, shapesView.color, shapesView.shapes, shapesView.removedShapes)
+        viewModel.saveShapes(shapesView.color, shapesView.shapes, shapesView.removedShapes)
+        viewModel.saveCanvasParameters()
     }
 
     override fun onShapeLongClick(shape: Shape) {
@@ -295,8 +310,8 @@ class CanvasFragment : Fragment(), ShapesView.OnShapeChanged, View.OnClickListen
     }
 
     override fun onStackSizesChanged(addedShapesSize: Int, removedShapesSize: Int) {
-        //menu?.findItem(R.id.undo)?.isEnabled = addedShapesSize > 0
-        //menu?.findItem(R.id.redo)?.isEnabled = removedShapesSize > 0
+        menu?.findItem(R.id.undo)?.isEnabled = addedShapesSize > 0
+        menu?.findItem(R.id.redo)?.isEnabled = removedShapesSize > 0
     }
 
     override fun onColorSelected(envelope: ColorEnvelope?, fromUser: Boolean) {

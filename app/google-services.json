@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "504792338027",
+    "project_id": "mobilepaint-cfbac",
+    "storage_bucket": "mobilepaint-cfbac.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:504792338027:android:f409cfb647402a6b61eb2e",
+        "android_client_info": {
+          "package_name": "com.example.mobilepaint"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "504792338027-4id22prq0jb5r0ae7ojll4ijoe76f9uq.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyD_1UEc2stiTlDLCnt4tkpgvoNded36CpI"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "504792338027-4id22prq0jb5r0ae7ojll4ijoe76f9uq.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

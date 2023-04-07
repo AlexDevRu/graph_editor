@@ -1,17 +1,28 @@
 package com.example.mobilepaint
 
+import android.graphics.Typeface
 import android.os.Bundle
+import android.text.Spannable
+import android.text.SpannableStringBuilder
+import android.text.style.ForegroundColorSpan
+import android.text.style.StyleSpan
+import android.view.Menu
+import android.view.MenuItem
 import android.view.View
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.content.ContextCompat
 import androidx.core.view.isVisible
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
+import androidx.navigation.NavController
+import androidx.navigation.NavDestination
+import androidx.navigation.fragment.NavHostFragment
+import androidx.navigation.ui.setupWithNavController
 import com.bumptech.glide.Glide
-import com.example.mobilepaint.adapters.CanvasAdapter
 import com.example.mobilepaint.databinding.ActivityMainBinding
 import com.google.android.gms.auth.api.signin.GoogleSignIn
 import com.google.android.gms.auth.api.signin.GoogleSignInClient
@@ -23,18 +34,16 @@ import javax.inject.Inject
 
 
 @AndroidEntryPoint
-class MainActivity : AppCompatActivity(), View.OnClickListener {
+class MainActivity : AppCompatActivity(), View.OnClickListener, NavController.OnDestinationChangedListener {
 
     private lateinit var binding: ActivityMainBinding
-
-    private val canvasAdapter by lazy {
-        CanvasAdapter(this, viewModel.canvases)
-    }
 
     private val viewModel by viewModels<MainViewModel>()
 
     @Inject
     lateinit var googleSignInClient: GoogleSignInClient
+
+    private lateinit var navController: NavController
 
     private val googleSignInLauncher = registerForActivityResult(
         ActivityResultContracts.StartActivityForResult()
@@ -56,31 +65,81 @@ class MainActivity : AppCompatActivity(), View.OnClickListener {
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        //binding.etType.setAdapter(PenTypesAdapter(this, viewModel.options))
-        //binding.etType.onItemClickListener = this
-
         binding.btnGoogleSignIn.setOnClickListener(this)
-        binding.btnSignOut.setOnClickListener(this)
-
-        observe()
-
-        /*if (savedInstanceState == null) {
-            binding.viewPager.post {
-                viewModel.setFirstCanvas(binding.viewPager.width, binding.viewPager.height)
-                canvasAdapter.setCanvases(viewModel.canvases)
-            }
-        }*/
 
         setSupportActionBar(binding.toolbar)
 
         supportActionBar?.setDisplayShowTitleEnabled(false)
+
+        val navHostFragment =
+            supportFragmentManager.findFragmentById(R.id.fragmentContainerView) as NavHostFragment
+        navController = navHostFragment.navController
+
+        navController.addOnDestinationChangedListener(this)
+        binding.toolbar.setupWithNavController(navController)
+
+        observe()
+    }
+
+    override fun onCreateOptionsMenu(menu: Menu?): Boolean {
+        menuInflater.inflate(R.menu.menu_dashboard, menu)
+        val showUp = navController.currentDestination?.id == R.id.canvasFragment
+        menu?.findItem(R.id.signOut)?.isVisible = viewModel.googleAccount.value != null && !showUp
+        return super.onCreateOptionsMenu(menu)
+    }
+
+    override fun onOptionsItemSelected(item: MenuItem): Boolean {
+        when (item.itemId) {
+            R.id.signOut -> googleSignInClient.signOut().addOnCompleteListener {
+                if (it.isSuccessful) {
+                    viewModel.saveAccount(null)
+                }
+            }
+        }
+        return true
+    }
+
+    override fun onDestinationChanged(
+        controller: NavController,
+        destination: NavDestination,
+        arguments: Bundle?
+    ) {
+        val showUp = destination.id == R.id.canvasFragment
+        binding.btnGoogleSignIn.isVisible = viewModel.googleAccount.value == null && !showUp
+        binding.profileAvatar.isVisible = viewModel.googleAccount.value != null && !showUp
+        binding.profileName.isVisible = viewModel.googleAccount.value != null && !showUp
+        invalidateOptionsMenu()
+    }
+
+    override fun onSupportNavigateUp(): Boolean {
+        return navController.navigateUp() || super.onSupportNavigateUp()
     }
 
     private fun observe() {
         viewModel.googleAccount.observe(this) {
-            binding.profileAvatar.isVisible = it != null
-            binding.btnGoogleSignIn.isVisible = it == null
-            binding.btnSignOut.isVisible = it != null
+            val showUp = navController.currentDestination?.id == R.id.canvasFragment
+            binding.btnGoogleSignIn.isVisible = it == null && !showUp
+            binding.profileAvatar.isVisible = it != null && !showUp
+            binding.profileName.isVisible = it != null && !showUp
+            invalidateOptionsMenu()
+
+            if (it != null) {
+                val spannable = SpannableStringBuilder("${it.displayName}\n${it.email}")
+                spannable.setSpan(
+                    StyleSpan(Typeface.BOLD),
+                    0,
+                    it.displayName.orEmpty().length,
+                    Spannable.SPAN_EXCLUSIVE_INCLUSIVE
+                )
+                spannable.setSpan(
+                    ForegroundColorSpan(ContextCompat.getColor(this, R.color.grey2)),
+                    it.displayName.orEmpty().length + 1,
+                    spannable.length,
+                    Spannable.SPAN_EXCLUSIVE_INCLUSIVE
+                )
+                binding.profileName.text = spannable
+            }
+
             if (it?.photoUrl != null) {
                 Glide.with(this)
                     .load(it.photoUrl?.toString())
@@ -102,16 +161,7 @@ class MainActivity : AppCompatActivity(), View.OnClickListener {
     override fun onClick(view: View?) {
         when (view?.id) {
             R.id.btnGoogleSignIn -> googleSignInLauncher.launch(googleSignInClient.signInIntent)
-            R.id.btnSignOut -> googleSignInClient.signOut().addOnCompleteListener {
-                if (it.isSuccessful) {
-                    viewModel.saveAccount(null)
-                }
-            }
+            //R.id.btnSignOut ->
         }
-    }
-
-    override fun onStop() {
-        super.onStop()
-        viewModel.saveCanvasParameters()
     }
 }

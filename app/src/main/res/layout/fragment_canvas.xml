@@ -44,23 +44,6 @@
                 android:text="@string/line"
                 app:icon="@drawable/ic_line" />
 
-            <Space
-                android:layout_width="40dp"
-                android:layout_height="40dp"
-                android:layout_weight="1" />
-
-            <androidx.appcompat.widget.AppCompatImageButton
-                android:id="@+id/btnUndo"
-                android:layout_width="40dp"
-                android:layout_height="40dp"
-                android:src="@drawable/ic_undo" />
-
-            <androidx.appcompat.widget.AppCompatImageButton
-                android:id="@+id/btnRedo"
-                android:layout_width="40dp"
-                android:layout_height="40dp"
-                android:src="@drawable/ic_redo" />
-
         </androidx.appcompat.widget.LinearLayoutCompat>
 
     </androidx.cardview.widget.CardView>

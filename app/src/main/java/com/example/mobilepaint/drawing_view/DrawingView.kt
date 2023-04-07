@@ -7,18 +7,19 @@ import android.util.AttributeSet
 import android.view.LayoutInflater
 import android.view.MotionEvent
 import android.view.View.OnTouchListener
+import android.view.ViewGroup
 import android.view.inputmethod.EditorInfo
 import android.view.inputmethod.InputMethodManager
-import android.widget.EditText
 import androidx.annotation.ColorInt
 import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.core.view.isVisible
+import androidx.core.view.updateLayoutParams
 import androidx.core.widget.doAfterTextChanged
 import com.example.mobilepaint.Utils.toPx
 import com.example.mobilepaint.databinding.ViewDrawingViewBinding
 import com.example.mobilepaint.drawing_view.shapes.CustomText
 import com.example.mobilepaint.drawing_view.shapes.Shape
-import com.google.gson.Gson
+import com.example.mobilepaint.models.CanvasData
 import kotlin.math.atan2
 import kotlin.math.cos
 import kotlin.math.hypot
@@ -367,4 +368,13 @@ class DrawingView @JvmOverloads constructor(
     fun addBitmap(bitmap: Bitmap) = binding.shapesView.addBitmap(bitmap)
 
     fun removeShape(shape: Shape) = binding.shapesView.removeShape(shape)
+
+    fun addCanvasData(canvasData: CanvasData) {
+        updateLayoutParams<ViewGroup.LayoutParams> {
+            width = canvasData.width
+            height = canvasData.height
+        }
+        binding.shapesView.color = canvasData.bg
+        binding.shapesView.addShapes(canvasData.shapesList, canvasData.removedShapesList)
+    }
 }

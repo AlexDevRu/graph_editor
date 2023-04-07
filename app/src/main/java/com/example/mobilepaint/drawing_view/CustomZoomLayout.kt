@@ -10,8 +10,8 @@ import com.otaliastudios.zoom.ZoomLayout
 class CustomZoomLayout @JvmOverloads constructor(
     context: Context,
     attrs: AttributeSet? = null,
-    @AttrRes defStyleAttr: Int = 0,
-): ZoomLayout(context, attrs, defStyleAttr) {
+    defStyle: Int = 0
+): ZoomLayout(context, attrs, defStyle) {
 
     var touchable = true
 

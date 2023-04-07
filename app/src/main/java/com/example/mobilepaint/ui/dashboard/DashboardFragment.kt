@@ -10,6 +10,7 @@ import androidx.fragment.app.viewModels
 import androidx.navigation.fragment.findNavController
 import com.example.mobilepaint.R
 import com.example.mobilepaint.databinding.FragmentDashboardBinding
+import com.example.mobilepaint.models.MyImage
 import com.google.android.flexbox.FlexDirection
 import com.google.android.flexbox.FlexboxLayoutManager
 import com.google.android.flexbox.JustifyContent
@@ -17,7 +18,7 @@ import dagger.hilt.android.AndroidEntryPoint
 
 
 @AndroidEntryPoint
-class DashboardFragment : Fragment(), View.OnClickListener {
+class DashboardFragment : Fragment(), View.OnClickListener, ImagesAdapter.Listener {
 
     private lateinit var binding: FragmentDashboardBinding
 
@@ -25,7 +26,7 @@ class DashboardFragment : Fragment(), View.OnClickListener {
 
     private val navController by lazy { findNavController() }
 
-    private val imagesAdapter = ImagesAdapter()
+    private val imagesAdapter = ImagesAdapter(this)
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -58,9 +59,12 @@ class DashboardFragment : Fragment(), View.OnClickListener {
         }
     }
 
-    private fun navigateToCanvasFragment() {
-        val action = DashboardFragmentDirections.actionDashboardFragmentToCanvasFragment()
+    private fun navigateToCanvasFragment(fileName: String = "") {
+        val action = DashboardFragmentDirections.actionDashboardFragmentToCanvasFragment(fileName)
         navController.navigate(action)
     }
 
+    override fun onItemClick(item: MyImage) {
+        navigateToCanvasFragment(item.title)
+    }
 }

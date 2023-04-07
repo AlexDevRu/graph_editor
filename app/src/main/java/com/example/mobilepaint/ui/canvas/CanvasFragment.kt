@@ -12,7 +12,6 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
-import androidx.core.os.bundleOf
 import androidx.core.view.MenuHost
 import androidx.core.view.MenuProvider
 import androidx.core.view.isVisible
@@ -317,16 +316,6 @@ class CanvasFragment : Fragment(), ShapesView.OnShapeChanged, View.OnClickListen
     override fun onColorSelected(envelope: ColorEnvelope?, fromUser: Boolean) {
         if (envelope == null) return
         viewModel.setColor(envelope.color)
-    }
-
-    companion object {
-        private const val KEY = "KEY"
-
-        fun createInstance(position: Int) : CanvasFragment {
-            val fragment = CanvasFragment()
-            fragment.arguments = bundleOf(KEY to position)
-            return fragment
-        }
     }
 
 }

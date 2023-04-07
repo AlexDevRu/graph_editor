@@ -7,6 +7,8 @@ import com.example.mobilepaint.drawing_view.Operation
 import com.example.mobilepaint.models.json.RectData
 import com.example.mobilepaint.models.json.ShapeData
 import com.google.gson.Gson
+import java.lang.Float.max
+import java.lang.Float.min
 
 class CustomRectF(
     selectionBorderOptions: SelectionBorderOptions,
@@ -52,10 +54,23 @@ class CustomRectF(
         }
     }
 
+    private fun calculateRectCoordinates() {
+        val newLeft = min(left, right)
+        val newRight = max(left, right)
+        val newTop = min(top, bottom)
+        val newBottom = max(top, bottom)
+        left = newLeft
+        top = newTop
+        right = newRight
+        bottom = newBottom
+    }
+
     override fun up(x: Float, y: Float) : Operation? {
         val firstTimeUp = shape.isEmpty
-        if (firstTimeUp)
+        if (firstTimeUp) {
+            calculateRectCoordinates()
             shape.addRect(this, Path.Direction.CW)
+        }
         shape.computeBounds(bounds, true)
         selectionBorder.up(bounds)
         return when {

@@ -96,7 +96,7 @@ class MainActivity : AppCompatActivity(), View.OnClickListener, NavController.On
                 }
             }
         }
-        return true
+        return super.onOptionsItemSelected(item)
     }
 
     override fun onDestinationChanged(
@@ -161,7 +161,6 @@ class MainActivity : AppCompatActivity(), View.OnClickListener, NavController.On
     override fun onClick(view: View?) {
         when (view?.id) {
             R.id.btnGoogleSignIn -> googleSignInLauncher.launch(googleSignInClient.signInIntent)
-            //R.id.btnSignOut ->
         }
     }
 }

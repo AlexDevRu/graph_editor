@@ -8,6 +8,7 @@ import android.os.*
 import android.provider.MediaStore
 import android.provider.Settings
 import android.view.*
+import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AlertDialog
@@ -19,6 +20,8 @@ import androidx.core.view.updateLayoutParams
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
 import androidx.navigation.fragment.navArgs
 import com.example.mobilepaint.R
 import com.example.mobilepaint.databinding.DialogChangeCanvasSizeBinding
@@ -31,6 +34,8 @@ import com.skydoves.colorpickerview.ColorEnvelope
 import com.skydoves.colorpickerview.ColorPickerDialog
 import com.skydoves.colorpickerview.listeners.ColorEnvelopeListener
 import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.launch
 import java.io.File
 
 @AndroidEntryPoint
@@ -203,6 +208,7 @@ class CanvasFragment : Fragment(), ShapesView.OnShapeChanged, View.OnClickListen
 
     override fun onMenuItemSelected(menuItem: MenuItem): Boolean {
         when (menuItem.itemId) {
+            R.id.publish -> viewModel.publish(shapesView.color, shapesView.shapes)
             R.id.undo -> shapesView.undo()
             R.id.redo -> shapesView.redo()
             R.id.exportImage -> {
@@ -286,6 +292,16 @@ class CanvasFragment : Fragment(), ShapesView.OnShapeChanged, View.OnClickListen
             binding.zoomLayout.touchable = enabled
             binding.btnPenType.text = it.text
             binding.btnPenType.setIconResource(it.iconRes)
+        }
+        lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                viewModel.message.collectLatest {
+                    Toast.makeText(requireContext(), it, Toast.LENGTH_SHORT).show()
+                }
+            }
+        }
+        viewModel.loading.observe(viewLifecycleOwner) {
+            binding.progressBar.isVisible = it
         }
     }
 

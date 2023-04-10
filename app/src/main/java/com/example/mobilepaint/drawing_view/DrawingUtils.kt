@@ -12,8 +12,6 @@ import com.example.mobilepaint.models.CanvasData
 import com.example.mobilepaint.models.SelectionBorderOptions
 import com.example.mobilepaint.models.json.*
 import com.google.gson.Gson
-import javax.inject.Inject
-import javax.inject.Singleton
 
 class DrawingUtils(context: Context) {
 

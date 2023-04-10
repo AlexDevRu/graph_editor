@@ -179,12 +179,16 @@ class ShapesView @JvmOverloads constructor(
                     handler.postDelayed(onLongPressed, 1000)
                     selectedShape?.down(touchX, touchY)
                 } else {
+                    val paint = drawingUtils.createPaint(strokeWidth, color)
                     currentShape = when (geometryType) {
-                        GeometryType.PATH -> CustomPath(drawingUtils.getSelectionBorderOptions(), drawingUtils.shader, drawingUtils.createPathPaint())
-                        GeometryType.LINE -> CustomLine(drawingUtils.handlePaint, drawingUtils.shader, drawingUtils.createPaint())
-                        GeometryType.RECT -> CustomRectF(drawingUtils.getSelectionBorderOptions(), drawingUtils.shader, drawingUtils.createPaint())
-                        GeometryType.ELLIPSE -> CustomEllipse(drawingUtils.getSelectionBorderOptions(), drawingUtils.shader, drawingUtils.createPaint())
-                        GeometryType.ARROW -> CustomArrow(drawingUtils.arrowWidth, drawingUtils.arrowHeight, drawingUtils.handlePaint, drawingUtils.shader, drawingUtils.createPaint())
+                        GeometryType.PATH -> {
+                            val pathPaint = drawingUtils.createPathPaint(strokeWidth, color)
+                            CustomPath(drawingUtils.getSelectionBorderOptions(), drawingUtils.shader, pathPaint)
+                        }
+                        GeometryType.LINE -> CustomLine(drawingUtils.handlePaint, drawingUtils.shader, paint)
+                        GeometryType.RECT -> CustomRectF(drawingUtils.getSelectionBorderOptions(), drawingUtils.shader, paint)
+                        GeometryType.ELLIPSE -> CustomEllipse(drawingUtils.getSelectionBorderOptions(), drawingUtils.shader, paint)
+                        GeometryType.ARROW -> CustomArrow(drawingUtils.arrowWidth, drawingUtils.arrowHeight, drawingUtils.handlePaint, drawingUtils.shader, paint)
                         else -> null
                     }
                     currentShape?.down(touchX, touchY)

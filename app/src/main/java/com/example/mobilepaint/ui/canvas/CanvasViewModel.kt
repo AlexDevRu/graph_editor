@@ -16,17 +16,23 @@ import com.example.mobilepaint.drawing_view.GeometryType
 import com.example.mobilepaint.drawing_view.shapes.Shape
 import com.example.mobilepaint.models.CanvasData
 import com.example.mobilepaint.models.PenType
+import com.google.android.gms.auth.api.signin.GoogleSignIn
+import com.google.firebase.firestore.ktx.firestore
+import com.google.firebase.ktx.Firebase
 import com.google.gson.Gson
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.suspendCancellableCoroutine
 import java.io.File
 import java.io.FileOutputStream
 import java.text.SimpleDateFormat
 import java.util.*
 import javax.inject.Inject
+import kotlin.coroutines.resumeWithException
 
 @HiltViewModel
 class CanvasViewModel @Inject constructor(
@@ -68,16 +74,43 @@ class CanvasViewModel @Inject constructor(
 
     var saveImage = 0
 
-    fun setFirstCanvas(minWidth: Int, minHeight: Int) {
-        canvas.width = minWidth
-        canvas.height = minHeight
+    private val db = Firebase.firestore
+    private val images = db.collection("/users/${GoogleSignIn.getLastSignedInAccount(app)?.email}/images")
+
+    @OptIn(ExperimentalCoroutinesApi::class)
+    fun publish(color: Int, shapesList : List<Shape>) {
+        canvas.bg = color
+        canvas.shapesList = shapesList
+        viewModelScope.launch(Dispatchers.IO) {
+            try {
+                _loading.postValue(true)
+                val json = canvas.toJson(gson)
+                val dateFormat = SimpleDateFormat("yyyy-MM-dd_HH_mm_ss", Locale.ENGLISH)
+                val fileName = dateFormat.format(Date())
+                val data = hashMapOf("json" to json)
+                suspendCancellableCoroutine { continuation ->
+                    images.document(fileName).set(data).addOnCompleteListener {
+                        if (it.isSuccessful) {
+                            continuation.resume(Unit, null)
+                        } else {
+                            continuation.resumeWithException(it.exception ?: Exception())
+                        }
+                    }
+                }
+                _message.emit("Published")
+            } catch (e: Exception) {
+                _message.emit(e.message.orEmpty())
+            } finally {
+                _loading.postValue(false)
+            }
+        }
     }
 
     fun saveImageToExternalStorage(image : Bitmap) {
         viewModelScope.launch(Dispatchers.IO) {
             _loading.postValue(true)
             val directory = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES)
-            val file = File(directory, "$${System.currentTimeMillis()}.jpeg")
+            val file = File(directory, "${System.currentTimeMillis()}.jpeg")
             val outputStream = FileOutputStream(file)
             image.compress(Bitmap.CompressFormat.JPEG, 100, outputStream)
             outputStream.flush()

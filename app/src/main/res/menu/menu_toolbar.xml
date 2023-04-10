@@ -14,23 +14,25 @@
         app:iconTint="@color/color_toolbar_button"
         app:showAsAction="ifRoom" />
     <item
+        android:id="@+id/publish"
+        android:icon="@drawable/ic_publish"
+        android:title="@string/publish"
+        app:iconTint="@color/color_toolbar_button"
+        app:showAsAction="ifRoom" />
+    <item
         android:id="@+id/changeCanvasSize"
-        android:icon="@drawable/ic_add"
         android:title="@string/change_canvas_size"
         app:showAsAction="never" />
     <item
         android:id="@+id/openJson"
-        android:icon="@drawable/ic_download"
         android:title="@string/open_json"
         app:showAsAction="never" />
     <item
         android:id="@+id/exportJson"
-        android:icon="@drawable/ic_download"
         android:title="@string/export_as_json"
         app:showAsAction="never" />
     <item
         android:id="@+id/exportImage"
-        android:icon="@drawable/ic_download"
         android:title="@string/export_as_jpeg"
         app:showAsAction="never" />
 </menu>

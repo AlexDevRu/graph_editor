@@ -2,13 +2,11 @@ package com.example.mobilepaint
 
 import android.app.Application
 import android.graphics.Color
-import android.net.Uri
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import com.example.mobilepaint.drawing_view.DrawingUtils
 import com.example.mobilepaint.drawing_view.GeometryType
-import com.example.mobilepaint.models.CanvasData
 import com.example.mobilepaint.models.PenType
 import com.google.android.gms.auth.api.signin.GoogleSignIn
 import com.google.android.gms.auth.api.signin.GoogleSignInAccount
@@ -40,9 +38,6 @@ class MainViewModel @Inject constructor(
     private val _stroke = MutableLiveData(5f)
     val stroke : LiveData<Float> = _stroke
 
-    private val _penType = MutableLiveData(options.first())
-    val penType : LiveData<PenType> = _penType
-
     private val _color = MutableLiveData(Color.BLACK)
     val color : LiveData<Int> = _color
 
@@ -52,13 +47,8 @@ class MainViewModel @Inject constructor(
     private val _message = MutableSharedFlow<String>()
     val message = _message.asSharedFlow()
 
-    private val _openFile = MutableSharedFlow<Uri>()
-    val openFile = _openFile.asSharedFlow()
-
     private val _googleAccount = MutableLiveData(GoogleSignIn.getLastSignedInAccount(app))
     val googleAccount : LiveData<GoogleSignInAccount?> = _googleAccount
-
-    val canvases = mutableListOf<CanvasData>()
 
     val gson = Gson()
 

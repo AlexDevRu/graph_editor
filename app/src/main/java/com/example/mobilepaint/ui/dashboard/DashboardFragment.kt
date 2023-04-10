@@ -11,9 +11,6 @@ import androidx.navigation.fragment.findNavController
 import com.example.mobilepaint.R
 import com.example.mobilepaint.databinding.FragmentDashboardBinding
 import com.example.mobilepaint.models.MyImage
-import com.google.android.flexbox.FlexDirection
-import com.google.android.flexbox.FlexboxLayoutManager
-import com.google.android.flexbox.JustifyContent
 import dagger.hilt.android.AndroidEntryPoint
 
 
@@ -47,9 +44,11 @@ class DashboardFragment : Fragment(), View.OnClickListener, ImagesAdapter.Listen
     private fun observe() {
         viewModel.loading.observe(viewLifecycleOwner) {
             binding.progressBar.isVisible = it
+            binding.llEmptyList.isVisible = !it && viewModel.myImages.value.isNullOrEmpty()
         }
         viewModel.myImages.observe(viewLifecycleOwner) {
             imagesAdapter.submitList(it)
+            binding.llEmptyList.isVisible = it.isEmpty()
         }
     }
 

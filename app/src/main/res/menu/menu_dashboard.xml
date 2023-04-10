@@ -4,20 +4,7 @@
     <item
         android:id="@+id/signOut"
         android:icon="@drawable/ic_baseline_logout_24"
-        android:title="@string/undo"
+        android:title="@string/sign_out"
         app:iconTint="@color/white"
         app:showAsAction="ifRoom" />
-    <item
-        android:id="@+id/c"
-        android:icon="@drawable/ic_baseline_logout_24"
-        android:title="Show published images"
-        app:iconTint="@color/white"
-        android:checkable="true"
-        app:showAsAction="never" />
-    <item
-        android:id="@+id/sync"
-        android:icon="@drawable/ic_baseline_logout_24"
-        android:title="Sync cloud images"
-        app:iconTint="@color/white"
-        app:showAsAction="never" />
 </menu>

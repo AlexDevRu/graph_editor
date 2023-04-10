@@ -4,6 +4,7 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.View.MeasureSpec
 import android.view.ViewGroup
+import androidx.core.view.isVisible
 import androidx.recyclerview.widget.DiffUtil.ItemCallback
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
@@ -62,6 +63,7 @@ class ImagesAdapter(
             drawingView.addShapes(item.canvasData.shapesList, item.canvasData.removedShapesList)
             binding.preview.setImageBitmap(drawingView.getBitmap())
             binding.title.text = item.title
+            binding.ivCloud.isVisible = item.published
         }
 
         override fun onClick(view: View?) {

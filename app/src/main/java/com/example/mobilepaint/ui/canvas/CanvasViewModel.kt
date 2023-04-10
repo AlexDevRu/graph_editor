@@ -85,7 +85,7 @@ class CanvasViewModel @Inject constructor(
             try {
                 _loading.postValue(true)
                 val json = canvas.toJson(gson)
-                val dateFormat = SimpleDateFormat("yyyy-MM-dd_HH_mm_ss", Locale.ENGLISH)
+                val dateFormat = SimpleDateFormat("yyyy-MM-dd_HH-mm-ss", Locale.ENGLISH)
                 val fileName = dateFormat.format(Date())
                 val data = hashMapOf("json" to json)
                 suspendCancellableCoroutine { continuation ->
@@ -130,7 +130,7 @@ class CanvasViewModel @Inject constructor(
             _loading.postValue(true)
             val json = canvas.toJson(gson)
             val dir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES)
-            val dateFormat = SimpleDateFormat("yyyy-MM-dd_HH_mm_ss", Locale.ENGLISH)
+            val dateFormat = SimpleDateFormat("yyyy-MM-dd_HH-mm-ss", Locale.ENGLISH)
             val fileName = dateFormat.format(Date())
             val file = File(dir, "$fileName.json")
             file.appendText(json)

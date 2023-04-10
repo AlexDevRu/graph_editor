@@ -15,7 +15,6 @@ import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
 import androidx.core.view.isVisible
-import androidx.core.view.iterator
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
@@ -85,11 +84,9 @@ class MainActivity : AppCompatActivity(), View.OnClickListener, NavController.On
     override fun onPrepareOptionsMenu(menu: Menu?): Boolean {
         if (menu != null) {
             val showUp = navController.currentDestination?.id == R.id.canvasFragment
-            for (item in menu.iterator()) {
-                item.isVisible = viewModel.googleAccount.value != null && !showUp
-            }
+            menu.findItem(R.id.signOut)?.isVisible = viewModel.googleAccount.value != null && !showUp
         }
-        return super.onPrepareOptionsMenu(menu)
+        return true
     }
 
     override fun onCreateOptionsMenu(menu: Menu?): Boolean {

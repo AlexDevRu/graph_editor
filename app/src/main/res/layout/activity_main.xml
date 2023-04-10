@@ -12,6 +12,7 @@
         android:layout_height="wrap_content"
         android:background="?colorPrimary"
         android:minHeight="?attr/actionBarSize"
+        android:theme="@style/toolbarTheme"
         app:layout_constraintTop_toTopOf="parent">
 
         <com.google.android.gms.common.SignInButton

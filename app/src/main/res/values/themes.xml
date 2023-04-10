@@ -5,7 +5,7 @@
         <item name="colorPrimary">@color/purple_500</item>
         <item name="colorPrimaryVariant">@color/purple_700</item>
         <item name="colorOnPrimary">@color/white</item>
-        <item name="colorControlNormal">@color/white</item>
+<!--        <item name="colorControlNormal">@color/white</item>-->
         <!-- Secondary brand color. -->
         <item name="colorSecondary">@color/teal_200</item>
         <item name="colorSecondaryVariant">@color/teal_700</item>
@@ -13,5 +13,11 @@
         <!-- Status bar color. -->
         <item name="android:statusBarColor">?attr/colorPrimaryVariant</item>
         <!-- Customize your theme here. -->
+    </style>
+
+    <style name="toolbarTheme" parent="Theme.MobilePaint">
+        <item name="colorControlNormal">@color/white</item>
+        <item name="android:editTextColor">@color/white</item>
+        <item name="android:textColorHint">@color/white</item>
     </style>
 </resources>

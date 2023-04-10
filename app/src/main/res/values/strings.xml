@@ -35,4 +35,5 @@
     <string name="web_client_id" translatable="false">1004598020314-klriisskb17ruoh6ccdmb5p1ts1c0grs.apps.googleusercontent.com</string>
     <string name="no_images_are_found">No images are found</string>
     <string name="publish">Publish</string>
+    <string name="search">Search</string>
 </resources>

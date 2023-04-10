@@ -5,7 +5,6 @@ import android.graphics.Color
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
-import com.example.mobilepaint.drawing_view.DrawingUtils
 import com.example.mobilepaint.drawing_view.GeometryType
 import com.example.mobilepaint.models.PenType
 import com.google.android.gms.auth.api.signin.GoogleSignIn
@@ -18,9 +17,8 @@ import javax.inject.Inject
 
 @HiltViewModel
 class MainViewModel @Inject constructor(
-    private val app : Application,
-    private val sharedPrefsUtils: SharedPrefsUtils,
-    private val drawingUtils: DrawingUtils
+    app : Application,
+    sharedPrefsUtils: SharedPrefsUtils
 ): ViewModel() {
 
     private val options = listOf(
@@ -40,9 +38,6 @@ class MainViewModel @Inject constructor(
 
     private val _color = MutableLiveData(Color.BLACK)
     val color : LiveData<Int> = _color
-
-    private val _loading = MutableLiveData(false)
-    val loading : LiveData<Boolean> = _loading
 
     private val _message = MutableSharedFlow<String>()
     val message = _message.asSharedFlow()

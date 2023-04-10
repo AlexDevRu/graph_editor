@@ -1,31 +1,29 @@
 package com.example.mobilepaint.ui.dashboard
 
 import android.app.Application
-import android.graphics.Paint
 import android.os.Environment
-import android.view.View.MeasureSpec
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.mobilepaint.Utils
 import com.example.mobilepaint.drawing_view.DrawingUtils
-import com.example.mobilepaint.drawing_view.DrawingView
 import com.example.mobilepaint.models.MyImage
-import com.google.gson.Gson
+import com.google.android.gms.auth.api.signin.GoogleSignIn
+import com.google.firebase.firestore.ktx.firestore
+import com.google.firebase.ktx.Firebase
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
+import kotlinx.coroutines.*
 import java.io.File
-import java.io.FileFilter
 import javax.inject.Inject
 
+@OptIn(ExperimentalCoroutinesApi::class)
 @HiltViewModel
 class DashboardViewModel @Inject constructor(
     private val drawingUtils: DrawingUtils,
-    private val app: Application
+    app: Application
 ): ViewModel() {
+
+    private var originalImages = emptyList<MyImage>()
 
     private val _myImages = MutableLiveData<List<MyImage>>()
     val myImages: LiveData<List<MyImage>> = _myImages
@@ -33,21 +31,57 @@ class DashboardViewModel @Inject constructor(
     private val _loading = MutableLiveData(false)
     val loading: LiveData<Boolean> = _loading
 
-    init {
+    private val _query = MutableLiveData("")
+    val query: LiveData<String> = _query
 
-        viewModelScope.launch(Dispatchers.IO) {
+    private val db = Firebase.firestore
+    private val images = db.collection("/users/${GoogleSignIn.getLastSignedInAccount(app)?.email}/images")
+
+    init {
+        viewModelScope.launch(Dispatchers.IO + SupervisorJob()) {
             _loading.postValue(true)
-            val dir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES)
-            val images = dir.listFiles { file: File -> file.extension == "json" }.orEmpty().toList()
-            val myImages = images.map {
-                MyImage(
-                    canvasData = drawingUtils.fromJson(it.readText()),
-                    title = it.name
-                )
+            val list1 = async {
+                suspendCancellableCoroutine { continuation ->
+                    images.get().addOnCompleteListener { result ->
+                        if (result.isSuccessful) {
+                            val cloudImages = result.result.documents.map {
+                                MyImage(
+                                    canvasData = drawingUtils.fromJson(it.get("json") as String),
+                                    title = it.id,
+                                    published = true
+                                )
+                            }
+                            continuation.resume(cloudImages, null)
+                        } else {
+                            continuation.resume(emptyList<MyImage>(), null)
+                        }
+                    }
+                }
             }
-            _myImages.postValue(myImages)
+            val list2 = async {
+                val dir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES)
+                val images = dir.listFiles { file: File -> file.extension == "json" }.orEmpty().toList()
+                images.map {
+                    MyImage(
+                        canvasData = drawingUtils.fromJson(it.readText()),
+                        title = it.name,
+                        published = false
+                    )
+                }
+            }
+            originalImages = list1.await() + list2.await()
+            _myImages.postValue(originalImages)
             _loading.postValue(false)
         }
+    }
+
+    fun updateSearchQuery(query: String?) {
+        _query.value = query
+        _myImages.value = originalImages.filter { it.title.lowercase().trim().contains(query.orEmpty().lowercase().trim()) }
+    }
+
+    private fun updateImages() {
+
     }
 
 }

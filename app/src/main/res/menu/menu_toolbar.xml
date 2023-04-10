@@ -20,6 +20,12 @@
         app:iconTint="@color/color_toolbar_button"
         app:showAsAction="ifRoom" />
     <item
+        android:id="@+id/save"
+        android:icon="@drawable/ic_publish"
+        android:title="@string/save"
+        app:iconTint="@color/color_toolbar_button"
+        app:showAsAction="ifRoom" />
+    <item
         android:id="@+id/changeCanvasSize"
         android:title="@string/change_canvas_size"
         app:showAsAction="never" />

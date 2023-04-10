@@ -67,7 +67,7 @@ class DashboardFragment : Fragment(), View.OnClickListener, ImagesAdapter.Listen
         }
     }
 
-    private fun navigateToCanvasFragment(fileName: String = "") {
+    private fun navigateToCanvasFragment(fileName: String? = null) {
         val action = DashboardFragmentDirections.actionDashboardFragmentToCanvasFragment(fileName)
         navController.navigate(action)
     }

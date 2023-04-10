@@ -19,7 +19,8 @@
             <argument
                 android:name="fileName"
                 app:argType="string"
-                android:defaultValue="" />
+                app:nullable="true"
+                android:defaultValue="@null" />
         </action>
     </fragment>
     <fragment

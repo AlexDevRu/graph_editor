@@ -208,7 +208,7 @@ class CanvasFragment : Fragment(), ShapesView.OnShapeChanged, View.OnClickListen
 
     override fun onMenuItemSelected(menuItem: MenuItem): Boolean {
         when (menuItem.itemId) {
-            R.id.publish -> viewModel.publish(shapesView.color, shapesView.shapes)
+            R.id.publish -> viewModel.publish(args.fileName, shapesView.color, shapesView.shapes)
             R.id.undo -> shapesView.undo()
             R.id.redo -> shapesView.redo()
             R.id.exportImage -> {

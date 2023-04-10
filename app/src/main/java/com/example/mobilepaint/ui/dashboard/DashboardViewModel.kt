@@ -23,7 +23,7 @@ class DashboardViewModel @Inject constructor(
     app: Application
 ): ViewModel() {
 
-    private var originalImages = emptyList<MyImage>()
+    private val originalImages = mutableListOf<MyImage>()
 
     private val _myImages = MutableLiveData<List<MyImage>>()
     val myImages: LiveData<List<MyImage>> = _myImages
@@ -69,7 +69,25 @@ class DashboardViewModel @Inject constructor(
                     )
                 }
             }
-            originalImages = list1.await() + list2.await()
+
+            val publishedImages = list1.await()
+            val localImages = list2.await()
+
+            originalImages.clear()
+            val localImagesMap = hashMapOf<String, MyImage>()
+            localImages.forEach {
+                localImagesMap[it.title] = it
+            }
+            publishedImages.forEach {
+                if (localImagesMap.contains(it.title)) {
+                    localImagesMap[it.title]!!.published = true
+                } else {
+                    originalImages.add(it)
+                }
+            }
+
+            originalImages.addAll(localImagesMap.values)
+
             _myImages.postValue(originalImages)
             _loading.postValue(false)
         }

@@ -36,4 +36,5 @@
     <string name="no_images_are_found">No images are found</string>
     <string name="publish">Publish</string>
     <string name="search">Search</string>
+    <string name="save">Save</string>
 </resources>

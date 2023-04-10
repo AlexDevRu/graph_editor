@@ -78,7 +78,7 @@ class CanvasViewModel @Inject constructor(
     private val images = db.collection("/users/${GoogleSignIn.getLastSignedInAccount(app)?.email}/images")
 
     @OptIn(ExperimentalCoroutinesApi::class)
-    fun publish(color: Int, shapesList : List<Shape>) {
+    fun publish(fileName: String?, color: Int, shapesList : List<Shape>) {
         canvas.bg = color
         canvas.shapesList = shapesList
         viewModelScope.launch(Dispatchers.IO) {
@@ -86,7 +86,7 @@ class CanvasViewModel @Inject constructor(
                 _loading.postValue(true)
                 val json = canvas.toJson(gson)
                 val dateFormat = SimpleDateFormat("yyyy-MM-dd_HH-mm-ss", Locale.ENGLISH)
-                val fileName = dateFormat.format(Date())
+                val fileName = fileName ?: dateFormat.format(Date())
                 val data = hashMapOf("json" to json)
                 suspendCancellableCoroutine { continuation ->
                     images.document(fileName).set(data).addOnCompleteListener {

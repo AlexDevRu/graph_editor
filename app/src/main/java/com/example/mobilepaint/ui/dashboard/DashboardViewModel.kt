@@ -11,6 +11,7 @@ import com.example.mobilepaint.models.MyImage
 import com.google.android.gms.auth.api.signin.GoogleSignIn
 import com.google.firebase.firestore.ktx.firestore
 import com.google.firebase.ktx.Firebase
+import com.google.gson.Gson
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.*
 import java.io.File
@@ -33,6 +34,8 @@ class DashboardViewModel @Inject constructor(
 
     private val _query = MutableLiveData("")
     val query: LiveData<String> = _query
+
+    private val gson = Gson()
 
     private val db = Firebase.firestore
     private val images = db.collection("/users/${GoogleSignIn.getLastSignedInAccount(app)?.email}/images")
@@ -83,6 +86,10 @@ class DashboardViewModel @Inject constructor(
                     localImagesMap[it.title]!!.published = true
                 } else {
                     originalImages.add(it)
+                    val dir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES)
+                    val file = File(dir, "${it.title}.json")
+                    file.createNewFile()
+                    file.appendText(it.canvasData.toJson(gson))
                 }
             }
 

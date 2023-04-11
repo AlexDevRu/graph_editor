@@ -37,4 +37,11 @@
     <string name="publish">Publish</string>
     <string name="search">Search</string>
     <string name="save">Save</string>
+    <string name="remove">Remove</string>
+    <string name="rename">Rename</string>
+
+    <string name="enter_new_image_name">Enter new image name</string>
+
+    <string name="my_images">My images</string>
+    <string name="published_images">Published images</string>
 </resources>

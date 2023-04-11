@@ -110,7 +110,7 @@ class CanvasViewModel @Inject constructor(
                     }
                 }
                 _message.emit("Published")
-                _update.emit("$newFileName.json" to true)
+                _update.emit(newFileName to true)
             } catch (e: Exception) {
                 _message.emit(e.message.orEmpty())
             } finally {
@@ -152,7 +152,7 @@ class CanvasViewModel @Inject constructor(
             file.createNewFile()
             _loading.postValue(false)
             _message.emit("Saved")
-            _update.emit("$fileName.json" to false)
+            _update.emit(fileName to false)
         }
     }
 

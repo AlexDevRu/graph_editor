@@ -144,7 +144,7 @@ class CanvasFragment : Fragment(), ShapesView.OnShapeChanged, View.OnClickListen
             }
         } else {
             val directory = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES)
-            val json = File(directory, args.fileName!!).readText()
+            val json = File(directory, "${args.fileName}.json").readText()
             val canvasData = viewModel.addCanvasFromJson(json)
             binding.shapesView.addCanvasData(canvasData)
             binding.zoomLayout.post {

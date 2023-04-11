@@ -1,7 +1,9 @@
 package com.example.mobilepaint.ui.dashboard
 
 import android.os.Bundle
+import android.text.InputType
 import android.view.*
+import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.widget.SearchView
 import androidx.core.view.MenuHost
 import androidx.core.view.MenuProvider
@@ -11,13 +13,19 @@ import androidx.fragment.app.activityViewModels
 import androidx.fragment.app.setFragmentResultListener
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
 import androidx.navigation.fragment.findNavController
 import com.example.mobilepaint.MainViewModel
 import com.example.mobilepaint.R
+import com.example.mobilepaint.databinding.DialogStrokeBinding
 import com.example.mobilepaint.databinding.FragmentDashboardBinding
 import com.example.mobilepaint.models.MyImage
+import com.example.mobilepaint.ui.ImagesFragmentDirections
 import com.example.mobilepaint.ui.canvas.CanvasFragment
 import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.launch
 
 
 @AndroidEntryPoint
@@ -62,10 +70,15 @@ class DashboardFragment : Fragment(), View.OnClickListener, ImagesAdapter.Listen
         }
         viewModel.myImages.observe(viewLifecycleOwner) {
             imagesAdapter.submitList(it)
+            binding.rvMyImages.isVisible = it.isNotEmpty()
             binding.llEmptyList.isVisible = it.isEmpty()
         }
-        mainViewModel.googleAccount.observe(viewLifecycleOwner) {
-            binding.cbShowPublishedImages.isVisible = it != null
+        lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                mainViewModel.newAccount.collectLatest {
+                    viewModel.updateImages()
+                }
+            }
         }
     }
 
@@ -76,12 +89,16 @@ class DashboardFragment : Fragment(), View.OnClickListener, ImagesAdapter.Listen
     }
 
     private fun navigateToCanvasFragment(fileName: String? = null) {
-        val action = DashboardFragmentDirections.actionDashboardFragmentToCanvasFragment(fileName)
+        val action = ImagesFragmentDirections.actionImagesFragmentToCanvasFragment(fileName)
         navController.navigate(action)
     }
 
     override fun onItemClick(item: MyImage) {
         navigateToCanvasFragment(item.title)
+    }
+
+    override fun registerContextMenu(view: View) {
+        registerForContextMenu(view)
     }
 
     override fun onPrepareMenu(menu: Menu) {
@@ -107,5 +124,36 @@ class DashboardFragment : Fragment(), View.OnClickListener, ImagesAdapter.Listen
 
     override fun onQueryTextSubmit(query: String?): Boolean {
         return false
+    }
+
+    override fun onCreateContextMenu(
+        menu: ContextMenu,
+        v: View,
+        menuInfo: ContextMenu.ContextMenuInfo?
+    ) {
+        super.onCreateContextMenu(menu, v, menuInfo)
+        activity?.menuInflater?.inflate(R.menu.menu_context_image, menu)
+    }
+
+    override fun onContextItemSelected(item: MenuItem): Boolean {
+        return false
+    }
+
+    override fun onRemoveItem(item: MyImage) {
+        viewModel.removeItem(item)
+    }
+
+    override fun onRenameItem(item: MyImage) {
+        val strokeBinding = DialogStrokeBinding.inflate(layoutInflater)
+        strokeBinding.etType.hint = getString(R.string.enter_new_image_name)
+        strokeBinding.etType.inputType = InputType.TYPE_CLASS_TEXT
+        strokeBinding.etType.setText(item.title)
+        AlertDialog.Builder(requireContext())
+            .setTitle(R.string.stroke)
+            .setView(strokeBinding.root)
+            .setPositiveButton(android.R.string.ok) { _, _ ->
+                viewModel.renameItem(item, strokeBinding.etType.text?.toString().orEmpty())
+            }
+            .show()
     }
 }

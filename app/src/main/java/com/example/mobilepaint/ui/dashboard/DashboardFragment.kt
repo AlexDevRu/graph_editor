@@ -8,6 +8,7 @@ import androidx.core.view.MenuProvider
 import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
+import androidx.fragment.app.setFragmentResultListener
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.Lifecycle
 import androidx.navigation.fragment.findNavController
@@ -15,6 +16,7 @@ import com.example.mobilepaint.MainViewModel
 import com.example.mobilepaint.R
 import com.example.mobilepaint.databinding.FragmentDashboardBinding
 import com.example.mobilepaint.models.MyImage
+import com.example.mobilepaint.ui.canvas.CanvasFragment
 import dagger.hilt.android.AndroidEntryPoint
 
 
@@ -45,6 +47,12 @@ class DashboardFragment : Fragment(), View.OnClickListener, ImagesAdapter.Listen
         binding.rvMyImages.adapter = imagesAdapter
         observe()
         (requireActivity() as MenuHost).addMenuProvider(this, viewLifecycleOwner, Lifecycle.State.RESUMED)
+
+        setFragmentResultListener(CanvasFragment.KEY) { _, bundle ->
+            val fileName = bundle.getString("fileName").orEmpty()
+            val published = bundle.getBoolean("published")
+            viewModel.updateJsonByFileName(fileName, published)
+        }
     }
 
     private fun observe() {
@@ -80,6 +88,7 @@ class DashboardFragment : Fragment(), View.OnClickListener, ImagesAdapter.Listen
         super.onPrepareMenu(menu)
         val searchView = menu.findItem(R.id.search).actionView as SearchView
         searchView.maxWidth = Int.MAX_VALUE
+        searchView.setQuery(viewModel.query.value, false)
         searchView.setOnQueryTextListener(this)
     }
 

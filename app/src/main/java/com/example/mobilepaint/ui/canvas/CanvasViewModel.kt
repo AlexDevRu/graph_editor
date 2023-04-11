@@ -72,24 +72,36 @@ class CanvasViewModel @Inject constructor(
     private val _color = MutableLiveData(Color.BLACK)
     val color : LiveData<Int> = _color
 
+    private val _update = MutableSharedFlow<Pair<String, Boolean>>()
+    val update = _update.asSharedFlow()
+
     var saveImage = 0
 
     private val db = Firebase.firestore
     private val images = db.collection("/users/${GoogleSignIn.getLastSignedInAccount(app)?.email}/images")
 
     @OptIn(ExperimentalCoroutinesApi::class)
-    fun publish(fileName: String?, color: Int, shapesList : List<Shape>) {
+    fun publish(fileName: String?, width: Int, height: Int, color: Int, shapesList : List<Shape>) {
         canvas.bg = color
         canvas.shapesList = shapesList
+        canvas.width = width
+        canvas.height = height
         viewModelScope.launch(Dispatchers.IO) {
             try {
                 _loading.postValue(true)
                 val json = canvas.toJson(gson)
                 val dateFormat = SimpleDateFormat("yyyy-MM-dd_HH-mm-ss", Locale.ENGLISH)
-                val fileName = fileName ?: dateFormat.format(Date())
+                val newFileName = fileName ?: dateFormat.format(Date())
+
+                val directory = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES)
+                val file = File(directory, "$newFileName.json")
+                file.delete()
+                file.createNewFile()
+                file.appendText(json)
+
                 val data = hashMapOf("json" to json)
                 suspendCancellableCoroutine { continuation ->
-                    images.document(fileName).set(data).addOnCompleteListener {
+                    images.document(newFileName).set(data).addOnCompleteListener {
                         if (it.isSuccessful) {
                             continuation.resume(Unit, null)
                         } else {
@@ -98,6 +110,7 @@ class CanvasViewModel @Inject constructor(
                     }
                 }
                 _message.emit("Published")
+                _update.emit("$newFileName.json" to true)
             } catch (e: Exception) {
                 _message.emit(e.message.orEmpty())
             } finally {
@@ -122,10 +135,12 @@ class CanvasViewModel @Inject constructor(
         }
     }
 
-    fun exportJson(color: Int, shapesList : List<Shape>, removedShapesList : List<Shape>) {
+    fun exportJson(color: Int, width: Int, height: Int, shapesList : List<Shape>, removedShapesList : List<Shape>) {
         canvas.bg = color
         canvas.shapesList = shapesList
         canvas.removedShapesList = removedShapesList
+        canvas.width = width
+        canvas.height = height
         viewModelScope.launch(Dispatchers.IO) {
             _loading.postValue(true)
             val json = canvas.toJson(gson)
@@ -137,6 +152,7 @@ class CanvasViewModel @Inject constructor(
             file.createNewFile()
             _loading.postValue(false)
             _message.emit("Saved")
+            _update.emit("$fileName.json" to false)
         }
     }
 

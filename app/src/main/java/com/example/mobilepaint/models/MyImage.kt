@@ -1,7 +1,7 @@
 package com.example.mobilepaint.models
 
 data class MyImage(
-    val canvasData: CanvasData,
+    var canvasData: CanvasData,
     val title: String,
     var published: Boolean
 )

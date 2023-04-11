@@ -98,8 +98,25 @@ class DashboardViewModel @Inject constructor(
         _myImages.value = originalImages.filter { it.title.lowercase().trim().contains(query.orEmpty().lowercase().trim()) }
     }
 
-    private fun updateImages() {
-
+    fun updateJsonByFileName(fileName: String, published: Boolean) {
+        viewModelScope.launch(Dispatchers.IO) {
+            val dir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES)
+            val file = File(dir, fileName)
+            if (file.exists()) {
+                val json = file.readText()
+                val canvasData = drawingUtils.fromJson(json)
+                val existingImage = originalImages.find { it.title == fileName }
+                if (existingImage != null)
+                    existingImage.canvasData = canvasData
+                else {
+                    val newImage = MyImage(canvasData = canvasData, title = fileName, published = published)
+                    originalImages.add(newImage)
+                }
+                withContext(Dispatchers.Main) {
+                    updateSearchQuery(query.value)
+                }
+            }
+        }
     }
 
 }

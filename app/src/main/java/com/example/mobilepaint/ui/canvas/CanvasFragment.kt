@@ -13,11 +13,13 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.os.bundleOf
 import androidx.core.view.MenuHost
 import androidx.core.view.MenuProvider
 import androidx.core.view.isVisible
 import androidx.core.view.updateLayoutParams
 import androidx.fragment.app.Fragment
+import androidx.fragment.app.setFragmentResult
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
@@ -48,9 +50,7 @@ class CanvasFragment : Fragment(), ShapesView.OnShapeChanged, View.OnClickListen
 
     private val viewModel by viewModels<CanvasViewModel>()
 
-    private val shapesView by lazy {
-        binding.shapesView
-    }
+    private val shapesView by lazy { binding.shapesView }
 
     private val externalStoragePermissionLauncher = registerForActivityResult(
         ActivityResultContracts.RequestMultiplePermissions()
@@ -59,7 +59,7 @@ class CanvasFragment : Fragment(), ShapesView.OnShapeChanged, View.OnClickListen
             if (viewModel.saveImage == 0)
                 viewModel.saveImageToExternalStorage(shapesView.getBitmap())
             else
-                viewModel.exportJson(shapesView.color, shapesView.shapes, shapesView.removedShapes)
+                viewModel.exportJson(shapesView.color, shapesView.width, shapesView.height, shapesView.shapes, shapesView.removedShapes)
         }
     }
 
@@ -71,7 +71,7 @@ class CanvasFragment : Fragment(), ShapesView.OnShapeChanged, View.OnClickListen
             if (viewModel.saveImage == 0)
                 viewModel.saveImageToExternalStorage(shapesView.getBitmap())
             else
-                viewModel.exportJson(shapesView.color, shapesView.shapes, shapesView.removedShapes)
+                viewModel.exportJson(shapesView.color, shapesView.width, shapesView.height, shapesView.shapes, shapesView.removedShapes)
         }
     }
 
@@ -135,7 +135,7 @@ class CanvasFragment : Fragment(), ShapesView.OnShapeChanged, View.OnClickListen
 
         (requireActivity() as MenuHost).addMenuProvider(this, viewLifecycleOwner, Lifecycle.State.RESUMED)
 
-        if (args.fileName.isBlank()) {
+        if (args.fileName.isNullOrBlank()) {
             binding.zoomLayout.post {
                 shapesView.updateLayoutParams<ViewGroup.LayoutParams> {
                     width = binding.zoomLayout.width
@@ -144,7 +144,7 @@ class CanvasFragment : Fragment(), ShapesView.OnShapeChanged, View.OnClickListen
             }
         } else {
             val directory = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES)
-            val json = File(directory, args.fileName).readText()
+            val json = File(directory, args.fileName!!).readText()
             val canvasData = viewModel.addCanvasFromJson(json)
             binding.shapesView.addCanvasData(canvasData)
             binding.zoomLayout.post {
@@ -208,7 +208,7 @@ class CanvasFragment : Fragment(), ShapesView.OnShapeChanged, View.OnClickListen
 
     override fun onMenuItemSelected(menuItem: MenuItem): Boolean {
         when (menuItem.itemId) {
-            R.id.publish -> viewModel.publish(args.fileName, shapesView.color, shapesView.shapes)
+            R.id.publish -> viewModel.publish(args.fileName, shapesView.width, shapesView.height, shapesView.color, shapesView.shapes)
             R.id.undo -> shapesView.undo()
             R.id.redo -> shapesView.redo()
             R.id.exportImage -> {
@@ -260,7 +260,7 @@ class CanvasFragment : Fragment(), ShapesView.OnShapeChanged, View.OnClickListen
                 if (viewModel.saveImage == 0)
                     viewModel.saveImageToExternalStorage(shapesView.getBitmap())
                 else
-                    viewModel.exportJson(shapesView.color, shapesView.shapes, shapesView.removedShapes)
+                    viewModel.exportJson(shapesView.color, shapesView.width, shapesView.height, shapesView.shapes, shapesView.removedShapes)
                 return
             }
             try {
@@ -300,6 +300,13 @@ class CanvasFragment : Fragment(), ShapesView.OnShapeChanged, View.OnClickListen
                 }
             }
         }
+        lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                viewModel.update.collectLatest {
+                    setFragmentResult(KEY, bundleOf("fileName" to it.first, "published" to it.second))
+                }
+            }
+        }
         viewModel.loading.observe(viewLifecycleOwner) {
             binding.progressBar.isVisible = it
         }
@@ -332,6 +339,10 @@ class CanvasFragment : Fragment(), ShapesView.OnShapeChanged, View.OnClickListen
     override fun onColorSelected(envelope: ColorEnvelope?, fromUser: Boolean) {
         if (envelope == null) return
         viewModel.setColor(envelope.color)
+    }
+
+    companion object {
+        const val KEY = "CanvasFragment"
     }
 
 }

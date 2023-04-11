@@ -19,8 +19,7 @@
             <argument
                 android:name="fileName"
                 app:argType="string"
-                app:nullable="true"
-                android:defaultValue="@null" />
+                app:nullable="true" />
         </action>
     </fragment>
     <fragment
@@ -30,6 +29,6 @@
         <argument
             android:name="fileName"
             app:argType="string"
-            android:defaultValue="" />
+            app:nullable="true" />
     </fragment>
 </navigation>

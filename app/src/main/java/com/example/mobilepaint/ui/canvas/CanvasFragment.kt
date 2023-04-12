@@ -27,6 +27,7 @@ import androidx.lifecycle.repeatOnLifecycle
 import androidx.navigation.fragment.navArgs
 import androidx.transition.TransitionInflater
 import com.example.mobilepaint.R
+import com.example.mobilepaint.Utils
 import com.example.mobilepaint.databinding.DialogChangeCanvasSizeBinding
 import com.example.mobilepaint.databinding.DialogStrokeBinding
 import com.example.mobilepaint.databinding.FragmentCanvasBinding
@@ -40,7 +41,6 @@ import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import java.io.File
-import java.util.concurrent.TimeUnit
 
 @AndroidEntryPoint
 class CanvasFragment : Fragment(), ShapesView.OnShapeChanged, View.OnClickListener,
@@ -97,7 +97,7 @@ class CanvasFragment : Fragment(), ShapesView.OnShapeChanged, View.OnClickListen
     ) { result ->
         if (result.resultCode == AppCompatActivity.RESULT_OK) {
             val fileName = result.data?.data?.lastPathSegment ?: return@registerForActivityResult
-            val directory = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES)
+            val directory = Utils.createAndGetAppDir()
             val json = File(directory, fileName).readText()
             val canvasData = viewModel.addCanvasFromJson(json)
             binding.shapesView.addCanvasData(canvasData)
@@ -151,7 +151,7 @@ class CanvasFragment : Fragment(), ShapesView.OnShapeChanged, View.OnClickListen
                 }
             }
         } else {
-            val directory = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES)
+            val directory = Utils.createAndGetAppDir()
             val json = File(directory, "${args.fileName}.json").readText()
             val canvasData = viewModel.addCanvasFromJson(json)
             binding.shapesView.addCanvasData(canvasData)

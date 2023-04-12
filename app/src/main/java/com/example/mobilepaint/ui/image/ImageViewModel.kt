@@ -1,11 +1,12 @@
 package com.example.mobilepaint.ui.image
 
+import android.app.Application
 import android.graphics.Bitmap
-import android.os.Environment
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.mobilepaint.Utils
 import com.example.mobilepaint.drawing_view.DrawingUtils
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
@@ -13,11 +14,11 @@ import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.launch
 import java.io.File
-import java.io.FileOutputStream
 import javax.inject.Inject
 
 @HiltViewModel
 class ImageViewModel @Inject constructor(
+    private val app: Application,
     private val drawingUtils: DrawingUtils
 ): ViewModel() {
 
@@ -40,13 +41,14 @@ class ImageViewModel @Inject constructor(
     fun saveImageToExternalStorage() {
         viewModelScope.launch(Dispatchers.IO) {
             _loading.postValue(true)
-            val directory = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES)
-            val file = File(directory, "${System.currentTimeMillis()}.jpeg")
-            val outputStream = FileOutputStream(file)
-            bitmap.compress(Bitmap.CompressFormat.JPEG, 100, outputStream)
-            outputStream.close()
-            _loading.postValue(false)
-            _message.emit("Saved")
+            try {
+                Utils.saveBitmap(app, bitmap, System.currentTimeMillis().toString())
+                _message.emit("Saved")
+            } catch (e: Exception) {
+                _message.emit(e.message.orEmpty())
+            } finally {
+                _loading.postValue(false)
+            }
         }
     }
 

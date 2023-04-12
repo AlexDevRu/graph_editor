@@ -3,14 +3,13 @@ package com.example.mobilepaint.ui.canvas
 import android.app.Application
 import android.graphics.Bitmap
 import android.graphics.Color
-import android.media.MediaScannerConnection
-import android.os.Environment
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.mobilepaint.R
 import com.example.mobilepaint.SharedPrefsUtils
+import com.example.mobilepaint.Utils
 import com.example.mobilepaint.drawing_view.DrawingUtils
 import com.example.mobilepaint.drawing_view.GeometryType
 import com.example.mobilepaint.drawing_view.shapes.Shape
@@ -28,7 +27,6 @@ import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.suspendCancellableCoroutine
 import java.io.File
-import java.io.FileOutputStream
 import java.text.SimpleDateFormat
 import java.util.*
 import javax.inject.Inject
@@ -93,7 +91,7 @@ class CanvasViewModel @Inject constructor(
                 val dateFormat = SimpleDateFormat("yyyy-MM-dd_HH-mm-ss", Locale.ENGLISH)
                 val newFileName = fileName ?: dateFormat.format(Date())
 
-                val directory = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES)
+                val directory = Utils.createAndGetAppDir()
                 val file = File(directory, "$newFileName.json")
                 file.delete()
                 file.createNewFile()
@@ -122,16 +120,14 @@ class CanvasViewModel @Inject constructor(
     fun saveImageToExternalStorage(image : Bitmap) {
         viewModelScope.launch(Dispatchers.IO) {
             _loading.postValue(true)
-            val directory = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES)
-            val file = File(directory, "${System.currentTimeMillis()}.jpeg")
-            val outputStream = FileOutputStream(file)
-            image.compress(Bitmap.CompressFormat.JPEG, 100, outputStream)
-            outputStream.flush()
-            outputStream.fd.sync()
-            outputStream.close()
-            MediaScannerConnection.scanFile(app, arrayOf(file.absolutePath), null, null)
-            _loading.postValue(false)
-            _message.emit("Saved")
+            try {
+                Utils.saveBitmap(app, image, System.currentTimeMillis().toString())
+                _message.emit("Saved")
+            } catch (e: Exception) {
+                _message.emit(e.message.orEmpty())
+            } finally {
+                _loading.postValue(false)
+            }
         }
     }
 
@@ -144,7 +140,7 @@ class CanvasViewModel @Inject constructor(
         viewModelScope.launch(Dispatchers.IO) {
             _loading.postValue(true)
             val json = canvas.toJson(gson)
-            val dir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES)
+            val dir = Utils.createAndGetAppDir()
             val dateFormat = SimpleDateFormat("yyyy-MM-dd_HH-mm-ss", Locale.ENGLISH)
             val fileName = dateFormat.format(Date())
             val file = File(dir, "$fileName.json")

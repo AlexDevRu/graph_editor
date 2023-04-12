@@ -1,12 +1,12 @@
 package com.example.mobilepaint.ui.dashboard
 
 import android.app.Application
-import android.os.Environment
 import android.util.Log
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.mobilepaint.Utils
 import com.example.mobilepaint.drawing_view.DrawingUtils
 import com.example.mobilepaint.models.MyImage
 import com.google.android.gms.auth.api.signin.GoogleSignIn
@@ -68,7 +68,7 @@ class DashboardViewModel @Inject constructor(
                 }
             }
             val list2 = async {
-                val dir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES)
+                val dir = Utils.createAndGetAppDir()
                 val images = dir.listFiles { file: File -> file.extension == "json" }.orEmpty().toList()
                 images.map {
                     Log.d(TAG, "read image json: ${it.name}")
@@ -97,7 +97,7 @@ class DashboardViewModel @Inject constructor(
                 } else {
                     originalImages.add(it)
                     Log.d(TAG, "publishedImages: no local, download ${it.title}")
-                    val dir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES)
+                    val dir = Utils.createAndGetAppDir()
                     val file = File(dir, "${it.title}.json")
                     file.createNewFile()
                     file.appendText(it.canvasData.toJson(gson))
@@ -121,7 +121,7 @@ class DashboardViewModel @Inject constructor(
 
     fun updateJsonByFileName(fileName: String, published: Boolean) {
         viewModelScope.launch(Dispatchers.IO) {
-            val dir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES)
+            val dir = Utils.createAndGetAppDir()
             val file = File(dir, "$fileName.json")
             if (file.exists()) {
                 val json = file.readText()
@@ -144,7 +144,7 @@ class DashboardViewModel @Inject constructor(
         val images = db.collection("/users/${GoogleSignIn.getLastSignedInAccount(app)?.email}/images")
         viewModelScope.launch(Dispatchers.IO) {
             _loading.postValue(true)
-            val dir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES)
+            val dir = Utils.createAndGetAppDir()
             val file = File(dir, "${item.title}.json")
             file.delete()
             val exists = suspendCancellableCoroutine { continuation ->
@@ -176,7 +176,7 @@ class DashboardViewModel @Inject constructor(
         val images = db.collection("/users/${GoogleSignIn.getLastSignedInAccount(app)?.email}/images")
         viewModelScope.launch(Dispatchers.IO) {
             _loading.postValue(true)
-            val dir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES)
+            val dir = Utils.createAndGetAppDir()
             val file = File(dir, "${item.title}.json")
             val newFile = File(dir, "$newName.json")
             file.renameTo(newFile)

@@ -25,6 +25,7 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import androidx.navigation.fragment.navArgs
+import androidx.transition.TransitionInflater
 import com.example.mobilepaint.R
 import com.example.mobilepaint.databinding.DialogChangeCanvasSizeBinding
 import com.example.mobilepaint.databinding.DialogStrokeBinding
@@ -39,6 +40,7 @@ import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import java.io.File
+import java.util.concurrent.TimeUnit
 
 @AndroidEntryPoint
 class CanvasFragment : Fragment(), ShapesView.OnShapeChanged, View.OnClickListener,
@@ -104,6 +106,12 @@ class CanvasFragment : Fragment(), ShapesView.OnShapeChanged, View.OnClickListen
 
     private val args by navArgs<CanvasFragmentArgs>()
 
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        sharedElementEnterTransition = TransitionInflater.from(requireContext()).inflateTransition(android.R.transition.move)
+        postponeEnterTransition()
+    }
+
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
@@ -153,6 +161,12 @@ class CanvasFragment : Fragment(), ShapesView.OnShapeChanged, View.OnClickListen
                     height = canvasData.height
                 }
             }
+        }
+
+        shapesView.transitionName = args.transitionName
+
+        shapesView.post {
+            startPostponedEnterTransition()
         }
 
         observe()

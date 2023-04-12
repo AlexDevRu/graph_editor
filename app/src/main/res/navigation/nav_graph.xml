@@ -6,17 +6,9 @@
     app:startDestination="@id/imagesFragment">
 
     <fragment
-        android:id="@+id/canvasFragment"
-        android:name="com.example.mobilepaint.ui.canvas.CanvasFragment"
-        tools:layout="@layout/fragment_canvas">
-        <argument
-            android:name="fileName"
-            app:argType="string"
-            app:nullable="true" />
-    </fragment>
-    <fragment
         android:id="@+id/imagesFragment"
-        android:name="com.example.mobilepaint.ui.ImagesFragment">
+        android:name="com.example.mobilepaint.ui.ImagesFragment"
+        tools:layout="@layout/fragment_images">
         <action
             android:id="@+id/action_imagesFragment_to_canvasFragment"
             app:destination="@id/canvasFragment" />
@@ -26,13 +18,39 @@
             <argument
                 android:name="filePath"
                 app:argType="string" />
+            <argument
+                android:name="transitionName"
+                app:argType="string" />
         </action>
+        <action
+            android:id="@+id/action_imagesFragment_to_canvasFragment2"
+            app:destination="@id/canvasFragment"
+            app:enterAnim="@anim/slide_in_right"
+            app:exitAnim="@anim/slide_out_left"
+            app:popEnterAnim="@anim/slide_in_left"
+            app:popExitAnim="@anim/slide_out_right"/>
+    </fragment>
+    <fragment
+        android:id="@+id/canvasFragment"
+        android:name="com.example.mobilepaint.ui.canvas.CanvasFragment"
+        tools:layout="@layout/fragment_canvas">
+        <argument
+            android:name="fileName"
+            app:argType="string"
+            app:nullable="true" />
+        <argument
+            android:name="transitionName"
+            app:argType="string" />
     </fragment>
     <fragment
         android:id="@+id/imageFragment"
-        android:name="com.example.mobilepaint.ui.image.ImageFragment">
+        android:name="com.example.mobilepaint.ui.image.ImageFragment"
+        tools:layout="@layout/fragment_image">
         <argument
             android:name="filePath"
+            app:argType="string" />
+        <argument
+            android:name="transitionName"
             app:argType="string" />
     </fragment>
 </navigation>

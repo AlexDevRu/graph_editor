@@ -12,11 +12,13 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import androidx.navigation.fragment.navArgs
+import androidx.transition.TransitionInflater
 import com.example.mobilepaint.R
 import com.example.mobilepaint.databinding.FragmentImageBinding
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
+import java.util.concurrent.TimeUnit
 
 @AndroidEntryPoint
 class ImageFragment : Fragment(), View.OnClickListener {
@@ -26,6 +28,12 @@ class ImageFragment : Fragment(), View.OnClickListener {
     private val args by navArgs<ImageFragmentArgs>()
 
     private val viewModel by viewModels<ImageViewModel>()
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        sharedElementEnterTransition = TransitionInflater.from(requireContext()).inflateTransition(android.R.transition.move)
+        postponeEnterTransition(300, TimeUnit.MILLISECONDS)
+    }
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -42,6 +50,8 @@ class ImageFragment : Fragment(), View.OnClickListener {
         binding.image.setImageBitmap(viewModel.getBitmapFromFile(args.filePath))
 
         binding.btnDownload.setOnClickListener(this)
+
+        binding.image.transitionName = args.transitionName
 
         observe()
     }

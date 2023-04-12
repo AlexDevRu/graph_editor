@@ -5,6 +5,7 @@ import android.view.MenuItem
 import android.view.View
 import android.view.View.MeasureSpec
 import android.view.ViewGroup
+import android.widget.ImageView
 import android.widget.PopupMenu
 import androidx.core.view.isVisible
 import androidx.recyclerview.widget.DiffUtil.ItemCallback
@@ -33,8 +34,7 @@ class ImagesAdapter(
     }
 
     interface Listener {
-        fun onItemClick(item: MyImage)
-        fun registerContextMenu(view: View) = Unit
+        fun onItemClick(item: MyImage, imageView: ImageView)
         fun onRenameItem(item: MyImage) = Unit
         fun onRemoveItem(item: MyImage) = Unit
     }
@@ -79,11 +79,12 @@ class ImagesAdapter(
             binding.preview.setImageBitmap(drawingView.getBitmap())
             binding.title.text = item.title
             binding.ivCloud.isVisible = item.published && !published
+            binding.preview.transitionName = item.title
         }
 
         override fun onClick(view: View?) {
             when (view) {
-                binding.root -> listener.onItemClick(item!!)
+                binding.root -> listener.onItemClick(item!!, binding.preview)
                 binding.ivOptions -> popupMenu?.show()
             }
         }

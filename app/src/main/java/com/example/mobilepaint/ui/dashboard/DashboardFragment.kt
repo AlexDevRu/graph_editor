@@ -3,10 +3,12 @@ package com.example.mobilepaint.ui.dashboard
 import android.os.Bundle
 import android.text.InputType
 import android.view.*
+import android.widget.ImageView
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.widget.SearchView
 import androidx.core.view.MenuHost
 import androidx.core.view.MenuProvider
+import androidx.core.view.doOnPreDraw
 import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
@@ -15,7 +17,9 @@ import androidx.fragment.app.viewModels
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
+import androidx.navigation.fragment.FragmentNavigatorExtras
 import androidx.navigation.fragment.findNavController
+import androidx.transition.TransitionInflater
 import com.example.mobilepaint.MainViewModel
 import com.example.mobilepaint.R
 import com.example.mobilepaint.databinding.DialogStrokeBinding
@@ -40,6 +44,12 @@ class DashboardFragment : Fragment(), View.OnClickListener, ImagesAdapter.Listen
 
     private val imagesAdapter = ImagesAdapter(this)
 
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        sharedElementEnterTransition = TransitionInflater.from(requireContext()).inflateTransition(android.R.transition.move)
+        sharedElementReturnTransition = TransitionInflater.from(requireContext()).inflateTransition(android.R.transition.move)
+    }
+
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
@@ -53,6 +63,7 @@ class DashboardFragment : Fragment(), View.OnClickListener, ImagesAdapter.Listen
         super.onViewCreated(view, savedInstanceState)
         binding.btnAddCanvas.setOnClickListener(this)
         binding.rvMyImages.adapter = imagesAdapter
+        binding.rvMyImages.setHasFixedSize(true)
         observe()
         (requireActivity() as MenuHost).addMenuProvider(this, viewLifecycleOwner, Lifecycle.State.RESUMED)
 
@@ -61,6 +72,8 @@ class DashboardFragment : Fragment(), View.OnClickListener, ImagesAdapter.Listen
             val published = bundle.getBoolean("published")
             viewModel.updateJsonByFileName(fileName, published)
         }
+
+        parentFragment?.postponeEnterTransition()
     }
 
     private fun observe() {
@@ -72,6 +85,9 @@ class DashboardFragment : Fragment(), View.OnClickListener, ImagesAdapter.Listen
             imagesAdapter.submitList(it)
             binding.rvMyImages.isVisible = it.isNotEmpty()
             binding.llEmptyList.isVisible = it.isEmpty()
+            (parentFragment?.view?.parent as? ViewGroup)?.doOnPreDraw {
+                parentFragment?.startPostponedEnterTransition()
+            }
         }
         lifecycleScope.launch {
             repeatOnLifecycle(Lifecycle.State.STARTED) {
@@ -84,21 +100,23 @@ class DashboardFragment : Fragment(), View.OnClickListener, ImagesAdapter.Listen
 
     override fun onClick(view: View?) {
         when (view?.id) {
-            R.id.btnAddCanvas -> navigateToCanvasFragment()
+            R.id.btnAddCanvas -> {
+                val action = ImagesFragmentDirections.actionImagesFragmentToCanvasFragment2(null, "")
+                navController.navigate(action)
+            }
         }
     }
 
-    private fun navigateToCanvasFragment(fileName: String? = null) {
-        val action = ImagesFragmentDirections.actionImagesFragmentToCanvasFragment(fileName)
-        navController.navigate(action)
+    private fun navigateToCanvasFragment(fileName: String?, imageView: ImageView) {
+        val extras = FragmentNavigatorExtras(
+            imageView to imageView.transitionName
+        )
+        val action = ImagesFragmentDirections.actionImagesFragmentToCanvasFragment(fileName, imageView.transitionName)
+        navController.navigate(action, extras)
     }
 
-    override fun onItemClick(item: MyImage) {
-        navigateToCanvasFragment(item.title)
-    }
-
-    override fun registerContextMenu(view: View) {
-        registerForContextMenu(view)
+    override fun onItemClick(item: MyImage, imageView: ImageView) {
+        navigateToCanvasFragment(item.title, imageView)
     }
 
     override fun onPrepareMenu(menu: Menu) {

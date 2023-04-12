@@ -115,6 +115,11 @@ class MainActivity : AppCompatActivity(), View.OnClickListener, NavController.On
         binding.profileAvatar.isVisible = viewModel.googleAccount.value != null && !showUp
         binding.profileName.isVisible = viewModel.googleAccount.value != null && !showUp
         invalidateOptionsMenu()
+        if (destination.id == R.id.imageFragment) {
+            binding.root.transitionToEnd()
+        } else {
+            binding.root.transitionToStart()
+        }
     }
 
     override fun onSupportNavigateUp(): Boolean {

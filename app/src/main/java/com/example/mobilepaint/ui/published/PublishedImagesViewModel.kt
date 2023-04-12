@@ -34,9 +34,9 @@ class PublishedImagesViewModel @Inject constructor(
     private val _query = MutableLiveData("")
     val query: LiveData<String> = _query
 
-    private val gson = Gson()
-
     private val db = Firebase.firestore
+
+    val gson = Gson()
 
     init {
         updateImages()
@@ -62,8 +62,13 @@ class PublishedImagesViewModel @Inject constructor(
                             db.collection("users/${it.id}/images").get().addOnCompleteListener { result ->
                                 if (result.isSuccessful) {
                                     val cloudImages = result.result.documents.map {
+                                        val file = java.io.File(app.cacheDir, "${it.id}.json")
+                                        file.delete()
+                                        file.createNewFile()
+                                        val json = it.get("json") as String
+                                        file.appendText(json)
                                         MyImage(
-                                            canvasData = drawingUtils.fromJson(it.get("json") as String),
+                                            canvasData = drawingUtils.fromJson(json),
                                             title = it.id,
                                             published = true
                                         )
@@ -79,8 +84,16 @@ class PublishedImagesViewModel @Inject constructor(
                 }
             }
 
-            _myImages.postValue(jobs.awaitAll().flatten())
+            originalImages.clear()
+            originalImages.addAll(jobs.awaitAll().flatten())
+
+            _myImages.postValue(originalImages)
             _loading.postValue(false)
         }
+    }
+
+    fun updateSearchQuery(query: String?) {
+        _query.value = query
+        _myImages.value = originalImages.filter { it.title.lowercase().trim().contains(query.orEmpty().lowercase().trim()) }
     }
 }

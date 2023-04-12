@@ -5,23 +5,6 @@
     android:id="@+id/nav_graph"
     app:startDestination="@id/imagesFragment">
 
-<!--    <fragment-->
-<!--        android:id="@+id/dashboardFragment"-->
-<!--        android:name="com.example.mobilepaint.ui.dashboard.DashboardFragment"-->
-<!--        tools:layout="@layout/fragment_dashboard">-->
-<!--        <action-->
-<!--            android:id="@+id/action_dashboardFragment_to_canvasFragment"-->
-<!--            app:destination="@id/canvasFragment"-->
-<!--            app:enterAnim="@anim/slide_in_right"-->
-<!--            app:exitAnim="@anim/slide_out_left"-->
-<!--            app:popEnterAnim="@anim/slide_in_left"-->
-<!--            app:popExitAnim="@anim/slide_out_right">-->
-<!--            <argument-->
-<!--                android:name="fileName"-->
-<!--                app:argType="string"-->
-<!--                app:nullable="true" />-->
-<!--        </action>-->
-<!--    </fragment>-->
     <fragment
         android:id="@+id/canvasFragment"
         android:name="com.example.mobilepaint.ui.canvas.CanvasFragment"
@@ -37,5 +20,19 @@
         <action
             android:id="@+id/action_imagesFragment_to_canvasFragment"
             app:destination="@id/canvasFragment" />
+        <action
+            android:id="@+id/action_imagesFragment_to_imageFragment"
+            app:destination="@id/imageFragment">
+            <argument
+                android:name="filePath"
+                app:argType="string" />
+        </action>
+    </fragment>
+    <fragment
+        android:id="@+id/imageFragment"
+        android:name="com.example.mobilepaint.ui.image.ImageFragment">
+        <argument
+            android:name="filePath"
+            app:argType="string" />
     </fragment>
 </navigation>

@@ -2,6 +2,7 @@ package com.example.mobilepaint.drawing_view
 
 import android.content.Context
 import android.graphics.*
+import android.view.View
 import android.widget.EditText
 import androidx.core.content.ContextCompat
 import com.example.mobilepaint.R
@@ -13,7 +14,7 @@ import com.example.mobilepaint.models.SelectionBorderOptions
 import com.example.mobilepaint.models.json.*
 import com.google.gson.Gson
 
-class DrawingUtils(context: Context) {
+class DrawingUtils(private val context: Context) {
 
     private val selectionColors = intArrayOf(
         ContextCompat.getColor(context, R.color.red),
@@ -117,5 +118,16 @@ class DrawingUtils(context: Context) {
             bg = canvasJson.bg,
             shapesList = shapes
         )
+    }
+
+    fun getBitmap(canvasData: CanvasData) : Bitmap {
+        val drawingView = DrawingView(context)
+        drawingView.measure(
+            View.MeasureSpec.makeMeasureSpec(canvasData.width, View.MeasureSpec.EXACTLY),
+            View.MeasureSpec.makeMeasureSpec(canvasData.height, View.MeasureSpec.EXACTLY),
+        )
+        drawingView.layout(0, 0, canvasData.width, canvasData.height)
+        drawingView.addShapes(canvasData.shapesList, canvasData.removedShapesList)
+        return drawingView.getBitmap()
     }
 }

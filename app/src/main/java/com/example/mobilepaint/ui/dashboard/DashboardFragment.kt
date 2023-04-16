@@ -67,13 +67,11 @@ class DashboardFragment : Fragment(), View.OnClickListener, ImagesAdapter.Listen
         observe()
         (requireActivity() as MenuHost).addMenuProvider(this, viewLifecycleOwner, Lifecycle.State.RESUMED)
 
-        setFragmentResultListener(CanvasFragment.KEY) { _, bundle ->
-            val fileName = bundle.getString("fileName").orEmpty()
-            val published = bundle.getBoolean("published")
-            viewModel.updateJsonByFileName(fileName, published)
-        }
-
         parentFragment?.postponeEnterTransition()
+    }
+
+    fun updateJsonByFileName(fileName: String, published: Boolean) {
+        viewModel.updateJsonByFileName(fileName, published)
     }
 
     private fun observe() {

@@ -8,6 +8,7 @@ import com.google.gson.Gson
 import java.util.*
 
 data class CanvasData(
+    var title: String = System.currentTimeMillis().toString(),
     var width: Int = 0,
     var height: Int = 0,
     var bg: Int,
@@ -28,6 +29,7 @@ data class CanvasData(
     fun toJson(gson: Gson) : String {
         val jsonShapes = shapesList.map { ShapeJson(getType(it).name, it.toJson(gson)) }
         val canvasJson = CanvasJson(
+            title = title,
             width = width,
             height = height,
             bg = bg,

@@ -17,7 +17,6 @@ import androidx.transition.TransitionInflater
 import com.example.mobilepaint.R
 import com.example.mobilepaint.databinding.FragmentPublishedImagesBinding
 import com.example.mobilepaint.models.MyImage
-import com.example.mobilepaint.ui.ImagesFragment
 import com.example.mobilepaint.ui.ImagesFragmentDirections
 import com.example.mobilepaint.ui.dashboard.ImagesAdapter
 import dagger.hilt.android.AndroidEntryPoint
@@ -107,9 +106,9 @@ class PublishedImagesFragment : Fragment(), ImagesAdapter.Listener, MenuProvider
         val extras = FragmentNavigatorExtras(
             imageView to imageView.transitionName
         )
-        val file = File(requireContext().cacheDir, "${item.title}.json")
+        val file = File(requireContext().cacheDir, "${item.id}.json")
 
-        val action = ImagesFragmentDirections.actionImagesFragmentToImageFragment(file.absolutePath, item.title)
+        val action = ImagesFragmentDirections.actionImagesFragmentToImageFragment(file.absolutePath, item.id)
         findNavController().navigate(action, extras)
     }
 

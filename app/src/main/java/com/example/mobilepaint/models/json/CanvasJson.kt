@@ -1,6 +1,7 @@
 package com.example.mobilepaint.models.json
 
 data class CanvasJson(
+    val title: String,
     val width: Int,
     val height: Int,
     val bg: Int,

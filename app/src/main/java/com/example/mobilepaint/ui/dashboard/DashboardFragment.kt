@@ -12,7 +12,6 @@ import androidx.core.view.doOnPreDraw
 import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
-import androidx.fragment.app.setFragmentResultListener
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
@@ -26,7 +25,6 @@ import com.example.mobilepaint.databinding.DialogStrokeBinding
 import com.example.mobilepaint.databinding.FragmentDashboardBinding
 import com.example.mobilepaint.models.MyImage
 import com.example.mobilepaint.ui.ImagesFragmentDirections
-import com.example.mobilepaint.ui.canvas.CanvasFragment
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
@@ -70,8 +68,8 @@ class DashboardFragment : Fragment(), View.OnClickListener, ImagesAdapter.Listen
         parentFragment?.postponeEnterTransition()
     }
 
-    fun updateJsonByFileName(fileName: String, published: Boolean) {
-        viewModel.updateJsonByFileName(fileName, published)
+    fun updateJsonByFileName(oldFileName: String, fileName: String, published: Boolean) {
+        viewModel.updateJsonByFileName(oldFileName, fileName, published)
     }
 
     private fun observe() {
@@ -99,7 +97,7 @@ class DashboardFragment : Fragment(), View.OnClickListener, ImagesAdapter.Listen
     override fun onClick(view: View?) {
         when (view?.id) {
             R.id.btnAddCanvas -> {
-                val action = ImagesFragmentDirections.actionImagesFragmentToCanvasFragment2(null, "")
+                val action = ImagesFragmentDirections.actionImagesFragmentToCanvasFragment2(null, "", mainViewModel.googleAccount.value != null)
                 navController.navigate(action)
             }
         }
@@ -109,12 +107,12 @@ class DashboardFragment : Fragment(), View.OnClickListener, ImagesAdapter.Listen
         val extras = FragmentNavigatorExtras(
             imageView to imageView.transitionName
         )
-        val action = ImagesFragmentDirections.actionImagesFragmentToCanvasFragment(fileName, imageView.transitionName)
+        val action = ImagesFragmentDirections.actionImagesFragmentToCanvasFragment(fileName, imageView.transitionName, mainViewModel.googleAccount.value != null)
         navController.navigate(action, extras)
     }
 
     override fun onItemClick(item: MyImage, imageView: ImageView) {
-        navigateToCanvasFragment(item.title, imageView)
+        navigateToCanvasFragment(item.id, imageView)
     }
 
     override fun onPrepareMenu(menu: Menu) {
@@ -163,7 +161,7 @@ class DashboardFragment : Fragment(), View.OnClickListener, ImagesAdapter.Listen
         val strokeBinding = DialogStrokeBinding.inflate(layoutInflater)
         strokeBinding.etType.hint = getString(R.string.enter_new_image_name)
         strokeBinding.etType.inputType = InputType.TYPE_CLASS_TEXT
-        strokeBinding.etType.setText(item.title)
+        strokeBinding.etType.setText(item.canvasData.title)
         AlertDialog.Builder(requireContext())
             .setTitle(R.string.stroke)
             .setView(strokeBinding.root)

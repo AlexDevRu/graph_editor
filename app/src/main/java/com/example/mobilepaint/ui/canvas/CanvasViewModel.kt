@@ -117,6 +117,32 @@ class CanvasViewModel @Inject constructor(
         }
     }
 
+    fun saveJson(fileName: String?, width: Int, height: Int, color: Int, shapesList : List<Shape>) {
+        canvas.bg = color
+        canvas.shapesList = shapesList
+        canvas.width = width
+        canvas.height = height
+        viewModelScope.launch(Dispatchers.IO) {
+            try {
+                _loading.postValue(true)
+                val json = canvas.toJson(gson)
+                val dateFormat = SimpleDateFormat("yyyy-MM-dd_HH-mm-ss", Locale.ENGLISH)
+                val newFileName = fileName ?: dateFormat.format(Date())
+
+                val directory = Utils.createAndGetAppDir()
+                val file = File(directory, "$newFileName.json")
+                file.writeText(json)
+
+                _message.emit("Published")
+                _update.emit(newFileName to true)
+            } catch (e: Exception) {
+                _message.emit(e.message.orEmpty())
+            } finally {
+                _loading.postValue(false)
+            }
+        }
+    }
+
     fun saveImageToExternalStorage(image : Bitmap) {
         viewModelScope.launch(Dispatchers.IO) {
             _loading.postValue(true)

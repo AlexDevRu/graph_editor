@@ -28,7 +28,11 @@ class ImagesAdapter(
             }
 
             override fun areItemsTheSame(oldItem: MyImage, newItem: MyImage): Boolean {
-                return oldItem.title == newItem.title
+                return oldItem.id == newItem.id
+            }
+
+            override fun getChangePayload(oldItem: MyImage, newItem: MyImage): Any? {
+                return if (oldItem.canvasData.title != newItem.canvasData.title) newItem.canvasData.title else null
             }
         }
     }
@@ -46,6 +50,18 @@ class ImagesAdapter(
 
     override fun onBindViewHolder(holder: ImageViewHolder, position: Int) {
         holder.bind(getItem(position))
+    }
+
+    override fun onBindViewHolder(
+        holder: ImageViewHolder,
+        position: Int,
+        payloads: MutableList<Any>
+    ) {
+        if (payloads.isNotEmpty()) {
+            holder.bindTitle(payloads.first().toString())
+        } else {
+            super.onBindViewHolder(holder, position, payloads)
+        }
     }
 
     inner class ImageViewHolder(
@@ -77,9 +93,15 @@ class ImagesAdapter(
             drawingView.layout(0, 0, item.canvasData.width, item.canvasData.height)
             drawingView.addShapes(item.canvasData.shapesList, item.canvasData.removedShapesList)
             binding.preview.setImageBitmap(drawingView.getBitmap())
-            binding.title.text = item.title
+
             binding.ivCloud.isVisible = item.published && !published
-            binding.preview.transitionName = item.title
+            binding.preview.transitionName = item.id
+
+            bindTitle(item.canvasData.title)
+        }
+
+        fun bindTitle(title: String) {
+            binding.title.text = title
         }
 
         override fun onClick(view: View?) {

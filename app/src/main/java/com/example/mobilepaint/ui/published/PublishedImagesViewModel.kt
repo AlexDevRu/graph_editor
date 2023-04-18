@@ -68,8 +68,8 @@ class PublishedImagesViewModel @Inject constructor(
                                         val json = it.get("json") as String
                                         file.appendText(json)
                                         MyImage(
+                                            id = it.id,
                                             canvasData = drawingUtils.fromJson(json),
-                                            title = it.id,
                                             published = true
                                         )
                                     }
@@ -94,6 +94,6 @@ class PublishedImagesViewModel @Inject constructor(
 
     fun updateSearchQuery(query: String?) {
         _query.value = query
-        _myImages.value = originalImages.filter { it.title.lowercase().trim().contains(query.orEmpty().lowercase().trim()) }
+        _myImages.value = originalImages.filter { it.canvasData.title.lowercase().trim().contains(query.orEmpty().lowercase().trim()) }
     }
 }

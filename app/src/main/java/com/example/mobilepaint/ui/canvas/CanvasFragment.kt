@@ -214,6 +214,12 @@ class CanvasFragment : Fragment(), ShapesView.OnShapeChanged, View.OnClickListen
         onStackSizesChanged(shapesView.shapes.size, shapesView.removedShapes.size)
     }
 
+    override fun onPrepareMenu(menu: Menu) {
+        super.onPrepareMenu(menu)
+        menu.findItem(R.id.save).isVisible = !args.fileName.isNullOrBlank()
+        menu.findItem(R.id.publish).isVisible = args.signedIn
+    }
+
     override fun onCreateMenu(menu: Menu, menuInflater: MenuInflater) {
         menuInflater.inflate(R.menu.menu_toolbar, menu)
         this.menu = menu
@@ -223,6 +229,7 @@ class CanvasFragment : Fragment(), ShapesView.OnShapeChanged, View.OnClickListen
     override fun onMenuItemSelected(menuItem: MenuItem): Boolean {
         when (menuItem.itemId) {
             R.id.publish -> viewModel.publish(args.fileName, shapesView.width, shapesView.height, shapesView.color, shapesView.shapes)
+            R.id.save -> viewModel.saveJson(args.fileName, shapesView.width, shapesView.height, shapesView.color, shapesView.shapes)
             R.id.undo -> shapesView.undo()
             R.id.redo -> shapesView.redo()
             R.id.exportImage -> {
@@ -317,7 +324,12 @@ class CanvasFragment : Fragment(), ShapesView.OnShapeChanged, View.OnClickListen
         lifecycleScope.launch {
             repeatOnLifecycle(Lifecycle.State.STARTED) {
                 viewModel.update.collectLatest {
-                    setFragmentResult(KEY, bundleOf("fileName" to it.first, "published" to it.second))
+                    val bundle =  bundleOf(
+                        "fileName" to it.first,
+                        "oldFileName" to args.fileName,
+                        "published" to it.second
+                    )
+                    setFragmentResult(KEY, bundle)
                 }
             }
         }

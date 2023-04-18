@@ -41,6 +41,9 @@
         <argument
             android:name="transitionName"
             app:argType="string" />
+        <argument
+            android:name="signedIn"
+            app:argType="boolean" />
     </fragment>
     <fragment
         android:id="@+id/imageFragment"

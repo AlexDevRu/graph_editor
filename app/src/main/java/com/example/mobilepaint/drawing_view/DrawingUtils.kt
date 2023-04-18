@@ -113,6 +113,7 @@ class DrawingUtils(private val context: Context) {
         }
 
         return CanvasData(
+            title = canvasJson.title,
             width = canvasJson.width,
             height = canvasJson.height,
             bg = canvasJson.bg,

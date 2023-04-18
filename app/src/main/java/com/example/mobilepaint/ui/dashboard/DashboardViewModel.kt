@@ -26,7 +26,7 @@ class DashboardViewModel @Inject constructor(
     private val app: Application
 ): ViewModel() {
 
-    private val originalImages = mutableListOf<MyImage>()
+    private var originalImages = mutableListOf<MyImage>()
 
     private val _myImages = MutableLiveData<List<MyImage>>()
     val myImages: LiveData<List<MyImage>> = _myImages
@@ -55,8 +55,8 @@ class DashboardViewModel @Inject constructor(
                         if (result.isSuccessful) {
                             val cloudImages = result.result.documents.map {
                                 MyImage(
+                                    id = it.id,
                                     canvasData = drawingUtils.fromJson(it.get("json") as String),
-                                    title = it.id,
                                     published = true
                                 )
                             }
@@ -74,8 +74,8 @@ class DashboardViewModel @Inject constructor(
                     Log.d(TAG, "read image json: ${it.name}")
                     val json = it.readText()
                     MyImage(
+                        id = it.nameWithoutExtension,
                         canvasData = drawingUtils.fromJson(json),
-                        title = it.nameWithoutExtension,
                         published = false
                     )
                 }
@@ -87,18 +87,18 @@ class DashboardViewModel @Inject constructor(
             originalImages.clear()
             val localImagesMap = hashMapOf<String, MyImage>()
             localImages.forEach {
-                Log.d(TAG, "localImages: ${it.title}")
-                localImagesMap[it.title] = it
+                Log.d(TAG, "localImages: ${it.id}")
+                localImagesMap[it.id] = it
             }
             publishedImages.forEach {
-                if (localImagesMap.contains(it.title)) {
-                    Log.d(TAG, "publishedImages: has local ${it.title}")
-                    localImagesMap[it.title]!!.published = true
+                if (localImagesMap.contains(it.id)) {
+                    Log.d(TAG, "publishedImages: has local ${it.id}")
+                    localImagesMap[it.id]!!.published = true
                 } else {
                     originalImages.add(it)
-                    Log.d(TAG, "publishedImages: no local, download ${it.title}")
+                    Log.d(TAG, "publishedImages: no local, download ${it.id}")
                     val dir = Utils.createAndGetAppDir()
-                    val file = File(dir, "${it.title}.json")
+                    val file = File(dir, "${it.id}.json")
                     file.createNewFile()
                     file.appendText(it.canvasData.toJson(gson))
                 }
@@ -116,23 +116,30 @@ class DashboardViewModel @Inject constructor(
 
     fun updateSearchQuery(query: String?) {
         _query.value = query
-        _myImages.value = originalImages.filter { it.title.lowercase().trim().contains(query.orEmpty().lowercase().trim()) }
+        _myImages.value = originalImages.filter { it.canvasData.title.lowercase().trim().contains(query.orEmpty().lowercase().trim()) }
     }
 
-    fun updateJsonByFileName(fileName: String, published: Boolean) {
+    fun updateJsonByFileName(oldFileName: String, fileName: String, published: Boolean) {
         viewModelScope.launch(Dispatchers.IO) {
             val dir = Utils.createAndGetAppDir()
             val file = File(dir, "$fileName.json")
             if (file.exists()) {
                 val json = file.readText()
                 val canvasData = drawingUtils.fromJson(json)
-                val existingImage = originalImages.find { it.title == fileName }
+
+                val existingImage = originalImages.find { it.id == oldFileName }
                 if (existingImage != null)
-                    existingImage.canvasData = canvasData
+                    originalImages = originalImages.map {
+                        if (it == existingImage)
+                            it.copy(canvasData = canvasData)
+                        else
+                            it
+                    }.toMutableList()
                 else {
-                    val newImage = MyImage(canvasData = canvasData, title = fileName, published = published)
+                    val newImage = MyImage(canvasData = canvasData, id = fileName, published = published)
                     originalImages.add(newImage)
                 }
+
                 withContext(Dispatchers.Main) {
                     updateSearchQuery(query.value)
                 }
@@ -141,29 +148,34 @@ class DashboardViewModel @Inject constructor(
     }
 
     fun removeItem(item: MyImage) {
-        val images = db.collection("/users/${GoogleSignIn.getLastSignedInAccount(app)?.email}/images")
+        val email = GoogleSignIn.getLastSignedInAccount(app)?.email
         viewModelScope.launch(Dispatchers.IO) {
             _loading.postValue(true)
             val dir = Utils.createAndGetAppDir()
-            val file = File(dir, "${item.title}.json")
+            val file = File(dir, "${item.id}.json")
             file.delete()
-            val exists = suspendCancellableCoroutine { continuation ->
-                images.document(item.title).get().addOnCompleteListener {
-                    if (it.isSuccessful)
-                        continuation.resume(it.result.exists(), null)
-                    else
-                        continuation.resumeWithException(it.exception ?: Exception())
-                }
-            }
-            if (exists)
-                suspendCancellableCoroutine { continuation ->
-                    images.document(item.title).delete().addOnCompleteListener {
+
+            if (!email.isNullOrBlank()) {
+                val images = db.collection("/users/$email/images")
+                val exists = suspendCancellableCoroutine { continuation ->
+                    images.document(item.id).get().addOnCompleteListener {
                         if (it.isSuccessful)
-                            continuation.resume(Unit, null)
+                            continuation.resume(it.result.exists(), null)
                         else
                             continuation.resumeWithException(it.exception ?: Exception())
                     }
                 }
+                if (exists)
+                    suspendCancellableCoroutine { continuation ->
+                        images.document(item.id).delete().addOnCompleteListener {
+                            if (it.isSuccessful)
+                                continuation.resume(Unit, null)
+                            else
+                                continuation.resumeWithException(it.exception ?: Exception())
+                        }
+                    }
+            }
+
             originalImages.remove(item)
             withContext(Dispatchers.Main) {
                 updateSearchQuery(query.value)
@@ -173,34 +185,36 @@ class DashboardViewModel @Inject constructor(
     }
 
     fun renameItem(item: MyImage, newName: String) {
-        val images = db.collection("/users/${GoogleSignIn.getLastSignedInAccount(app)?.email}/images")
+        val email = GoogleSignIn.getLastSignedInAccount(app)?.email
         viewModelScope.launch(Dispatchers.IO) {
             _loading.postValue(true)
-            val dir = Utils.createAndGetAppDir()
-            val file = File(dir, "${item.title}.json")
-            val newFile = File(dir, "$newName.json")
-            file.renameTo(newFile)
-            suspendCancellableCoroutine { continuation ->
-                images.document(item.title).delete().addOnCompleteListener {
-                    if (it.isSuccessful)
-                        continuation.resume(Unit, null)
-                    else
-                        continuation.resumeWithException(it.exception ?: Exception())
+
+            val newCanvasData = item.canvasData.copy(title = newName)
+
+            if (!email.isNullOrBlank()) {
+                val images = db.collection("/users/$email/images")
+                suspendCancellableCoroutine { continuation ->
+                    val data = hashMapOf("json" to newCanvasData.toJson(gson))
+                    images.document(item.id).set(data).addOnCompleteListener {
+                        if (it.isSuccessful)
+                            continuation.resume(Unit, null)
+                        else
+                            continuation.resumeWithException(it.exception ?: Exception())
+                    }
                 }
             }
-            suspendCancellableCoroutine { continuation ->
-                val data = hashMapOf("json" to item.canvasData.toJson(gson))
-                images.document(newName).set(data).addOnCompleteListener {
-                    if (it.isSuccessful)
-                        continuation.resume(Unit, null)
-                    else
-                        continuation.resumeWithException(it.exception ?: Exception())
-                }
-            }
-            originalImages.find { it.title == item.title }?.title = newName
+
+            originalImages = originalImages.map {
+                if (it.id == item.id)
+                    it.copy(canvasData = newCanvasData)
+                else
+                    it
+            }.toMutableList()
+
             withContext(Dispatchers.Main) {
                 updateSearchQuery(query.value)
             }
+
             _loading.postValue(false)
         }
     }

@@ -3,10 +3,7 @@ package com.example.mobilepaint.ui.canvas
 import android.app.Application
 import android.graphics.Bitmap
 import android.graphics.Color
-import androidx.lifecycle.LiveData
-import androidx.lifecycle.MutableLiveData
-import androidx.lifecycle.ViewModel
-import androidx.lifecycle.viewModelScope
+import androidx.lifecycle.*
 import com.example.mobilepaint.R
 import com.example.mobilepaint.SharedPrefsUtils
 import com.example.mobilepaint.Utils
@@ -36,7 +33,8 @@ import kotlin.coroutines.resumeWithException
 class CanvasViewModel @Inject constructor(
     private val app: Application,
     private val drawingUtils: DrawingUtils,
-    private val sharedPrefsUtils: SharedPrefsUtils
+    private val sharedPrefsUtils: SharedPrefsUtils,
+    savedStateHandle: SavedStateHandle
 ) : ViewModel() {
 
     private val options = listOf(
@@ -77,6 +75,8 @@ class CanvasViewModel @Inject constructor(
 
     private val db = Firebase.firestore
     private val images = db.collection("/users/${GoogleSignIn.getLastSignedInAccount(app)?.email}/images")
+
+    private val published = savedStateHandle.get<Boolean>("published") ?: false
 
     @OptIn(ExperimentalCoroutinesApi::class)
     fun publish(fileName: String?, width: Int, height: Int, color: Int, shapesList : List<Shape>) {
@@ -134,7 +134,7 @@ class CanvasViewModel @Inject constructor(
                 file.writeText(json)
 
                 _message.emit("Published")
-                _update.emit(newFileName to true)
+                _update.emit(newFileName to published)
             } catch (e: Exception) {
                 _message.emit(e.message.orEmpty())
             } finally {
@@ -170,8 +170,7 @@ class CanvasViewModel @Inject constructor(
             val dateFormat = SimpleDateFormat("yyyy-MM-dd_HH-mm-ss", Locale.ENGLISH)
             val fileName = dateFormat.format(Date())
             val file = File(dir, "$fileName.json")
-            file.appendText(json)
-            file.createNewFile()
+            file.writeText(json)
             _loading.postValue(false)
             _message.emit("Saved")
             _update.emit(fileName to false)

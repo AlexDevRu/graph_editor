@@ -45,7 +45,7 @@ class ImagesFragment : Fragment() {
 
         setFragmentResultListener(CanvasFragment.KEY) { _, bundle ->
             val fileName = bundle.getString("fileName").orEmpty()
-            val oldFileName = bundle.getString("oldFileName").orEmpty()
+            val oldFileName = bundle.getString("oldFileName")
             val published = bundle.getBoolean("published")
             dashboardFragment.updateJsonByFileName(oldFileName, fileName, published)
         }

@@ -6,8 +6,7 @@ import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.mobilepaint.drawing_view.GeometryType
-import com.example.mobilepaint.models.PenType
+import com.example.mobilepaint.events.EventSave
 import com.google.android.gms.auth.api.signin.GoogleSignIn
 import com.google.android.gms.auth.api.signin.GoogleSignInAccount
 import com.google.firebase.firestore.ktx.firestore
@@ -46,6 +45,13 @@ class MainViewModel @Inject constructor(
     val gson = Gson()
 
     private val db = Firebase.firestore
+
+    private val _eventBus = MutableSharedFlow<EventSave>()
+    val eventBus = _eventBus.asSharedFlow()
+
+    fun sendEvent(eventSave: EventSave) {
+        viewModelScope.launch { _eventBus.emit(eventSave) }
+    }
 
     init {
         _stroke.value = sharedPrefsUtils.strokeWidth

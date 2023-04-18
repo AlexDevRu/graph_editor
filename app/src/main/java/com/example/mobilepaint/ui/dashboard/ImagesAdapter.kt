@@ -32,9 +32,17 @@ class ImagesAdapter(
             }
 
             override fun getChangePayload(oldItem: MyImage, newItem: MyImage): Any? {
-                return if (oldItem.canvasData.title != newItem.canvasData.title) newItem.canvasData.title else null
+                return if (oldItem.canvasData.title != newItem.canvasData.title)
+                    TITLE_PAYLOAD
+                else if (oldItem.published != newItem.published)
+                    PUBLISHED_PAYLOAD
+                else
+                    null
             }
         }
+
+        const val PUBLISHED_PAYLOAD = 1
+        const val TITLE_PAYLOAD = 2
     }
 
     interface Listener {
@@ -58,7 +66,13 @@ class ImagesAdapter(
         payloads: MutableList<Any>
     ) {
         if (payloads.isNotEmpty()) {
-            holder.bindTitle(payloads.first().toString())
+            if (payloads.first() is Int) {
+                val type = payloads.first() as Int
+                if (type == TITLE_PAYLOAD)
+                    holder.bindTitle(getItem(position).canvasData.title)
+                else if (type == PUBLISHED_PAYLOAD)
+                    holder.bindPublished(getItem(position).published)
+            }
         } else {
             super.onBindViewHolder(holder, position, payloads)
         }
@@ -94,14 +108,18 @@ class ImagesAdapter(
             drawingView.addShapes(item.canvasData.shapesList, item.canvasData.removedShapesList)
             binding.preview.setImageBitmap(drawingView.getBitmap())
 
-            binding.ivCloud.isVisible = item.published && !published
             binding.preview.transitionName = item.id
 
             bindTitle(item.canvasData.title)
+            bindPublished(item.published)
         }
 
         fun bindTitle(title: String) {
             binding.title.text = title
+        }
+
+        fun bindPublished(itemPublished: Boolean) {
+            binding.ivCloud.isVisible = itemPublished && !published
         }
 
         override fun onClick(view: View?) {

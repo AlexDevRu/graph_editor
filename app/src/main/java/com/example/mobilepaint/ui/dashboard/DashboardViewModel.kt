@@ -119,7 +119,7 @@ class DashboardViewModel @Inject constructor(
         _myImages.value = originalImages.filter { it.canvasData.title.lowercase().trim().contains(query.orEmpty().lowercase().trim()) }
     }
 
-    fun updateJsonByFileName(oldFileName: String, fileName: String, published: Boolean) {
+    fun updateJsonByFileName(oldFileName: String?, fileName: String, published: Boolean) {
         viewModelScope.launch(Dispatchers.IO) {
             val dir = Utils.createAndGetAppDir()
             val file = File(dir, "$fileName.json")
@@ -131,7 +131,7 @@ class DashboardViewModel @Inject constructor(
                 if (existingImage != null)
                     originalImages = originalImages.map {
                         if (it == existingImage)
-                            it.copy(canvasData = canvasData)
+                            it.copy(canvasData = canvasData, published = published)
                         else
                             it
                     }.toMutableList()

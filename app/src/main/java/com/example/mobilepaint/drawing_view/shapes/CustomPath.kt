@@ -117,13 +117,12 @@ class CustomPath(
     fun addData(pathData: PathData) {
         paint.color = pathData.shapeData.color
         paint.strokeWidth = pathData.shapeData.stroke
-        points.addAll(pathData.points)
 
         pathData.points.forEachIndexed { index, pointData ->
+            Log.d(TAG, "addData: index=$index, x=${pointData.x}, y=${pointData.y}")
             if (index == 0) down(pointData.x, pointData.y)
             else move(pointData.x, pointData.y)
         }
-        up(0f, 0f)
 
         matrix.setValues(pathData.matrix)
         selectionBorder.applyMatrix(matrix)

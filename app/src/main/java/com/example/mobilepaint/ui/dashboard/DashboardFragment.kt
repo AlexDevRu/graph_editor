@@ -68,7 +68,7 @@ class DashboardFragment : Fragment(), View.OnClickListener, ImagesAdapter.Listen
         parentFragment?.postponeEnterTransition()
     }
 
-    fun updateJsonByFileName(oldFileName: String, fileName: String, published: Boolean) {
+    fun updateJsonByFileName(oldFileName: String?, fileName: String, published: Boolean) {
         viewModel.updateJsonByFileName(oldFileName, fileName, published)
     }
 

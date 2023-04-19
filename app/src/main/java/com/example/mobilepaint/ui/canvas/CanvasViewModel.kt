@@ -23,8 +23,6 @@ import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.suspendCancellableCoroutine
-import java.io.File
-import java.text.SimpleDateFormat
 import java.util.*
 import javax.inject.Inject
 import kotlin.coroutines.resumeWithException
@@ -51,7 +49,7 @@ class CanvasViewModel @Inject constructor(
 
     private val gson = Gson()
 
-    var canvas = CanvasData(bg = Color.WHITE)
+    var canvas = CanvasData(title = "", bg = Color.WHITE)
 
     private val _loading = MutableLiveData(false)
     val loading : LiveData<Boolean> = _loading
@@ -84,18 +82,13 @@ class CanvasViewModel @Inject constructor(
         canvas.shapesList = shapesList
         canvas.width = width
         canvas.height = height
+        canvas.title = fileName ?: Utils.generateFileName()
         viewModelScope.launch(Dispatchers.IO) {
             try {
                 _loading.postValue(true)
                 val json = canvas.toJson(gson)
-                val dateFormat = SimpleDateFormat("yyyy-MM-dd_HH-mm-ss", Locale.ENGLISH)
-                val newFileName = fileName ?: dateFormat.format(Date())
 
-                val directory = Utils.createAndGetAppDir()
-                val file = File(directory, "$newFileName.json")
-                file.delete()
-                file.createNewFile()
-                file.appendText(json)
+                val newFileName = Utils.createOrOverwriteJson(json, canvas.title)
 
                 val data = hashMapOf("json" to json)
                 suspendCancellableCoroutine { continuation ->
@@ -117,7 +110,7 @@ class CanvasViewModel @Inject constructor(
         }
     }
 
-    fun saveJson(fileName: String?, width: Int, height: Int, color: Int, shapesList : List<Shape>) {
+    fun saveJson(fileName: String, width: Int, height: Int, color: Int, shapesList : List<Shape>) {
         canvas.bg = color
         canvas.shapesList = shapesList
         canvas.width = width
@@ -126,15 +119,11 @@ class CanvasViewModel @Inject constructor(
             try {
                 _loading.postValue(true)
                 val json = canvas.toJson(gson)
-                val dateFormat = SimpleDateFormat("yyyy-MM-dd_HH-mm-ss", Locale.ENGLISH)
-                val newFileName = fileName ?: dateFormat.format(Date())
 
-                val directory = Utils.createAndGetAppDir()
-                val file = File(directory, "$newFileName.json")
-                file.writeText(json)
+                Utils.createOrOverwriteJson(json, fileName)
 
-                _message.emit("Published")
-                _update.emit(newFileName to published)
+                _message.emit("Saved")
+                _update.emit(fileName to published)
             } catch (e: Exception) {
                 _message.emit(e.message.orEmpty())
             } finally {
@@ -147,7 +136,7 @@ class CanvasViewModel @Inject constructor(
         viewModelScope.launch(Dispatchers.IO) {
             _loading.postValue(true)
             try {
-                Utils.saveBitmap(app, image, System.currentTimeMillis().toString())
+                Utils.saveBitmap(app, image)
                 _message.emit("Saved")
             } catch (e: Exception) {
                 _message.emit(e.message.orEmpty())
@@ -163,14 +152,11 @@ class CanvasViewModel @Inject constructor(
         canvas.removedShapesList = removedShapesList
         canvas.width = width
         canvas.height = height
+        canvas.title = Utils.generateFileName()
         viewModelScope.launch(Dispatchers.IO) {
             _loading.postValue(true)
             val json = canvas.toJson(gson)
-            val dir = Utils.createAndGetAppDir()
-            val dateFormat = SimpleDateFormat("yyyy-MM-dd_HH-mm-ss", Locale.ENGLISH)
-            val fileName = dateFormat.format(Date())
-            val file = File(dir, "$fileName.json")
-            file.writeText(json)
+            val fileName = Utils.createOrOverwriteJson(json, canvas.title)
             _loading.postValue(false)
             _message.emit("Saved")
             _update.emit(fileName to false)

@@ -141,6 +141,10 @@ class CustomLine(
         return gson.toJson(lineData)
     }
 
+    override fun changeStrokeWidth(stroke: Float) {
+        paint.strokeWidth = stroke
+    }
+
     fun addData(lineData: LineData) {
         paint.color = lineData.shapeData.color
         paint.strokeWidth = lineData.shapeData.stroke

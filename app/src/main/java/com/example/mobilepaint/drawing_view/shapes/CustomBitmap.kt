@@ -5,7 +5,6 @@ import android.util.Base64
 import android.util.Log
 import androidx.core.graphics.values
 import com.example.mobilepaint.Utils.isTranslation
-import com.example.mobilepaint.Utils.toPx
 import com.example.mobilepaint.drawing_view.Operation
 import com.example.mobilepaint.models.SelectionBorderOptions
 import com.example.mobilepaint.models.json.BitmapData
@@ -17,7 +16,7 @@ import java.io.ByteArrayOutputStream
 
 class CustomBitmap(
     private val bitmap: Bitmap,
-    val selectionBorderOptions: SelectionBorderOptions,
+    selectionBorderOptions: SelectionBorderOptions,
     override val paint: Paint
 ): Path(), Shape, SelectionBorder.Listener {
 
@@ -33,8 +32,6 @@ class CustomBitmap(
     private val matrix1 = Matrix()
     private val matrix2 = Matrix()
     private val matrix3 = Matrix()
-    private val matrix4 = Matrix()
-    private val matrix5 = Matrix()
 
     private var x = 0f
     private var y = 0f
@@ -96,12 +93,6 @@ class CustomBitmap(
         if (selected) {
             selectionBorder.move(x, y)
         }
-    }
-
-    private val paint11 = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-        style = Paint.Style.STROKE
-        strokeWidth = 2.toPx
-        color = Color.RED
     }
 
     override fun up(x: Float, y: Float) : Operation? {

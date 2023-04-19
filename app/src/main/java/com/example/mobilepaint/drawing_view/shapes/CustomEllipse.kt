@@ -145,6 +145,10 @@ class CustomEllipse(
         shape.transform(matrix)
     }
 
+    override fun changeStrokeWidth(stroke: Float) {
+        paint.strokeWidth = stroke
+    }
+
     companion object {
         private const val TAG = "CustomEllipse"
     }

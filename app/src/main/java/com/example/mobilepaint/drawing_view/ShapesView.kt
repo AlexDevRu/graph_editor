@@ -97,6 +97,10 @@ class ShapesView @JvmOverloads constructor(
         }
 
     var strokeWidth = 1f
+        set(value) {
+            field = value
+            selectedShape?.changeStrokeWidth(field.toPx)
+        }
 
     var geometryType: GeometryType = GeometryType.PATH
         set(value) {

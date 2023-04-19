@@ -5,7 +5,6 @@ import android.content.Context
 import android.content.res.Resources
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
-import android.graphics.Canvas
 import android.graphics.Matrix
 import android.net.Uri
 import android.os.Build
@@ -13,12 +12,13 @@ import android.os.Environment
 import android.provider.MediaStore
 import android.util.Base64
 import android.util.TypedValue
-import android.view.View
 import androidx.core.graphics.values
 import java.io.ByteArrayOutputStream
 import java.io.File
 import java.io.FileOutputStream
 import java.io.IOException
+import java.text.SimpleDateFormat
+import java.util.*
 
 object Utils {
 
@@ -41,13 +41,6 @@ object Utils {
         return BitmapFactory.decodeByteArray(decodedBytes, 0, decodedBytes.size)
     }
 
-    fun getBitmapFromView(view: View): Bitmap {
-        val bitmap = Bitmap.createBitmap(view.width, view.height, Bitmap.Config.ARGB_8888)
-        val canvas = Canvas(bitmap)
-        view.draw(canvas)
-        return bitmap
-    }
-
     val Matrix.isTranslation: Boolean
         get() = values()[0] == 1f && values()[1] == 0f && values()[2] != 0f &&
                 values()[3] == 0f && values()[4] == 1f && values()[5] != 0f &&
@@ -60,7 +53,14 @@ object Utils {
         return dir
     }
 
-    fun saveBitmap(context: Context, bitmap: Bitmap, name: String) {
+    fun generateFileName() : String {
+        val dateFormat = SimpleDateFormat("yyyy-MM-dd_HH-mm-ss", Locale.ENGLISH)
+        return dateFormat.format(Date())
+    }
+
+    fun saveBitmap(context: Context, bitmap: Bitmap) {
+        val name = generateFileName()
+
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) {
             val dir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES)
             val file = File(dir, "$name.jpeg")
@@ -96,5 +96,12 @@ object Utils {
             }
             throw e
         }
+    }
+
+    fun createOrOverwriteJson(text: String, name: String = generateFileName()) : String {
+        val directory = createAndGetAppDir()
+        val file = File(directory, "$name.json")
+        file.writeText(text)
+        return name
     }
 }

@@ -8,7 +8,7 @@ import com.google.gson.Gson
 import java.util.*
 
 data class CanvasData(
-    var title: String = System.currentTimeMillis().toString(),
+    var title: String,
     var width: Int = 0,
     var height: Int = 0,
     var bg: Int,

@@ -42,7 +42,7 @@ class ImageViewModel @Inject constructor(
         viewModelScope.launch(Dispatchers.IO) {
             _loading.postValue(true)
             try {
-                Utils.saveBitmap(app, bitmap, System.currentTimeMillis().toString())
+                Utils.saveBitmap(app, bitmap)
                 _message.emit("Saved")
             } catch (e: Exception) {
                 _message.emit(e.message.orEmpty())

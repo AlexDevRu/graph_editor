@@ -131,6 +131,10 @@ class CustomPath(
         up(0f, 0f)
     }
 
+    override fun changeStrokeWidth(stroke: Float) {
+        paint.strokeWidth = stroke
+    }
+
     companion object {
         private const val TAG = "CustomPath"
     }

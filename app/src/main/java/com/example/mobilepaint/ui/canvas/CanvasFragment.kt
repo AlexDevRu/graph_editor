@@ -19,11 +19,13 @@ import androidx.core.view.MenuProvider
 import androidx.core.view.isVisible
 import androidx.core.view.updateLayoutParams
 import androidx.fragment.app.Fragment
+import androidx.fragment.app.FragmentResultListener
 import androidx.fragment.app.setFragmentResult
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
+import androidx.navigation.fragment.findNavController
 import androidx.navigation.fragment.navArgs
 import androidx.transition.TransitionInflater
 import com.example.mobilepaint.R
@@ -44,7 +46,7 @@ import java.io.File
 
 @AndroidEntryPoint
 class CanvasFragment : Fragment(), ShapesView.OnShapeChanged, View.OnClickListener,
-    ColorEnvelopeListener, MenuProvider {
+    ColorEnvelopeListener, MenuProvider, FragmentResultListener {
 
     private lateinit var binding : FragmentCanvasBinding
 
@@ -58,10 +60,7 @@ class CanvasFragment : Fragment(), ShapesView.OnShapeChanged, View.OnClickListen
         ActivityResultContracts.RequestMultiplePermissions()
     ) { result ->
         if (result.all { it.value }) {
-            if (viewModel.saveImage == 0)
-                viewModel.saveImageToExternalStorage(shapesView.getBitmap())
-            else
-                viewModel.exportJson(shapesView.color, shapesView.width, shapesView.height, shapesView.shapes, shapesView.removedShapes)
+            goToTheImageNameDialog()
         }
     }
 
@@ -70,10 +69,7 @@ class CanvasFragment : Fragment(), ShapesView.OnShapeChanged, View.OnClickListen
         ActivityResultContracts.StartActivityForResult()
     ) {
         if (Environment.isExternalStorageManager()) {
-            if (viewModel.saveImage == 0)
-                viewModel.saveImageToExternalStorage(shapesView.getBitmap())
-            else
-                viewModel.exportJson(shapesView.color, shapesView.width, shapesView.height, shapesView.shapes, shapesView.removedShapes)
+            goToTheImageNameDialog()
         }
     }
 
@@ -170,6 +166,19 @@ class CanvasFragment : Fragment(), ShapesView.OnShapeChanged, View.OnClickListen
         }
 
         observe()
+
+        parentFragmentManager.setFragmentResultListener(ImageNameDialog.RESULT_KEY, this, this)
+    }
+
+    override fun onFragmentResult(requestKey: String, result: Bundle) {
+        when (requestKey) {
+            ImageNameDialog.RESULT_KEY -> {
+                if (viewModel.saveImage == 0)
+                    viewModel.saveImageToExternalStorage(shapesView.getBitmap())
+                else
+                    viewModel.exportJson(shapesView.color, shapesView.width, shapesView.height, shapesView.shapes, shapesView.removedShapes)
+            }
+        }
     }
 
     override fun onClick(view: View?) {
@@ -278,10 +287,7 @@ class CanvasFragment : Fragment(), ShapesView.OnShapeChanged, View.OnClickListen
     private fun exportImage() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
             if (Environment.isExternalStorageManager()) {
-                if (viewModel.saveImage == 0)
-                    viewModel.saveImageToExternalStorage(shapesView.getBitmap())
-                else
-                    viewModel.exportJson(shapesView.color, shapesView.width, shapesView.height, shapesView.shapes, shapesView.removedShapes)
+                goToTheImageNameDialog()
                 return
             }
             try {
@@ -296,6 +302,11 @@ class CanvasFragment : Fragment(), ShapesView.OnShapeChanged, View.OnClickListen
         } else {
             externalStoragePermissionLauncher.launch(arrayOf(Manifest.permission.READ_EXTERNAL_STORAGE, Manifest.permission.WRITE_EXTERNAL_STORAGE))
         }
+    }
+
+    private fun goToTheImageNameDialog() {
+        val action = CanvasFragmentDirections.actionCanvasFragmentToImageNameDialog(Utils.generateFileName(), getString(R.string.export_as_jpeg), getString(R.string.enter_new_image_name))
+        findNavController().navigate(action)
     }
 
     private fun observe() {

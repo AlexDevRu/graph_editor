@@ -44,4 +44,7 @@
 
     <string name="my_images">My images</string>
     <string name="published_images">Published images</string>
+
+    <string name="saved">Saved</string>
+    <string name="published">Published</string>
 </resources>

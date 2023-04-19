@@ -110,10 +110,10 @@ class MainActivity : AppCompatActivity(), View.OnClickListener, NavController.On
         destination: NavDestination,
         arguments: Bundle?
     ) {
-        val showUp = destination.id == R.id.canvasFragment
-        binding.btnGoogleSignIn.isVisible = viewModel.googleAccount.value == null && !showUp
-        binding.profileAvatar.isVisible = viewModel.googleAccount.value != null && !showUp
-        binding.profileName.isVisible = viewModel.googleAccount.value != null && !showUp
+        val show = destination.id == R.id.imagesFragment
+        binding.btnGoogleSignIn.isVisible = viewModel.googleAccount.value == null && show
+        binding.profileAvatar.isVisible = viewModel.googleAccount.value != null && show
+        binding.profileName.isVisible = viewModel.googleAccount.value != null && show
         invalidateOptionsMenu()
         if (destination.id == R.id.imageFragment) {
             binding.root.transitionToEnd()
@@ -128,10 +128,10 @@ class MainActivity : AppCompatActivity(), View.OnClickListener, NavController.On
 
     private fun observe() {
         viewModel.googleAccount.observe(this) {
-            val showUp = navController.currentDestination?.id == R.id.canvasFragment
-            binding.btnGoogleSignIn.isVisible = it == null && !showUp
-            binding.profileAvatar.isVisible = it != null && !showUp
-            binding.profileName.isVisible = it != null && !showUp
+            val show = navController.currentDestination?.id == R.id.imagesFragment
+            binding.btnGoogleSignIn.isVisible = it == null && show
+            binding.profileAvatar.isVisible = it != null && show
+            binding.profileName.isVisible = it != null && show
             invalidateOptionsMenu()
 
             if (it != null) {

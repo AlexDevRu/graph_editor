@@ -44,6 +44,9 @@
         <argument
             android:name="signedIn"
             app:argType="boolean" />
+        <action
+            android:id="@+id/action_canvasFragment_to_imageNameDialog"
+            app:destination="@id/imageNameDialog" />
     </fragment>
     <fragment
         android:id="@+id/imageFragment"
@@ -56,4 +59,18 @@
             android:name="transitionName"
             app:argType="string" />
     </fragment>
+    <dialog
+        android:id="@+id/imageNameDialog"
+        android:name="com.example.mobilepaint.ui.canvas.ImageNameDialog"
+        android:label="ImageNameDialog">
+        <argument
+            android:name="name"
+            app:argType="string" />
+        <argument
+            android:name="title"
+            app:argType="string" />
+        <argument
+            android:name="hint"
+            app:argType="string" />
+    </dialog>
 </navigation>

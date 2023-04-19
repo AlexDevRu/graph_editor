@@ -3,6 +3,7 @@ package com.example.mobilepaint.ui.canvas
 import android.app.Application
 import android.graphics.Bitmap
 import android.graphics.Color
+import android.util.Log
 import androidx.lifecycle.*
 import com.example.mobilepaint.R
 import com.example.mobilepaint.SharedPrefsUtils
@@ -17,12 +18,9 @@ import com.google.firebase.firestore.ktx.firestore
 import com.google.firebase.ktx.Firebase
 import com.google.gson.Gson
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.suspendCancellableCoroutine
 import java.util.*
 import javax.inject.Inject
 import kotlin.coroutines.resumeWithException
@@ -76,6 +74,10 @@ class CanvasViewModel @Inject constructor(
 
     private val published = savedStateHandle.get<Boolean>("published") ?: false
 
+    private val handler = CoroutineExceptionHandler { _, throwable ->
+        viewModelScope.launch { _message.emit(throwable.message.orEmpty()) }
+    }
+
     @OptIn(ExperimentalCoroutinesApi::class)
     fun publish(fileName: String?, width: Int, height: Int, color: Int, shapesList : List<Shape>) {
         canvas.bg = color
@@ -100,7 +102,7 @@ class CanvasViewModel @Inject constructor(
                         }
                     }
                 }
-                _message.emit("Published")
+                _message.emit(app.getString(R.string.published))
                 _update.emit(newFileName to true)
             } catch (e: Exception) {
                 _message.emit(e.message.orEmpty())
@@ -115,17 +117,15 @@ class CanvasViewModel @Inject constructor(
         canvas.shapesList = shapesList
         canvas.width = width
         canvas.height = height
-        viewModelScope.launch(Dispatchers.IO) {
+        viewModelScope.launch(Dispatchers.IO + handler) {
             try {
                 _loading.postValue(true)
                 val json = canvas.toJson(gson)
 
                 Utils.createOrOverwriteJson(json, fileName)
 
-                _message.emit("Saved")
+                _message.emit(app.getString(R.string.saved))
                 _update.emit(fileName to published)
-            } catch (e: Exception) {
-                _message.emit(e.message.orEmpty())
             } finally {
                 _loading.postValue(false)
             }
@@ -133,13 +133,11 @@ class CanvasViewModel @Inject constructor(
     }
 
     fun saveImageToExternalStorage(image : Bitmap) {
-        viewModelScope.launch(Dispatchers.IO) {
+        viewModelScope.launch(Dispatchers.IO + handler) {
             _loading.postValue(true)
             try {
                 Utils.saveBitmap(app, image)
-                _message.emit("Saved")
-            } catch (e: Exception) {
-                _message.emit(e.message.orEmpty())
+                _message.emit(app.getString(R.string.saved))
             } finally {
                 _loading.postValue(false)
             }
@@ -153,13 +151,18 @@ class CanvasViewModel @Inject constructor(
         canvas.width = width
         canvas.height = height
         canvas.title = Utils.generateFileName()
-        viewModelScope.launch(Dispatchers.IO) {
-            _loading.postValue(true)
-            val json = canvas.toJson(gson)
-            val fileName = Utils.createOrOverwriteJson(json, canvas.title)
-            _loading.postValue(false)
-            _message.emit("Saved")
-            _update.emit(fileName to false)
+
+        viewModelScope.launch(Dispatchers.IO + handler) {
+            try {
+                _loading.postValue(true)
+                val json = canvas.toJson(gson)
+                val fileName = Utils.createOrOverwriteJson(json, canvas.title)
+
+                _message.emit(app.getString(R.string.saved))
+                _update.emit(fileName to false)
+            } finally {
+                _loading.postValue(false)
+            }
         }
     }
 

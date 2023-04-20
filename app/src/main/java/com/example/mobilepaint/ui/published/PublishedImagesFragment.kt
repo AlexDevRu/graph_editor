@@ -51,7 +51,7 @@ class PublishedImagesFragment : Fragment(), ImagesAdapter.Listener, MenuProvider
         super.onViewCreated(view, savedInstanceState)
 
         binding.rvMyImages.adapter = imagesAdapter
-        //binding.rvMyImages.setHasFixedSize(true)
+        binding.rvMyImages.setHasFixedSize(true)
 
         binding.swipeToRefreshLayout.setOnRefreshListener {
             viewModel.updateImages()

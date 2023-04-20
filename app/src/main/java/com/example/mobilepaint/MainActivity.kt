@@ -110,6 +110,7 @@ class MainActivity : AppCompatActivity(), View.OnClickListener, NavController.On
         destination: NavDestination,
         arguments: Bundle?
     ) {
+        supportActionBar?.setDisplayShowTitleEnabled(destination.id != R.id.imagesFragment)
         val show = destination.id == R.id.imagesFragment
         binding.btnGoogleSignIn.isVisible = viewModel.googleAccount.value == null && show
         binding.profileAvatar.isVisible = viewModel.googleAccount.value != null && show

@@ -146,6 +146,7 @@ class CanvasFragment : Fragment(), ShapesView.OnShapeChanged, View.OnClickListen
                     height = binding.zoomLayout.height
                 }
             }
+            (requireActivity() as AppCompatActivity).title = null
         } else {
             val directory = Utils.createAndGetAppDir()
             val json = File(directory, "${args.fileName}.json").readText()
@@ -157,6 +158,7 @@ class CanvasFragment : Fragment(), ShapesView.OnShapeChanged, View.OnClickListen
                     height = canvasData.height
                 }
             }
+            (requireActivity() as AppCompatActivity).title = canvasData.title
         }
 
         shapesView.transitionName = args.transitionName

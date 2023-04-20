@@ -13,6 +13,7 @@
         android:layout_height="wrap_content"
         android:background="?colorPrimary"
         android:minHeight="?attr/actionBarSize"
+        app:titleTextColor="@color/white"
         android:theme="@style/toolbarTheme"
         app:layout_constraintTop_toTopOf="parent">
 

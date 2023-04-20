@@ -54,9 +54,11 @@ class DashboardViewModel @Inject constructor(
                     imagesCollection.get().addOnCompleteListener { result ->
                         if (result.isSuccessful) {
                             val cloudImages = result.result.documents.map {
+                                val canvasData = drawingUtils.fromJson(it.get("json") as String)
                                 MyImage(
                                     id = it.id,
-                                    canvasData = drawingUtils.fromJson(it.get("json") as String),
+                                    filePath = Utils.saveBitmap(it.id, app, canvasData),
+                                    canvasData = canvasData,
                                     published = true
                                 )
                             }
@@ -73,9 +75,11 @@ class DashboardViewModel @Inject constructor(
                 images.map {
                     Log.d(TAG, "read image json: ${it.name}")
                     val json = it.readText()
+                    val canvasData = drawingUtils.fromJson(json)
                     MyImage(
                         id = it.nameWithoutExtension,
-                        canvasData = drawingUtils.fromJson(json),
+                        filePath = Utils.saveBitmap(it.nameWithoutExtension, app, canvasData),
+                        canvasData = canvasData,
                         published = false
                     )
                 }
@@ -136,7 +140,12 @@ class DashboardViewModel @Inject constructor(
                             it
                     }.toMutableList()
                 else {
-                    val newImage = MyImage(canvasData = canvasData, id = fileName, published = published)
+                    val newImage = MyImage(
+                        id = fileName,
+                        filePath = Utils.saveBitmap(fileName, app, canvasData),
+                        canvasData = canvasData,
+                        published = published
+                    )
                     originalImages.add(newImage)
                 }
 

@@ -11,10 +11,12 @@ import androidx.core.view.isVisible
 import androidx.recyclerview.widget.DiffUtil.ItemCallback
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
+import com.bumptech.glide.Glide
 import com.example.mobilepaint.R
 import com.example.mobilepaint.databinding.ItemMyImageBinding
 import com.example.mobilepaint.drawing_view.DrawingView
 import com.example.mobilepaint.models.MyImage
+import java.io.File
 
 class ImagesAdapter(
     private val listener: Listener,
@@ -82,7 +84,6 @@ class ImagesAdapter(
         private val binding: ItemMyImageBinding
     ) : RecyclerView.ViewHolder(binding.root), View.OnClickListener, PopupMenu.OnMenuItemClickListener {
 
-        private val drawingView = DrawingView(binding.root.context)
         private var item: MyImage? = null
 
         private var popupMenu: PopupMenu? = null
@@ -100,18 +101,15 @@ class ImagesAdapter(
 
         fun bind(item: MyImage) {
             this.item = item
-            drawingView.measure(
-                MeasureSpec.makeMeasureSpec(item.canvasData.width, MeasureSpec.EXACTLY),
-                MeasureSpec.makeMeasureSpec(item.canvasData.height, MeasureSpec.EXACTLY),
-            )
-            drawingView.layout(0, 0, item.canvasData.width, item.canvasData.height)
-            drawingView.addShapes(item.canvasData.shapesList, item.canvasData.removedShapesList)
-            binding.preview.setImageBitmap(drawingView.getBitmap())
 
             binding.preview.transitionName = item.id
 
             bindTitle(item.canvasData.title)
             bindPublished(item.published)
+
+            Glide.with(binding.root)
+                .load(item.filePath)
+                .into(binding.preview)
         }
 
         fun bindTitle(title: String) {

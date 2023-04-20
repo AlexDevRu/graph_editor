@@ -6,6 +6,7 @@ import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.mobilepaint.Utils
 import com.example.mobilepaint.drawing_view.DrawingUtils
 import com.example.mobilepaint.models.MyImage
 import com.google.android.gms.auth.api.signin.GoogleSignIn
@@ -82,9 +83,11 @@ class PublishedImagesViewModel @Inject constructor(
                                 file.createNewFile()
                                 val json = it.get("json") as String
                                 file.writeText(json)
+                                val canvasData = drawingUtils.fromJson(json)
                                 MyImage(
                                     id = it.id,
-                                    canvasData = drawingUtils.fromJson(json),
+                                    filePath = Utils.saveBitmap(it.id, app, canvasData),
+                                    canvasData = canvasData,
                                     published = true
                                 )
                             }
@@ -132,9 +135,11 @@ class PublishedImagesViewModel @Inject constructor(
                                         file.createNewFile()
                                         val json = it.get("json") as String
                                         file.appendText(json)
+                                        val canvasData = drawingUtils.fromJson(json)
                                         MyImage(
                                             id = it.id,
-                                            canvasData = drawingUtils.fromJson(json),
+                                            filePath = Utils.saveBitmap(it.id, app, canvasData),
+                                            canvasData = canvasData,
                                             published = true
                                         )
                                     }

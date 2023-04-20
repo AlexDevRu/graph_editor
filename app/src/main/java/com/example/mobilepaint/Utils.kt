@@ -12,7 +12,10 @@ import android.os.Environment
 import android.provider.MediaStore
 import android.util.Base64
 import android.util.TypedValue
+import android.view.View
 import androidx.core.graphics.values
+import com.example.mobilepaint.drawing_view.DrawingView
+import com.example.mobilepaint.models.CanvasData
 import java.io.ByteArrayOutputStream
 import java.io.File
 import java.io.FileOutputStream
@@ -56,6 +59,23 @@ object Utils {
     fun generateFileName() : String {
         val dateFormat = SimpleDateFormat("yyyy-MM-dd_HH-mm-ss", Locale.ENGLISH)
         return dateFormat.format(Date())
+    }
+
+    fun saveBitmap(fileName: String, context: Context, canvasData: CanvasData) : String {
+        val drawingView = DrawingView(context)
+        drawingView.measure(
+            View.MeasureSpec.makeMeasureSpec(canvasData.width, View.MeasureSpec.EXACTLY),
+            View.MeasureSpec.makeMeasureSpec(canvasData.height, View.MeasureSpec.EXACTLY),
+        )
+        drawingView.layout(0, 0, canvasData.width, canvasData.height)
+        drawingView.addShapes(canvasData.shapesList, canvasData.removedShapesList)
+        val bitmap = drawingView.getBitmap()
+        val file = File(context.cacheDir, "$fileName.jpg")
+        val out = FileOutputStream(file)
+        bitmap.compress(Bitmap.CompressFormat.JPEG, 100, out)
+        out.flush()
+        out.close()
+        return file.absolutePath
     }
 
     fun saveBitmap(context: Context, bitmap: Bitmap) {

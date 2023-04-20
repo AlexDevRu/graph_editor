@@ -150,7 +150,7 @@ class CanvasFragment : Fragment(), ShapesView.OnShapeChanged, View.OnClickListen
             val directory = Utils.createAndGetAppDir()
             val json = File(directory, "${args.fileName}.json").readText()
             val canvasData = viewModel.addCanvasFromJson(json)
-            binding.shapesView.addCanvasData(canvasData)
+            shapesView.addCanvasData(canvasData)
             binding.zoomLayout.post {
                 shapesView.updateLayoutParams<ViewGroup.LayoutParams> {
                     width = canvasData.width

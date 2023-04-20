@@ -14,7 +14,7 @@ import kotlin.math.min
 class CustomLine(
     private val handlePaint: Paint,
     private val selectionShader: Shader?,
-    override val paint: Paint
+    val paint: Paint
 ) : RectF(), Shape {
 
     private val startPoint = PointF()

@@ -13,7 +13,7 @@ import java.lang.Float.min
 class CustomRectF(
     selectionBorderOptions: SelectionBorderOptions,
     private val selectionShader: Shader?,
-    override val paint: Paint
+    val paint: Paint
 ) : RectF(), Shape, SelectionBorder.Listener {
 
     private val selectionBorder = SelectionBorder(selectionBorderOptions, this)

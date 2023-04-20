@@ -3,7 +3,6 @@ package com.example.mobilepaint.ui.canvas
 import android.app.Application
 import android.graphics.Bitmap
 import android.graphics.Color
-import android.util.Log
 import androidx.lifecycle.*
 import com.example.mobilepaint.R
 import com.example.mobilepaint.SharedPrefsUtils

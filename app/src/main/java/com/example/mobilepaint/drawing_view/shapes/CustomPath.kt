@@ -13,7 +13,7 @@ import com.google.gson.Gson
 class CustomPath(
     selectionBorderOptions: SelectionBorderOptions,
     private val selectionShader: Shader?,
-    override val paint: Paint
+    val paint: Paint
 ): Path(), Shape, SelectionBorder.Listener {
 
     private var selected = false

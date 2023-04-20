@@ -7,8 +7,6 @@ import com.example.mobilepaint.drawing_view.Operation
 import com.google.gson.Gson
 
 interface Shape {
-    val paint: Paint
-
     fun drawInCanvas(canvas: Canvas)
     fun down(x: Float, y: Float)
     fun move(x: Float, y: Float)

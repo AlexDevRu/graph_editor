@@ -15,7 +15,7 @@ class CustomArrow(
     private val arrowHeight: Float,
     private val handlePaint: Paint,
     private val selectionShader: Shader?,
-    override val paint: Paint
+    val paint: Paint
 ): RectF(), Shape {
 
     companion object {

@@ -16,8 +16,7 @@ import java.io.ByteArrayOutputStream
 
 class CustomBitmap(
     private val bitmap: Bitmap,
-    selectionBorderOptions: SelectionBorderOptions,
-    override val paint: Paint
+    selectionBorderOptions: SelectionBorderOptions
 ): Path(), Shape, SelectionBorder.Listener {
 
     private val IMAGE_SIZE = bitmap.width
@@ -192,7 +191,7 @@ class CustomBitmap(
         val base64 = Base64.encodeToString(byteArray, Base64.DEFAULT)
 
         val bitmapData = BitmapData(
-            shapeData = ShapeData(paint.color, null, paint.strokeWidth),
+            shapeData = ShapeData(0, null, 0f),
             base64 = base64,
             matrix1 = matrix1.values(),
             matrix2 = matrix2.values(),

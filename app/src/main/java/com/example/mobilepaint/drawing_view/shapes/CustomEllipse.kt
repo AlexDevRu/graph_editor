@@ -11,7 +11,7 @@ import com.google.gson.Gson
 class CustomEllipse(
     selectionBorderOptions: SelectionBorderOptions,
     private val selectionShader: Shader?,
-    override val paint: Paint
+    val paint: Paint
 ) : RectF(), Shape, SelectionBorder.Listener {
 
     private var fillPaint : Paint? = null

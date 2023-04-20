@@ -1,6 +1,7 @@
 package com.example.mobilepaint.ui.published
 
 import android.os.Bundle
+import android.util.Log
 import android.view.*
 import android.widget.ImageView
 import androidx.appcompat.widget.SearchView
@@ -50,7 +51,7 @@ class PublishedImagesFragment : Fragment(), ImagesAdapter.Listener, MenuProvider
         super.onViewCreated(view, savedInstanceState)
 
         binding.rvMyImages.adapter = imagesAdapter
-        binding.rvMyImages.setHasFixedSize(true)
+        //binding.rvMyImages.setHasFixedSize(true)
 
         binding.swipeToRefreshLayout.setOnRefreshListener {
             viewModel.updateImages()
@@ -68,6 +69,7 @@ class PublishedImagesFragment : Fragment(), ImagesAdapter.Listener, MenuProvider
             binding.swipeToRefreshLayout.isRefreshing = it
         }
         viewModel.myImages.observe(viewLifecycleOwner) {
+            Log.d("asd", "observe: ${it.size} ${it.map { it.id }}")
             imagesAdapter.submitList(it)
             binding.rvMyImages.isVisible = it.isNotEmpty()
             binding.llEmptyList.isVisible = it.isEmpty()

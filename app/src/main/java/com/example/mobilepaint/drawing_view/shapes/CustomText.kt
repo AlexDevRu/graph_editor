@@ -1,14 +1,13 @@
 package com.example.mobilepaint.drawing_view.shapes
 
 import android.graphics.*
-import com.example.mobilepaint.drawing_view.Operation
 import com.example.mobilepaint.models.json.ShapeData
 import com.example.mobilepaint.models.json.TextData
 import com.google.gson.Gson
 import com.otaliastudios.opengl.geometry.RectF
 
 class CustomText(
-    override val paint: Paint,
+    val paint: Paint,
     val rotateAngle: Float,
     val scale: Float
 ): Shape {
@@ -35,7 +34,6 @@ class CustomText(
         private set
 
     private val textBounds = Rect()
-    private val textBounds1 = Rect()
 
     private var textLines: List<String>? = null
     
@@ -43,9 +41,6 @@ class CustomText(
     private var textHeight = 0f
 
     private val matrix = Matrix()
-
-    private val paint1 = Paint(paint).apply { color = Color.RED }
-    private val paint2 = Paint(paint).apply { color = Color.GREEN }
 
     var text = ""
         set(value) {

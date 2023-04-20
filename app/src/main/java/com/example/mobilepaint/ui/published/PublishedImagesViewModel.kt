@@ -1,6 +1,7 @@
 package com.example.mobilepaint.ui.published
 
 import android.app.Application
+import android.util.Log
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
@@ -13,17 +14,20 @@ import com.google.firebase.ktx.Firebase
 import com.google.gson.Gson
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.*
+import kotlinx.coroutines.channels.awaitClose
+import kotlinx.coroutines.flow.*
+import java.io.File
 import javax.inject.Inject
 import kotlin.coroutines.resumeWithException
 
-@OptIn(ExperimentalCoroutinesApi::class)
+@OptIn(ExperimentalCoroutinesApi::class, FlowPreview::class)
 @HiltViewModel
 class PublishedImagesViewModel @Inject constructor(
     private val app: Application,
     private val drawingUtils: DrawingUtils
 ): ViewModel() {
 
-    private val originalImages = mutableListOf<MyImage>()
+    private var originalImages = mutableListOf<MyImage>()
 
     private val _myImages = MutableLiveData<List<MyImage>>()
     val myImages: LiveData<List<MyImage>> = _myImages
@@ -38,8 +42,69 @@ class PublishedImagesViewModel @Inject constructor(
 
     val gson = Gson()
 
+    companion object {
+        private const val TAG = "PublishedImagesViewMode"
+    }
+
     init {
         updateImages()
+    }
+
+    private fun observeChanges() {
+        viewModelScope.launch {
+            callbackFlow {
+                val listener = db.collection("users").addSnapshotListener { value, error ->
+                    if (error != null) {
+                        Log.w(TAG, "Listen failed.", error)
+                        return@addSnapshotListener
+                    }
+
+                    if (value != null) {
+                        for (doc in value)
+                            if (doc.id != GoogleSignIn.getLastSignedInAccount(app)?.email)
+                                viewModelScope.launch { send(doc) }
+                    }
+                }
+
+                awaitClose { listener.remove() }
+            }.flatMapMerge {
+                callbackFlow {
+                    val listener = db.collection("users/${it.id}/images").addSnapshotListener { value, error ->
+                        if (error != null) {
+                            Log.w(TAG, "Listen failed.", error)
+                            return@addSnapshotListener
+                        }
+
+                        if (value != null) {
+                            val images = value.documents.map {
+                                val file = File(app.cacheDir, "${it.id}.json")
+                                file.delete()
+                                file.createNewFile()
+                                val json = it.get("json") as String
+                                file.writeText(json)
+                                MyImage(
+                                    id = it.id,
+                                    canvasData = drawingUtils.fromJson(json),
+                                    published = true
+                                )
+                            }
+                            images.forEach { cloudImage ->
+                                val index = originalImages.indexOfFirst { it.id == cloudImage.id }
+                                if (index >= 0) {
+                                    originalImages[index] = cloudImage
+                                } else {
+                                    originalImages.add(cloudImage)
+                                }
+                            }
+                            _myImages.postValue(originalImages.map { it })
+                            viewModelScope.launch { send(images) }
+                        }
+                    }
+
+                    awaitClose { listener.remove() }
+                }
+            }.collect()
+        }
     }
 
     fun updateImages() {
@@ -62,7 +127,7 @@ class PublishedImagesViewModel @Inject constructor(
                             db.collection("users/${it.id}/images").get().addOnCompleteListener { result ->
                                 if (result.isSuccessful) {
                                     val cloudImages = result.result.documents.map {
-                                        val file = java.io.File(app.cacheDir, "${it.id}.json")
+                                        val file = File(app.cacheDir, "${it.id}.json")
                                         file.delete()
                                         file.createNewFile()
                                         val json = it.get("json") as String
@@ -84,11 +149,12 @@ class PublishedImagesViewModel @Inject constructor(
                 }
             }
 
-            originalImages.clear()
-            originalImages.addAll(jobs.awaitAll().flatten())
+            originalImages = jobs.awaitAll().flatten().toMutableList()
 
             _myImages.postValue(originalImages)
             _loading.postValue(false)
+
+            observeChanges()
         }
     }
 

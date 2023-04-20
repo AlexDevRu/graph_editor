@@ -31,8 +31,6 @@ class DrawingUtils(private val context: Context) {
     val arrowWidth = context.resources.getDimension(R.dimen.drawing_view_arrow_width)
     val arrowHeight = arrowWidth * 1.2f
 
-    val bitmapPaint = Paint(Paint.ANTI_ALIAS_FLAG)
-
     val shader =
         LinearGradient(0f, 0f, 100f, 20f, selectionColors, null, Shader.TileMode.MIRROR)
 
@@ -100,7 +98,7 @@ class DrawingUtils(private val context: Context) {
                 GeometryType.BITMAP.name -> {
                     val bitmapData = gson.fromJson(it.data, BitmapData::class.java)
                     val bitmap = Utils.convert(bitmapData.base64)
-                    CustomBitmap(bitmap, getSelectionBorderOptions(), bitmapPaint).apply {
+                    CustomBitmap(bitmap, getSelectionBorderOptions()).apply {
                         addData(bitmapData)
                     }
                 }

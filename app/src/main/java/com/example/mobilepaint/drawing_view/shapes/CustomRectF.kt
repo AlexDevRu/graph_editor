@@ -20,7 +20,7 @@ class CustomRectF(
 
     private var fillPaint : Paint? = null
 
-    private var selected1 = false
+    private var selected = false
 
     private val shape = Path()
     private val bounds = RectF()
@@ -35,7 +35,7 @@ class CustomRectF(
     }
 
     override fun down(x: Float, y: Float) {
-        if (selected1) {
+        if (selected) {
             selectionBorder.down(x, y)
         } else {
             left = x
@@ -46,7 +46,7 @@ class CustomRectF(
     }
 
     override fun move(x: Float, y: Float) {
-        if (selected1) {
+        if (selected) {
             selectionBorder.move(x, y)
         } else {
             right = x
@@ -95,7 +95,7 @@ class CustomRectF(
             canvas.drawPath(shape, it)
         }
 
-        if (selected1) {
+        if (selected) {
             selectionBorder.drawInCanvas(canvas)
         }
     }
@@ -116,7 +116,7 @@ class CustomRectF(
     override fun isInside(x: Float, y: Float) = bounds.contains(x, y)
 
     override fun setSelected(selected: Boolean) {
-        this.selected1 = selected
+        this.selected = selected
         paint.shader = if (selected) selectionShader else null
     }
 

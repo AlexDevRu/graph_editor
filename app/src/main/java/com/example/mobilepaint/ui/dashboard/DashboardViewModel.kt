@@ -101,10 +101,8 @@ class DashboardViewModel @Inject constructor(
                 } else {
                     originalImages.add(it)
                     Log.d(TAG, "publishedImages: no local, download ${it.id}")
-                    val dir = Utils.createAndGetAppDir()
-                    val file = File(dir, "${it.id}.json")
-                    file.createNewFile()
-                    file.appendText(it.canvasData.toJson(gson))
+                    val json = it.canvasData.toJson(gson)
+                    Utils.createOrOverwriteJson(app, json, "${it.id}.json")
                 }
             }
 

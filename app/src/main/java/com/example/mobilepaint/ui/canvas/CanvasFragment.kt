@@ -64,15 +64,6 @@ class CanvasFragment : Fragment(), ShapesView.OnShapeChanged, View.OnClickListen
         }
     }
 
-    @RequiresApi(Build.VERSION_CODES.R)
-    private val storageActivityResultLauncher = registerForActivityResult(
-        ActivityResultContracts.StartActivityForResult()
-    ) {
-        if (Environment.isExternalStorageManager()) {
-            goToTheImageNameDialog()
-        }
-    }
-
     private val pickPhotoLauncher = registerForActivityResult(
         ActivityResultContracts.StartActivityForResult()
     ) { result ->
@@ -146,7 +137,7 @@ class CanvasFragment : Fragment(), ShapesView.OnShapeChanged, View.OnClickListen
                     height = binding.zoomLayout.height
                 }
             }
-            (requireActivity() as AppCompatActivity).title = null
+            (requireActivity() as AppCompatActivity).title = getString(R.string.new_canvas)
         } else {
             val directory = Utils.createAndGetAppDir()
             val json = File(directory, "${args.fileName}.json").readText()
@@ -287,27 +278,16 @@ class CanvasFragment : Fragment(), ShapesView.OnShapeChanged, View.OnClickListen
     }
 
     private fun exportImage() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-            if (Environment.isExternalStorageManager()) {
-                goToTheImageNameDialog()
-                return
-            }
-            try {
-                val intent = Intent(Settings.ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION)
-                val uri = Uri.fromParts("package", requireContext().packageName, null)
-                intent.data = uri
-                storageActivityResultLauncher.launch(intent)
-            } catch (e : Exception) {
-                val intent = Intent(Settings.ACTION_MANAGE_ALL_FILES_ACCESS_PERMISSION)
-                storageActivityResultLauncher.launch(intent)
-            }
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) {
+            externalStoragePermissionLauncher.launch(arrayOf(Manifest.permission.WRITE_EXTERNAL_STORAGE))
         } else {
-            externalStoragePermissionLauncher.launch(arrayOf(Manifest.permission.READ_EXTERNAL_STORAGE, Manifest.permission.WRITE_EXTERNAL_STORAGE))
+            goToTheImageNameDialog()
         }
     }
 
     private fun goToTheImageNameDialog() {
-        val action = CanvasFragmentDirections.actionCanvasFragmentToImageNameDialog(Utils.generateFileName(), getString(R.string.export_as_jpeg), getString(R.string.enter_new_image_name))
+        val titleRes = if (viewModel.saveImage == 0) R.string.export_as_jpeg else R.string.export_as_json
+        val action = CanvasFragmentDirections.actionCanvasFragmentToImageNameDialog(Utils.generateFileName(), getString(titleRes), getString(R.string.enter_new_image_name))
         findNavController().navigate(action)
     }
 

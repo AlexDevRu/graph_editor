@@ -89,7 +89,7 @@ class CanvasViewModel @Inject constructor(
                 _loading.postValue(true)
                 val json = canvas.toJson(gson)
 
-                val newFileName = Utils.createOrOverwriteJson(json, canvas.title)
+                val newFileName = Utils.createOrOverwriteJson(app, json, canvas.title)
 
                 val data = hashMapOf("json" to json)
                 suspendCancellableCoroutine { continuation ->
@@ -121,7 +121,7 @@ class CanvasViewModel @Inject constructor(
                 _loading.postValue(true)
                 val json = canvas.toJson(gson)
 
-                Utils.createOrOverwriteJson(json, fileName)
+                Utils.createOrOverwriteJson(app, json, fileName)
 
                 _message.emit(app.getString(R.string.saved))
                 _update.emit(fileName to published)
@@ -155,7 +155,7 @@ class CanvasViewModel @Inject constructor(
             try {
                 _loading.postValue(true)
                 val json = canvas.toJson(gson)
-                val fileName = Utils.createOrOverwriteJson(json, canvas.title)
+                val fileName = Utils.createOrOverwriteJson(app, json, canvas.title)
 
                 _message.emit(app.getString(R.string.saved))
                 _update.emit(fileName to false)

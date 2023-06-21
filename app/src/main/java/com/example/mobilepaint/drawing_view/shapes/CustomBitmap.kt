@@ -47,6 +47,7 @@ class CustomBitmap(
         reset()
         addRect(0f, 0f, IMAGE_SIZE.toFloat(), IMAGE_SIZE.toFloat(), Direction.CW)
         computeBounds(bounds, true)
+        selectionBorder.up(bounds)
     }
 
     override fun onTransform(matrix: Matrix) {

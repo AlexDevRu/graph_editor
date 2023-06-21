@@ -1,5 +1,6 @@
 package com.example.mobilepaint
 
+import android.content.ContentUris
 import android.content.ContentValues
 import android.content.Context
 import android.content.res.Resources
@@ -83,7 +84,10 @@ object Utils {
 
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) {
             val dir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES)
-            val file = File(dir, "$name.jpeg")
+            val appDir = File(dir, APP_DIR)
+            if (!appDir.exists())
+                appDir.mkdirs()
+            val file = File(appDir, "$name.jpeg")
             val outStream = FileOutputStream(file)
             bitmap.compress(Bitmap.CompressFormat.JPEG, 100, outStream)
             outStream.flush()
@@ -95,7 +99,7 @@ object Utils {
             put(MediaStore.MediaColumns.DISPLAY_NAME, name)
             put(MediaStore.MediaColumns.MIME_TYPE, "image/jpeg")
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-                put(MediaStore.MediaColumns.RELATIVE_PATH, Environment.DIRECTORY_PICTURES)
+                put(MediaStore.MediaColumns.RELATIVE_PATH, Environment.DIRECTORY_PICTURES + "/$APP_DIR")
             }
         }
 
@@ -118,10 +122,56 @@ object Utils {
         }
     }
 
-    fun createOrOverwriteJson(text: String, name: String = generateFileName()) : String {
-        val directory = createAndGetAppDir()
-        val file = File(directory, "$name.json")
-        file.writeText(text)
+    fun createOrOverwriteJson(context: Context, text: String, name: String = generateFileName()) : String {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) {
+            val dir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES)
+            val appDir = File(dir, APP_DIR)
+            if (!appDir.exists())
+                appDir.mkdirs()
+            val file = File(appDir, "$name.json")
+            file.writeText(text)
+            return name
+        }
+
+        val resolver = context.contentResolver
+        var uri: Uri? = null
+        try {
+            val contentUri = MediaStore.Files.getContentUri("external")
+            val cursor = resolver.query(
+                contentUri,
+                null,
+                MediaStore.MediaColumns.RELATIVE_PATH + "=? and " + MediaStore.MediaColumns.DISPLAY_NAME + "=?",
+                arrayOf(Environment.DIRECTORY_DOCUMENTS + "/$APP_DIR", name),
+                null
+            )
+
+            uri = if (cursor != null && cursor.moveToFirst()) {
+                val id = cursor.getLong(cursor.getColumnIndexOrThrow(MediaStore.MediaColumns._ID))
+                cursor.close()
+                ContentUris.withAppendedId(contentUri, id)
+            } else {
+                val values = ContentValues().apply {
+                    put(MediaStore.MediaColumns.DISPLAY_NAME, name)
+                    put(MediaStore.MediaColumns.MIME_TYPE, "application/json")
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                        put(MediaStore.MediaColumns.RELATIVE_PATH, Environment.DIRECTORY_DOCUMENTS + "/$APP_DIR")
+                    }
+                }
+                resolver.insert(contentUri, values)
+                    ?: throw IOException("Failed to create new MediaStore record.")
+            }
+            resolver.openOutputStream(uri)?.use {
+                it.write(text.encodeToByteArray())
+            } ?: throw IOException("Failed to open output stream.")
+        } catch (e: IOException) {
+            uri?.let { orphanUri ->
+                resolver.delete(orphanUri, null, null)
+            }
+            throw e
+        }
+
         return name
     }
+
+    private const val APP_DIR = "MobilePaint"
 }

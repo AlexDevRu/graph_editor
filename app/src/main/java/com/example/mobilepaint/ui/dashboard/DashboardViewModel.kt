@@ -15,6 +15,7 @@ import com.google.firebase.ktx.Firebase
 import com.google.gson.Gson
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.*
+import timber.log.Timber
 import java.io.File
 import javax.inject.Inject
 import kotlin.coroutines.resumeWithException
@@ -49,8 +50,9 @@ class DashboardViewModel @Inject constructor(
         val imagesCollection = db.collection("/users/${GoogleSignIn.getLastSignedInAccount(app)?.email}/images")
         viewModelScope.launch(Dispatchers.IO + SupervisorJob()) {
             _loading.postValue(true)
+            app.cacheDir.listFiles()?.forEach { if (it.isFile) it.delete() }
             val list1 = async {
-                suspendCancellableCoroutine { continuation ->
+                suspendCancellableCoroutine<List<MyImage>> { continuation ->
                     imagesCollection.get().addOnCompleteListener { result ->
                         if (result.isSuccessful) {
                             val cloudImages = result.result.documents.map {
@@ -64,21 +66,21 @@ class DashboardViewModel @Inject constructor(
                             }
                             continuation.resume(cloudImages, null)
                         } else {
-                            continuation.resume(emptyList<MyImage>(), null)
+                            continuation.resume(emptyList(), null)
                         }
                     }
                 }
             }
             val list2 = async {
-                val dir = Utils.createAndGetAppDir()
-                val images = dir.listFiles { file: File -> file.extension == "json" }.orEmpty().toList()
+                val images = Utils.getJsonFileNames(app)
+                Timber.e("local images - $images")
                 images.map {
-                    Log.d(TAG, "read image json: ${it.name}")
-                    val json = it.readText()
+                    Log.d(TAG, "read image json: ${it.first}")
+                    val json = it.second
                     val canvasData = drawingUtils.fromJson(json)
                     MyImage(
-                        id = it.nameWithoutExtension,
-                        filePath = Utils.saveBitmap(it.nameWithoutExtension, app, canvasData),
+                        id = it.first,
+                        filePath = Utils.saveBitmap(it.first, app, canvasData),
                         canvasData = canvasData,
                         published = false
                     )
@@ -123,21 +125,23 @@ class DashboardViewModel @Inject constructor(
 
     fun updateJsonByFileName(oldFileName: String?, fileName: String, published: Boolean) {
         viewModelScope.launch(Dispatchers.IO) {
-            val dir = Utils.createAndGetAppDir()
-            val file = File(dir, "$fileName.json")
-            if (file.exists()) {
-                val json = file.readText()
+            val json = Utils.getJsonByFileName(app, fileName)
+            if (json != null) {
                 val canvasData = drawingUtils.fromJson(json)
 
                 val existingImage = originalImages.find { it.id == oldFileName }
-                if (existingImage != null)
+                if (existingImage != null) {
                     originalImages = originalImages.map {
                         if (it == existingImage)
-                            it.copy(canvasData = canvasData, published = published)
+                            it.copy(
+                                canvasData = canvasData,
+                                filePath = Utils.saveBitmap(fileName, app, canvasData),
+                                published = published
+                            )
                         else
                             it
                     }.toMutableList()
-                else {
+                } else {
                     val newImage = MyImage(
                         id = fileName,
                         filePath = Utils.saveBitmap(fileName, app, canvasData),
@@ -158,9 +162,7 @@ class DashboardViewModel @Inject constructor(
         val email = GoogleSignIn.getLastSignedInAccount(app)?.email
         viewModelScope.launch(Dispatchers.IO) {
             _loading.postValue(true)
-            val dir = Utils.createAndGetAppDir()
-            val file = File(dir, "${item.id}.json")
-            file.delete()
+            Utils.removeJsonFile(app, item.id)
 
             if (!email.isNullOrBlank()) {
                 val images = db.collection("/users/$email/images")

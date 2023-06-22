@@ -12,6 +12,7 @@ import androidx.recyclerview.widget.DiffUtil.ItemCallback
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
+import com.bumptech.glide.load.engine.DiskCacheStrategy
 import com.example.mobilepaint.R
 import com.example.mobilepaint.databinding.ItemMyImageBinding
 import com.example.mobilepaint.drawing_view.DrawingView
@@ -109,6 +110,8 @@ class ImagesAdapter(
 
             Glide.with(binding.root)
                 .load(item.filePath)
+                .diskCacheStrategy(DiskCacheStrategy.NONE)
+                .skipMemoryCache(true)
                 .into(binding.preview)
         }
 

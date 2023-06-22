@@ -163,9 +163,4 @@ class CustomRectF(
     override fun changeStrokeWidth(stroke: Float) {
         paint.strokeWidth = stroke
     }
-
-    companion object {
-        private const val TAG = "CustomRectF"
-    }
-
 }

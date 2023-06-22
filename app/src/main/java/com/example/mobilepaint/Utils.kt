@@ -12,15 +12,18 @@ import android.os.Build
 import android.os.Environment
 import android.provider.MediaStore
 import android.util.Base64
+import android.util.Log
 import android.util.TypedValue
 import android.view.View
 import androidx.core.graphics.values
 import com.example.mobilepaint.drawing_view.DrawingView
 import com.example.mobilepaint.models.CanvasData
+import timber.log.Timber
 import java.io.ByteArrayOutputStream
 import java.io.File
 import java.io.FileOutputStream
 import java.io.IOException
+import java.nio.charset.StandardCharsets
 import java.text.SimpleDateFormat
 import java.util.*
 
@@ -79,6 +82,75 @@ object Utils {
         return file.absolutePath
     }
 
+    fun getJsonFileNames(context: Context) : List<Pair<String, String>> {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            val fileNames = mutableListOf<Pair<String, String>>()
+            val resolver = context.contentResolver
+            val contentUri = MediaStore.Files.getContentUri("external")
+            val cursor = resolver.query(
+                contentUri,
+                arrayOf(MediaStore.MediaColumns._ID, MediaStore.MediaColumns.DISPLAY_NAME, MediaStore.MediaColumns.RELATIVE_PATH),
+                MediaStore.MediaColumns.RELATIVE_PATH + "=?",
+                arrayOf(Environment.DIRECTORY_DOCUMENTS + "/$APP_DIR/"),
+                null
+            )
+            if (cursor != null) {
+                while (cursor.moveToNext()) {
+                    val id = cursor.getLong(cursor.getColumnIndexOrThrow(MediaStore.MediaColumns._ID))
+                    val fileName = cursor.getString(cursor.getColumnIndexOrThrow(MediaStore.MediaColumns.DISPLAY_NAME))
+                    val relativePath = cursor.getString(cursor.getColumnIndexOrThrow(MediaStore.MediaColumns.RELATIVE_PATH))
+                    Log.e("asd", "json file - $id $fileName $relativePath")
+                    val uri = ContentUris.withAppendedId(contentUri, id)
+                    resolver.openInputStream(uri)?.use {
+                        val json = String(it.readBytes(), StandardCharsets.UTF_8)
+                        fileNames.add(fileName to json)
+                    }
+                }
+                cursor.close()
+            }
+            return fileNames
+         }
+
+        val dir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOCUMENTS)
+        val appDir = File(dir, APP_DIR)
+        if (!appDir.exists())
+            appDir.mkdirs()
+        return appDir.listFiles().orEmpty().map { it.name to it.readText() }
+    }
+
+    fun getJsonByFileName(context: Context, fileName: String) : String? {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            val resolver = context.contentResolver
+            val contentUri = MediaStore.Files.getContentUri("external")
+            val cursor = resolver.query(
+                contentUri,
+                arrayOf(MediaStore.MediaColumns._ID, MediaStore.MediaColumns.DISPLAY_NAME),
+                MediaStore.MediaColumns.RELATIVE_PATH + "=? and ${MediaStore.MediaColumns.DISPLAY_NAME} = ?",
+                arrayOf(Environment.DIRECTORY_DOCUMENTS + "/$APP_DIR/", fileName),
+                null
+            )
+            if (cursor != null && cursor.moveToFirst()) {
+                val id = cursor.getLong(cursor.getColumnIndexOrThrow(MediaStore.MediaColumns._ID))
+                val uri = ContentUris.withAppendedId(contentUri, id)
+                resolver.openInputStream(uri)?.use {
+                    return String(it.readBytes(), StandardCharsets.UTF_8)
+                }
+                cursor.close()
+            }
+            return null
+        }
+
+        val dir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOCUMENTS)
+        val appDir = File(dir, APP_DIR)
+        if (!appDir.exists())
+            appDir.mkdirs()
+        val file = File(appDir, fileName)
+        if (file.exists())
+            return file.readText()
+        else
+            return null
+    }
+
     fun saveBitmap(context: Context, bitmap: Bitmap) {
         val name = generateFileName()
 
@@ -124,7 +196,7 @@ object Utils {
 
     fun createOrOverwriteJson(context: Context, text: String, name: String = generateFileName()) : String {
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) {
-            val dir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES)
+            val dir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOCUMENTS)
             val appDir = File(dir, APP_DIR)
             if (!appDir.exists())
                 appDir.mkdirs()
@@ -141,7 +213,7 @@ object Utils {
                 contentUri,
                 null,
                 MediaStore.MediaColumns.RELATIVE_PATH + "=? and " + MediaStore.MediaColumns.DISPLAY_NAME + "=?",
-                arrayOf(Environment.DIRECTORY_DOCUMENTS + "/$APP_DIR", name),
+                arrayOf(Environment.DIRECTORY_DOCUMENTS + "/$APP_DIR/", name),
                 null
             )
 
@@ -171,6 +243,33 @@ object Utils {
         }
 
         return name
+    }
+
+    fun removeJsonFile(context: Context, fileName: String) {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) {
+            val dir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOCUMENTS)
+            val appDir = File(dir, APP_DIR)
+            if (!appDir.exists())
+                appDir.mkdirs()
+            val file = File(appDir, fileName)
+            file.delete()
+            return
+        }
+        val resolver = context.contentResolver
+        val contentUri = MediaStore.Files.getContentUri("external")
+        val cursor = resolver.query(
+            contentUri,
+            arrayOf(MediaStore.MediaColumns._ID),
+            MediaStore.MediaColumns.RELATIVE_PATH + "=? and " + MediaStore.MediaColumns.DISPLAY_NAME + "=?",
+            arrayOf(Environment.DIRECTORY_DOCUMENTS + "/$APP_DIR/", fileName),
+            null
+        )
+        if (cursor != null && cursor.moveToFirst()) {
+            val id = cursor.getLong(cursor.getColumnIndexOrThrow(MediaStore.MediaColumns._ID))
+            cursor.close()
+            val uri = ContentUris.withAppendedId(contentUri, id)
+            resolver.delete(uri, null, null)
+        }
     }
 
     private const val APP_DIR = "MobilePaint"

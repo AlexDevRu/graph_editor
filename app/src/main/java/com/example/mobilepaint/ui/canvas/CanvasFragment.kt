@@ -139,7 +139,7 @@ class CanvasFragment : Fragment(), ShapesView.OnShapeChanged, View.OnClickListen
             }
             (requireActivity() as AppCompatActivity).title = getString(R.string.new_canvas)
         } else {
-            val json = Utils.getJsonByFileName(requireContext(), args.fileName!!)!!
+            val json = Utils.getJsonByFileName(requireContext(), "${args.fileName}.json")!!
             val canvasData = viewModel.addCanvasFromJson(json)
             shapesView.addCanvasData(canvasData)
             binding.zoomLayout.post {

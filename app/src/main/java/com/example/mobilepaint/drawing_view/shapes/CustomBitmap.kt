@@ -36,14 +36,6 @@ class CustomBitmap(
     private var y = 0f
 
     init {
-        /*moveTo(0f, 0f)
-        lineTo(IMAGE_SIZE.toFloat(), 0f)
-        lineTo(IMAGE_SIZE.toFloat(), IMAGE_SIZE.toFloat())
-        lineTo(0f, IMAGE_SIZE.toFloat())
-        lineTo(0f, 0f)
-
-        up(0f, 0f)*/
-
         reset()
         addRect(0f, 0f, IMAGE_SIZE.toFloat(), IMAGE_SIZE.toFloat(), Direction.CW)
         computeBounds(bounds, true)
@@ -101,14 +93,6 @@ class CustomBitmap(
         selectionBorder.up(bounds)
         return when {
             sx != osx || sy != osy || rotation != orotation || this.x != ox || this.y != oy -> {
-                /*val matrix4Inverse = Matrix()
-                matrix4.invert(matrix4Inverse)
-                val matrix5Inverse = Matrix()
-                matrix5.invert(matrix5Inverse)
-                val operation = Operation.BitmapTransformation(this, matrix4Inverse, matrix5Inverse)
-                matrix4.reset()
-                matrix5.reset()
-                operation*/
                 val operation = Operation.BitmapTransformation1(this, ox, oy, osx, osy, orotation)
                 osx = sx
                 osy = sy
@@ -222,6 +206,8 @@ class CustomBitmap(
         matrix3.postTranslate(x, y)
         selectionBorder.applyMatrix(matrix3)
         transform(matrix3)
+
+        onScale(bitmapData.sx, bitmapData.sy, bitmapData.rotation)
 
         up(0f, 0f)
     }

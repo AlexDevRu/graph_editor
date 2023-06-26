@@ -24,6 +24,7 @@ import kotlin.math.atan2
 import kotlin.math.cos
 import kotlin.math.hypot
 import kotlin.math.sin
+import timber.log.Timber
 
 
 @SuppressLint("ClickableViewAccessibility")
@@ -196,7 +197,6 @@ class DrawingView @JvmOverloads constructor(
                     binding.overlay.scaleY = newScale
                     binding.overlay.rotation = newRotation
 
-
                     val halfDiag = hypot(
                         binding.editText.width.toFloat(),
                         binding.editText.height.toFloat()
@@ -207,6 +207,7 @@ class DrawingView @JvmOverloads constructor(
                     ).toFloat()
                     val rotateInRadians = Math.toRadians(newRotation.toDouble()).toFloat()
 
+                    Timber.d("ACTION_MOVE center $centerX $centerY")
                     binding.expand.x = centerX + halfDiag * cos(rotateInRadians + diagAngle)
                     binding.expand.y = centerY + halfDiag * sin(rotateInRadians + diagAngle)
 
@@ -215,7 +216,6 @@ class DrawingView @JvmOverloads constructor(
 
                     binding.save.x = centerX + halfDiag * cos(rotateInRadians - diagAngle)
                     binding.save.y = centerY + halfDiag * sin(rotateInRadians - diagAngle) - binding.save.height
-
 
                     binding.expand.pivotX = 0f
                     binding.expand.pivotY = 0f
@@ -239,13 +239,22 @@ class DrawingView @JvmOverloads constructor(
             textInEdit = true
             val x = textShape.x
             val y = textShape.y
-            val lp = binding.editText.layoutParams as LayoutParams
-            lp.leftMargin = x.toInt()
-            lp.topMargin = y.toInt() - binding.editText.height
+
+            binding.editText.updateLayoutParams<LayoutParams> {
+                leftMargin = x.toInt()
+                topMargin = y.toInt() - binding.editText.height
+            }
+
+            binding.editText.isVisible = true
+            binding.editText.setText(textShape.text)
+
             binding.editText.rotation = textShape.rotateAngle
             binding.editText.scaleX = textShape.scale
             binding.editText.scaleY = textShape.scale
-            setPositionForButtons(textShape.scale, textShape.rotateAngle)
+
+            binding.editText.post {
+                setPositionForButtons(textShape.scale, textShape.rotateAngle)
+            }
 
             binding.expand.pivotX = 0f
             binding.expand.pivotY = 0f
@@ -260,8 +269,7 @@ class DrawingView @JvmOverloads constructor(
             binding.save.rotation = textShape.rotateAngle
 
             binding.buttons.isVisible = true
-            binding.editText.isVisible = true
-            binding.editText.setText(textShape.text)
+
             binding.editText.setSelection(textShape.text.length)
             binding.editText.requestFocus()
             imm.showSoftInput(binding.editText, 0)
@@ -272,6 +280,7 @@ class DrawingView @JvmOverloads constructor(
         val cx = (binding.editText.left + binding.editText.right) / 2f
         val cy = (binding.editText.top + binding.editText.bottom) / 2f
 
+        Timber.d("setPositionForButtons center $cx $cy")
         val halfDiag = hypot(
             binding.editText.width.toFloat(),
             binding.editText.height.toFloat()

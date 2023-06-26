@@ -16,7 +16,6 @@ import com.google.gson.Gson
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.*
 import timber.log.Timber
-import java.io.File
 import javax.inject.Inject
 import kotlin.coroutines.resumeWithException
 
@@ -79,7 +78,7 @@ class DashboardViewModel @Inject constructor(
                     val json = it.second
                     val canvasData = drawingUtils.fromJson(json)
                     MyImage(
-                        id = it.first,
+                        id = it.first.split(".").first(),
                         filePath = Utils.saveBitmap(it.first, app, canvasData),
                         canvasData = canvasData,
                         published = false

@@ -124,7 +124,7 @@ class DashboardViewModel @Inject constructor(
 
     fun updateJsonByFileName(oldFileName: String?, fileName: String, published: Boolean) {
         viewModelScope.launch(Dispatchers.IO) {
-            val json = Utils.getJsonByFileName(app, fileName)
+            val json = Utils.getJsonByFileName(app, "$fileName.json")
             if (json != null) {
                 val canvasData = drawingUtils.fromJson(json)
 

@@ -29,7 +29,7 @@ class ShapesView @JvmOverloads constructor(
     val shapes = mutableListOf<Shape>()
     val removedShapes = mutableListOf<Shape>()
 
-    private val operations = LinkedList<Operation>()
+    val operations = LinkedList<Operation>()
     private val removedOperations = LinkedList<Operation>()
 
     private var currentShape: Shape? = null
@@ -73,6 +73,14 @@ class ShapesView @JvmOverloads constructor(
         addNewShape(customBitmap)
         operations.add(Operation.Creation(customBitmap))
         onShapeChanged?.onStackSizesChanged(operations.size, removedOperations.size)
+    }
+
+    fun addText(customText: CustomText) {
+        addNewShape(customText)
+    }
+
+    fun addOperation(customText: CustomText) {
+
     }
 
     fun removeShape(shape: Shape) {

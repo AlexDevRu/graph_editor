@@ -47,7 +47,7 @@ class DashboardViewModel @Inject constructor(
 
     fun updateImages() {
         val imagesCollection = db.collection("/users/${GoogleSignIn.getLastSignedInAccount(app)?.email}/images")
-        viewModelScope.launch(Dispatchers.IO + SupervisorJob()) {
+        viewModelScope.launch(Dispatchers.IO) {
             _loading.postValue(true)
             app.cacheDir.listFiles()?.forEach { if (it.isFile) it.delete() }
             val list1 = async {

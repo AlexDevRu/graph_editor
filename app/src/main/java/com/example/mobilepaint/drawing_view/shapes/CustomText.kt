@@ -1,6 +1,7 @@
 package com.example.mobilepaint.drawing_view.shapes
 
 import android.graphics.*
+import com.example.mobilepaint.drawing_view.Operation
 import com.example.mobilepaint.models.json.ShapeData
 import com.example.mobilepaint.models.json.TextData
 import com.google.gson.Gson
@@ -8,8 +9,8 @@ import com.otaliastudios.opengl.geometry.RectF
 
 class CustomText(
     val paint: Paint,
-    val rotateAngle: Float,
-    val scale: Float
+    var rotateAngle: Float,
+    var scale: Float
 ): Shape {
 
     private val path = Path()
@@ -159,5 +160,23 @@ class CustomText(
             scale = scale
         )
         return gson.toJson(textData)
+    }
+
+    override fun applyOperation(operation: Operation): Operation? {
+        if (operation is Operation.PointMoving) {
+            val invertOperation = Operation.PointMoving(this, true, x, y)
+            x = operation.x
+            y = operation.y
+            return invertOperation
+        } else if (operation is Operation.BitmapTransformation1) {
+            val invertOperation = Operation.BitmapTransformation1(this, x, y, scale, scale, rotateAngle)
+            x = operation.x
+            y = operation.y
+            scale = operation.sx
+            rotateAngle = operation.rotation
+            calculatePoints()
+            return invertOperation
+        }
+        return null
     }
 }

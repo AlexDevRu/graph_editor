@@ -119,20 +119,60 @@ class DrawingView @JvmOverloads constructor(
         textPaint.set(binding.editText.paint)
 
         if (textInEdit) {
-            binding.shapesView.shapes.remove(binding.shapesView.selectedShape)
+            val textShape = binding.shapesView.selectedShape as CustomText
+            textShape.setSelected(false)
+            binding.shapesView.operations.push(Operation.BitmapTransformation1(textShape, textShape.x, textShape.y, textShape.scale, textShape.scale, textShape.rotateAngle))
+            textShape.down(x.toFloat(), y)
+            textShape.scale = binding.editText.scaleX
+            textShape.rotateAngle = binding.editText.rotation
+            textShape.text = binding.editText.text.toString()
             textInEdit = false
+        } else {
+            val textShape = CustomText(
+                textPaint,
+                binding.editText.rotation,
+                binding.editText.scaleX
+            )
+            textShape.down(x.toFloat(), y)
+            textShape.text = binding.editText.text.toString()
+            binding.shapesView.operations.push(Operation.Creation(textShape))
+            binding.shapesView.addNewShape(textShape)
         }
 
-        val textShape = CustomText(
+        Timber.d("saveCurrentText shapes - ${shapes.size}")
+        binding.shapesView.invalidate()
+
+        /*val textShape = CustomText(
             textPaint,
             binding.editText.rotation,
             binding.editText.scaleX
         )
         textShape.text = binding.editText.text.toString()
 
+        var oldX = 0f
+        var oldY = 0f
+        var oldScale = 0f
+        var oldRotation = 0f
+
+        if (textInEdit) {
+            val selectedShape = binding.shapesView.selectedShape as CustomText
+            oldX = selectedShape.x
+            oldY = selectedShape.y
+            oldScale = selectedShape.scale
+            oldRotation = selectedShape.rotateAngle
+            binding.shapesView.shapes.remove(binding.shapesView.selectedShape)
+        }
+
+        if (textInEdit) {
+            binding.shapesView.operations.add(Operation.BitmapTransformation1(textShape, oldX, oldY, oldScale, oldScale, oldRotation))
+            textInEdit = false
+        } else {
+            binding.shapesView.operations.add(Operation.Creation(textShape))
+        }
+
         textShape.down(x.toFloat(), y.toFloat())
-        binding.shapesView.addNewShape(textShape)
-        binding.shapesView.invalidate()
+        binding.shapesView.addText(textShape)
+        binding.shapesView.invalidate()*/
 
         closeEditText()
     }

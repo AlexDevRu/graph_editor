@@ -3,14 +3,11 @@ package com.example.mobilepaint.ui.canvas
 import android.Manifest
 import android.content.Intent
 import android.graphics.ImageDecoder
-import android.net.Uri
 import android.os.*
 import android.provider.MediaStore
-import android.provider.Settings
 import android.view.*
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.os.bundleOf
@@ -31,7 +28,7 @@ import androidx.transition.TransitionInflater
 import com.example.mobilepaint.R
 import com.example.mobilepaint.Utils
 import com.example.mobilepaint.databinding.DialogChangeCanvasSizeBinding
-import com.example.mobilepaint.databinding.DialogStrokeBinding
+import com.example.mobilepaint.databinding.DialogEditTextBinding
 import com.example.mobilepaint.databinding.FragmentCanvasBinding
 import com.example.mobilepaint.drawing_view.GeometryType
 import com.example.mobilepaint.drawing_view.ShapesView
@@ -186,13 +183,13 @@ class CanvasFragment : Fragment(), ShapesView.OnShapeChanged, View.OnClickListen
                     .show()
             }
             R.id.tvStroke -> {
-                val strokeBinding = DialogStrokeBinding.inflate(layoutInflater)
-                strokeBinding.etType.setText(viewModel.stroke.value?.toInt()?.toString())
+                val strokeBinding = DialogEditTextBinding.inflate(layoutInflater)
+                strokeBinding.editText.setText(viewModel.stroke.value?.toInt()?.toString())
                 AlertDialog.Builder(requireContext())
                     .setTitle(R.string.stroke)
                     .setView(strokeBinding.root)
                     .setPositiveButton(android.R.string.ok) { _, _ ->
-                        viewModel.setStroke(strokeBinding.etType.text?.toString()?.toFloatOrNull() ?: 1f)
+                        viewModel.setStroke(strokeBinding.editText.text?.toString()?.toFloatOrNull() ?: 1f)
                     }
                     .show()
             }
